@@ -43,7 +43,7 @@ def run_scheduler(plan=False):
 	plugplan = autoscheduler.assign_carts(apogee_choices, manga_choices, eboss_choices)
 	
 	as_end_time = time()
-	print("[PY] run_scheduler complete in (%3.1f min)" % ((as_end_time - as_start_time) / 60.0))
+	print("[PY] run_scheduler complete in (%d sec)" % ((as_end_time - as_start_time)))
 	
 	return plugplan
 

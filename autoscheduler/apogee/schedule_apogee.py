@@ -108,7 +108,7 @@ def get_apogee_plates(plan=False):
 		if len(tmp) > 3: apg[i]['vplan'] = tmp[3]
 		apg[i]['apgver'] = 100*tmp[0] + 10*tmp[1] + tmp[2]
 	stage1_end = time()
-	print("[SQL] Read in APOGEE-II plates (%3.1f min)" % ((stage1_end - stage1_start)/60))
+	print("[SQL] Read in APOGEE-II plates (%d sec)" % ((stage1_end - stage1_start)))
 	
 	# Read in previous APOGEE observations
 	stage2_start = time()
@@ -127,7 +127,7 @@ def get_apogee_plates(plan=False):
 			"GROUP BY plt.plate_id, obs.mjd ORDER BY plt.plate_id").fetchall()
 	except: pass
 	stage2_end = time()
-	print("[SQL] Read in past APOGEE observations (%3.1f min)" % ((stage2_end - stage2_start)/60))
+	print("[SQL] Read in past APOGEE observations (%d sec)" % ((stage2_end - stage2_start)))
 	
 	# Parse previous APOGEE observations
 	for i in range(len(stage2)):
@@ -165,7 +165,7 @@ def get_apogee_plates(plan=False):
 			"LEFT JOIN platedb.plate_pointing as pltg ON (pltg.plate_pk=plt.pk)) "+
 		"WHERE p2s.survey_pk = 1 ORDER BY crt.number").fetchall()
 	stage3_end = time()
-	print("[SQL] Read in currently plugged APOGEE plates (%3.1f min)" % ((stage3_end - stage3_start)/60))
+	print("[SQL] Read in currently plugged APOGEE plates (%d sec)" % ((stage3_end - stage3_start)))
 	
 	# Save currently plugged plates to data
 	for c,p in stage3:
