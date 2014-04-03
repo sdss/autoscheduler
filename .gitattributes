@@ -1,0 +1,17 @@
+* text=auto !eol
+/ReadMe.txt -text
+/apogee.pro -text
+/eboss.pro -text
+/gen_schedule.pro -text
+/gen_weather.pro -text
+/get_platedata.pro -text
+/manga.pro -text
+/observability.pro -text
+/out_final.pro -text
+/out_sim.pro -text
+platelists/apogee2_2016-02-10_forBen.dat -text
+platelists/eboss.1113.txt -text
+/s4as.pro -text
+schedules/Sch_base.2yrs.txt -text
+schedules/Sch_base.2yrs.txt.frm.dat -text
+/set_params.pro -text
