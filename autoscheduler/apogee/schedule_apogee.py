@@ -2,18 +2,20 @@ from __future__ import print_function, division
 from time import time
 import numpy as np
 import subprocess
+import os
 
 # SCHEDULE_APOGEE
 # DESCRIPTION: Main APOGEE-II scheduling routine.
 # INPUT: schedule -- dictionary defining important schedule times throughout the night
 # OUTPUT: apogee_choices -- dictionary list containing plate choices + observing times for tonight 
-def schedule_apogee(schedule):
+def schedule_apogee(schedule, plan=False):
 
 	# Get all plate information from the database
-	apg = get_apogee_plates()
+	apg = get_apogee_plates(plan=plan)
 	
 	# Write out plate information to file for read in by IDL routine
-	of = open('autoscheduler/apogee/apgplates.as','w')
+	pwd = os.path.dirname(os.path.realpath(__file__))
+	of = open(pwd+'/apgplates.as','w')
 	for i in range(len(apg)):
 		print("%20s %4d %4d %4d %9.5f %9.5f %6.1f %2d %2d %7.1f %2d %3.1f %2d %6.1f %6.1f %2d %2d %s" % 
 				(apg[i]['name'], apg[i]['plateid'], apg[i]['locationid'], apg[i]['apgver'], apg[i]['ra'], apg[i]['dec'], 
@@ -23,7 +25,7 @@ def schedule_apogee(schedule):
 	of.close()
 	
 	# Call APOGEE-II IDL routine
-	idl = subprocess.Popen("cd autoscheduler/apogee ; idl -e apogee -args %7d %2d %2d %f %f %f %f %f" %
+	idl = subprocess.Popen("cd "+pwd+" ; idl -e apogee -args %7d %2d %2d %f %f %f %f %f" %
 					(schedule['jd'], schedule['manga'], schedule['eboss'], schedule['bright_start'], schedule['bright_end'],
 					schedule['dark_start'], schedule['eboss_start'], schedule['manga_start']),
 					shell=True, stderr=subprocess.STDOUT, stdout=subprocess.PIPE)
@@ -50,32 +52,37 @@ def schedule_apogee(schedule):
 # DESCRIPTION: Reads in APOGEE-II plate information from platedb
 # INPUT: none
 # OUTPUT: apg -- list of dicts with all APOGEE-II plate information
-def get_apogee_plates():
+def get_apogee_plates(plan=False):
 	# Create database connection
-	try:
-		from sdss.internal.database.connections.APODatabaseUserLocalConnection import db
-		session = db.Session()
-		tmp = session.execute("SET SCHEMA 'platedb' ; SELECT survey.label from platedb.survey").fetchall()
-	except:
-		from sdss.internal.database.connections.UtahLocalConnection import db
-		session = db.Session()
-	else:
-		from sdss.internal.database.connections.UtahLocalConnection import db
-		session = db.Session()
+	if (os.path.dirname(os.path.realpath(__file__))).find('utah.edu') >= 0: from sdss.internal.database.connections.UtahLocalConnection import db
+	else: from sdss.internal.database.connections.APODatabaseUserLocalConnection import db
+	session = db.Session()
 	
 	# Pull all relevant plate information for APOGEE plates
 	stage1_start = time()
-	stage1 = session.execute("SET SCHEMA 'platedb'; "+
-		"SELECT plt.location_id, ptg.center_ra, ptg.center_dec, plt.plate_id, pltg.hour_angle, pltg.priority, plt.design_pk, plt.name, pltg.ha_observable_max, pltg.ha_observable_min, plt.pk "+
-		"FROM ((((((platedb.plate AS plt "+
-			"INNER JOIN platedb.plate_to_survey AS p2s ON (p2s.plate_pk = plt.pk)) "+
-			"INNER JOIN platedb.plate_pointing AS pltg ON (pltg.plate_pk=plt.pk)) "+
-			"INNER JOIN platedb.pointing AS ptg ON (pltg.pointing_pk=ptg.pk)) "+
-			"INNER JOIN platedb.plate_location AS ploc ON (ploc.pk=plt.plate_location_pk)) "+
-			"INNER JOIN platedb.plate_to_plate_status AS p2ps ON (p2ps.plate_pk=plt.pk))"+
-			"INNER JOIN platedb.plate_status AS plts ON (plts.pk=p2ps.plate_status_pk))"+
-		"WHERE p2s.survey_pk=1 AND plt.plate_id >= 4800 AND plts.label = 'Accepted' AND ploc.label = 'APO' "+
-		"ORDER BY plt.plate_id").fetchall()
+	if plan:
+		stage1 = session.execute("SET SCHEMA 'platedb'; "+
+			"SELECT plt.location_id, ptg.center_ra, ptg.center_dec, plt.plate_id, pltg.hour_angle, pltg.priority, plt.design_pk, plt.name, pltg.ha_observable_max, pltg.ha_observable_min, plt.pk "+
+			"FROM ((((((platedb.plate AS plt "+
+				"INNER JOIN platedb.plate_to_survey AS p2s ON (p2s.plate_pk = plt.pk)) "+
+				"INNER JOIN platedb.plate_pointing AS pltg ON (pltg.plate_pk=plt.pk)) "+
+				"INNER JOIN platedb.pointing AS ptg ON (pltg.pointing_pk=ptg.pk)) "+
+				"INNER JOIN platedb.plate_location AS ploc ON (ploc.pk=plt.plate_location_pk)) "+
+				"INNER JOIN platedb.plate_to_plate_status AS p2ps ON (p2ps.plate_pk=plt.pk))"+
+				"INNER JOIN platedb.plate_status AS plts ON (plts.pk=p2ps.plate_status_pk))"+
+			"WHERE p2s.survey_pk=1 AND plt.plate_id >= 4800 AND plts.label = 'Accepted' AND ploc.label = 'APO' "+
+			"ORDER BY plt.plate_id").fetchall()
+	else:
+		stage1 = session.execute("SET SCHEMA 'platedb'; "+
+			"SELECT plt.location_id, ptg.center_ra, ptg.center_dec, plt.plate_id, pltg.hour_angle, pltg.priority, plt.design_pk, plt.name, pltg.ha_observable_max, pltg.ha_observable_min, plt.pk "+
+			"FROM ((((((platedb.active_plugging AS ac "+
+				"JOIN platedb.plugging AS plg ON (ac.plugging_pk=plg.pk)) "+
+				"LEFT JOIN platedb.cartridge AS crt ON (plg.cartridge_pk=crt.pk)) "+
+				"LEFT JOIN platedb.plate AS plt ON (plg.plate_pk=plt.pk)) "+
+				"LEFT JOIN platedb.plate_to_survey AS p2s ON (p2s.plate_pk=plt.pk)) "+
+				"LEFT JOIN platedb.plate_pointing as pltg ON (pltg.plate_pk=plt.pk)) "+
+				"LEFT JOIN platedb.pointing AS ptg ON (pltg.pointing_pk=ptg.pk)) "+
+			"WHERE p2s.survey_pk = 1 ORDER BY crt.number").fetchall()
 	
 	# Setup APOGEE-II data structure
 	apg = []

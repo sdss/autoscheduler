@@ -66,7 +66,7 @@ pri_start = systime(1,/seconds)
 apg.priority = 100.0 * apg.manpriority
 ; Already Plugged
 wplugged = where(apg.plugged gt 0, nplugged)
-if nplugged gt 0 then apg[wplugged].priority += 100.0
+if nplugged gt 0 then apg[wplugged].priority += 1000.0
 ; Declination
 apg.priority -= 50.0 * exp( -(apg.dec - 30.0)^2.0 / (2.0 * (20.0)^2.0))
 ; Ecliptic

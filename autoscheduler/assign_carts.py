@@ -1,5 +1,6 @@
 from __future__ import print_function, division
 import numpy as np
+import os
 
 # ASSIGN_CARTS
 # DESCRIPTION: Assigns all survey plate choices to cartridges
@@ -9,16 +10,9 @@ import numpy as np
 # OUTPUT: plugplan -- dictionary list containing all plugging choices for tonight
 def assign_carts(apogee_choices, manga_choices, eboss_choices):
 	# Create database connection
-	try:
-		from sdss.internal.database.connections.APODatabaseUserLocalConnection import db
-		session = db.Session()
-		tmp = session.execute("SET SCHEMA 'platedb' ; SELECT survey.label from platedb.survey").fetchall()
-	except:
-		from sdss.internal.database.connections.UtahLocalConnection import db
-		session = db.Session()
-	else:
-		from sdss.internal.database.connections.UtahLocalConnection import db
-		session = db.Session()
+	if (os.path.dirname(os.path.realpath(__file__))).find('utah.edu') >= 0: from sdss.internal.database.connections.UtahLocalConnection import db
+	else: from sdss.internal.database.connections.APODatabaseUserLocalConnection import db
+	session = db.Session()
 		
 	# Read in all available cartridges
 	allcarts = session.execute("SET SCHEMA 'platedb'; "+
@@ -73,7 +67,5 @@ def assign_carts(apogee_choices, manga_choices, eboss_choices):
 		plugplan[carts_avail[0]]['obsmjd'] = apogee_choices[i]['obstime']
 		plugplan[carts_avail[0]]['exposure_length'] = apogee_choices[i]['explength']
 	
-		
-	for p in range(len(plugplan)):
-		print("%3d: %5d --> %5d" % (plugplan[p]['cart'], plugplan[p]['oldplate'], plugplan[p]['plate']))
+	return plugplan
 		
