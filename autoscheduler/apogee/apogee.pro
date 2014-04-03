@@ -52,7 +52,7 @@ endif else begin
 	endif
 endelse
 block_end = systime(1,/seconds)
-print, "[IDL] APOGEE-II blocks determined (" + string((block_end-block_start), format='(I)') + " sec)"
+print, "[IDL] APOGEE-II blocks determined (" + string((block_end-block_start), format='(1I)') + " sec)"
 
 ; ---- Determine LSTs for all blocks tonight
 OBSERVATORY, 'apo', apo
@@ -97,7 +97,7 @@ for i=0, n_elements(apg)-1 do begin
 	for j=0, nfield-1 do if apg[i].apgver gt apg[wfield[j]].apgver and apg[wfield[j]].priority gt 1 then apg[i].priority /= 2.0
 endfor
 pri_end = systime(1,/seconds)
-print, "[IDL] APOGEE-II plates prioritized (" + string((pri_end-pri_start), format='(I)') + " sec)"
+print, "[IDL] APOGEE-II plates prioritized (" + string((pri_end-pri_start), format='(1I)') + " sec)"
 
 ; ---- Determine Observability
 obs_start = systime(1,/seconds)
@@ -107,7 +107,7 @@ for i=0, n_elements(apg)-1 do begin
 	obsarr[i,*] = obsvalues
 endfor
 obs_end = systime(1,/seconds)
-print, "[IDL] APOGEE-II plate observability determined (" + string((obs_end-obs_start), format='(I)') + " sec)"
+print, "[IDL] APOGEE-II plate observability determined (" + string((obs_end-obs_start), format='(1I)') + " sec)"
 
 ; ---- Pick Plates
 nplt = replicate(0, n_elements(atimes))
@@ -180,7 +180,7 @@ for p=0, n_elements(chosen)-1 do begin
 	endif
 endfor
 choose_end = systime(1,/seconds)
-print, "[IDL] APOGEE-II plates chosen (" + string((block_end-block_start), format='(I)') + " sec)"
+print, "[IDL] APOGEE-II plates chosen (" + string((block_end-block_start), format='(I1)') + " sec)"
 
 ; Return chosen plates
 for i=0, n_elements(atimes)-1 do begin
