@@ -1,0 +1,10 @@
+* text=auto !eol
+/ReadMe.txt -text
+daily/gen_sched.pro -text
+daily/output_final.pro -text
+daily/output_nightly.pro -text
+daily/plan_apogee.pro -text
+daily/plan_eboss.pro -text
+daily/plan_manga.pro -text
+daily/s4scheduler.pro -text
+daily/set_params.pro -text
