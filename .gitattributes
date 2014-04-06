@@ -18,6 +18,8 @@ autoscheduler/apogee/apogee.pro -text
 autoscheduler/apogee/observability.pro -text
 autoscheduler/apogee/schedule_apogee.py -text
 autoscheduler/assign_carts.py -text
+autoscheduler/eboss/__init__.py -text
+autoscheduler/eboss/schedule_eboss.py -text
 autoscheduler/night_schedule.py -text
 platelists/apogee2_2016-02-10_forBen.dat -text
 platelists/eboss.1113.txt -text

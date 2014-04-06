@@ -66,6 +66,17 @@ def assign_carts(apogee_choices, manga_choices, eboss_choices):
 		plugplan[carts_avail[0]]['second_backup'] = apogee_choices[i]['second_backup']
 		plugplan[carts_avail[0]]['obsmjd'] = apogee_choices[i]['obstime']
 		plugplan[carts_avail[0]]['exposure_length'] = apogee_choices[i]['explength']
+		
+	# Save eBOSS choices to cartridges
+	for i in range(len(eboss_choices)):
+		wplate = [x for x in range(len(plugplan)) if eboss_choices[i]['plate'] == plugplan[x]['oldplate']]
+		if len(wplate) == 0: continue
+		# Save new values to plugplan
+		plugplan[wplate[0]]['plate'] = eboss_choices[i]['plate']
+		plugplan[wplate[0]]['first_backup'] = -1
+		plugplan[wplate[0]]['second_backup'] = -1
+		plugplan[wplate[0]]['obsmjd'] = eboss_choices[i]['transittime']
+		plugplan[wplate[0]]['exposure_length'] = 0
 	
 	return plugplan
 		
