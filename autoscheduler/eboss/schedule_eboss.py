@@ -32,13 +32,14 @@ def get_eboss_plates(plan=False):
 	# Determine what is currently plugged
 	sql_start = time()
 	eboplug = session.execute("SET SCHEMA 'platedb'; "+
-		"SELECT crt.number, plt.pk, plt.ra, plt.dec "+
+		"SELECT crt.number, plt.pk, ptg.ra, ptg.dec "+
 		"FROM (((((platedb.active_plugging AS ac "+
 			"JOIN platedb.plugging AS plg ON (ac.plugging_pk=plg.pk)) "+
 			"LEFT JOIN platedb.cartridge AS crt ON (plg.cartridge_pk=crt.pk)) "+
 			"LEFT JOIN platedb.plate AS plt ON (plg.plate_pk=plt.pk)) "+
 			"LEFT JOIN platedb.plate_to_survey AS p2s ON (p2s.plate_pk=plt.pk)) "+
 			"LEFT JOIN platedb.plate_pointing as pltg ON (pltg.plate_pk=plt.pk)) "+
+			"LEFT JOIN platedb.pointing AS ptg ON (pltg.pointing_pk=ptg.pk))
 		"WHERE p2s.survey_pk = 2 ORDER BY crt.number").fetchall()
 	sql_end = time()
 	print("[SQL] Read in currently plugged eBOSS plates (%d sec)" % ((sql_end - sql_start)))
