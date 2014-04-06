@@ -6,6 +6,7 @@
 from __future__ import print_function, division
 import autoscheduler
 import autoscheduler.apogee as apg
+import autoscheduler.eboss as ebo
 from time import time
 import os
 
@@ -36,8 +37,8 @@ def run_scheduler(plan=False):
 	#if schedule[currjd]['manga'] > 0:
 	#	manga_choices = schedule_manga(schedule[currjd])
 	# Schedule eBOSS
-	#if schedule[currjd]['eboss'] > 0:
-	#	eboss_choices = schedule_eboss(schedule[currjd])
+	if schedule[currjd]['eboss'] > 0:
+		eboss_choices = ebo.schedule_eboss(schedule[currjd], plan=plan)
 	
 	# Take results and assign to carts
 	plugplan = autoscheduler.assign_carts(apogee_choices, manga_choices, eboss_choices)
