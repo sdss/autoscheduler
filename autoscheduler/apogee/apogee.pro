@@ -188,7 +188,14 @@ for i=0, n_elements(atimes)-1 do begin
 	if backup1[i] ge 0 then thisbak1 = apg[backup1[i]].plateid else thisbak1 = -1
 	if backup2[i] ge 0 then thisbak2 = apg[backup2[i]].plateid else thisbak2 = -1
 	if alengths[i] ge par.aexp/60.0 then thislength = alengths[i] - par.aovh/60.0 else thislength = alengths[i]
-	print, "[CHOSEN]", atimes[i], thislength, thisplate, thisbak1, thisbak2, format='(A8, 2X, 2F20.7, 3I6)'
+	if schedule.drkstrt eq 0 then begin
+		thistime = atimes[i]
+	endif else if schedule.brtstrt lt schedule.drkstrt then begin
+		thistime = atimes[i]
+	endif else begin
+		if alengths[i] ge par.aexp/60.0 then thistime = atimes[i] + par.aovh/60.0/24.0
+	endelse
+	print, "[CHOSEN]", thistime, thislength, thisplate, thisbak1, thisbak2, format='(A8, 2X, 2F20.7, 3I6)'
 endfor
 
 
