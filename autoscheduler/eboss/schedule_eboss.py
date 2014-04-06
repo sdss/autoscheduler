@@ -2,6 +2,7 @@ from __future__ import print_function, division
 from time import time
 import astropysics.coords as coo
 import astropysics.obstools as obs
+import os
 
 # SCHEDULE_EBOSS
 # DESCRIPTION: Main eBOSS scheduling routine.
