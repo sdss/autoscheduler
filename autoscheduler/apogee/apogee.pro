@@ -187,6 +187,7 @@ for i=0, n_elements(atimes)-1 do begin
 	if chosen[i] ge 0 then thisplate = apg[chosen[i]].plateid else thisplate = -1
 	if backup1[i] ge 0 then thisbak1 = apg[backup1[i]].plateid else thisbak1 = -1
 	if backup2[i] ge 0 then thisbak2 = apg[backup2[i]].plateid else thisbak2 = -1
+	if alengths[i] > par.aexp/60.0 then thislength = alengths[i] - par.aovh/60.0 else thislength = alengths[i]
 	print, "[CHOSEN]", atimes[i], alengths[i], thisplate, thisbak1, thisbak2, format='(A8, 2X, 2F20.7, 3I6)'
 endfor
 
