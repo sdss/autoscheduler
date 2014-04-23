@@ -41,11 +41,24 @@ def run_scheduler(plan=False):
 		eboss_choices = ebo.schedule_eboss(schedule[currjd], plan=plan)
 	
 	# Take results and assign to carts
-	plugplan = autoscheduler.assign_carts(apogee_choices, manga_choices, eboss_choices)
+	apgcart, mancart, ebocart = autoscheduler.assign_carts(apogee_choices, manga_choices, eboss_choices)
 	
 	as_end_time = time()
 	print("[PY] run_scheduler complete in (%d sec)" % ((as_end_time - as_start_time)))
 	
-	return plugplan
+	plan = dict()
+	# Reformat schedule dict for output
+	plan['schedule'] = dict()
+	plan['schedule']['apg_start'] = schedule[currjd]['bright_start']
+	plan['schedule']['apg_end'] = schedule[currjd]['bright_end']
+	plan['schedule']['man_start'] = schedule[currjd]['manga_start']
+	plan['schedule']['man_end'] = schedule[currjd]['manga_end']
+	plan['schedule']['ebo_start'] = schedule[currjd]['eboss_start']
+	plan['schedule']['ebo_end'] = schedule[currjd]['eboss_end']
+	# Return cart assignments for chosen plates
+	plan['apogee'] = apgcart
+	plan['manga'] = mancart
+	plan['eboss'] = ebocart
+	return plan
 
 

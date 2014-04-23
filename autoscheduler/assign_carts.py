@@ -20,7 +20,7 @@ def assign_carts(apogee_choices, manga_choices, eboss_choices):
 			"ORDER BY crt.number").fetchall()
 	plugplan = []
 	for c in allcarts:
-		plugplan.append({'cart': c[0], 'cartsurveys': 0, 'oldplate': 0, 'plate': 0, 'obsmjd': float(0.0), 'exposure_length': float(0.0), 'first_backup': 0, 'second_backup': 0})
+		plugplan.append({'cart': c[0], 'cartsurveys': 0, 'oldplate': 0})
 		if c[0] < 10: plugplan[-1]['cartsurveys'] = 1
 		if c[0] >= 10: plugplan[-1]['cartsurveys'] = 2
 		if c[0] == 2: plugplan[-1]['cartsurveys'] = 3
@@ -41,42 +41,55 @@ def assign_carts(apogee_choices, manga_choices, eboss_choices):
 		
 	# Save MaNGA choices to cartridges (since they are the most dependent)
 	# TO-DO
+	manpicks = []
 	
 	# Save APOGEE-II choices to cartridges
 	apgsaved = np.zeros(len(apogee_choices))
+	apgpicks = []
 	# First loop: assign plates to carts which are already plugged
 	for i in range(len(apogee_choices)):
 		wplate = [x for x in range(len(plugplan)) if apogee_choices[i]['plate'] == plugplan[x]['oldplate']]
 		if len(wplate) == 0: continue
-		# Save new values to plugplan
-		plugplan[wplate[0]]['plate'] = apogee_choices[i]['plate']
-		plugplan[wplate[0]]['first_backup'] = apogee_choices[i]['first_backup']
-		plugplan[wplate[0]]['second_backup'] = apogee_choices[i]['second_backup']
-		plugplan[wplate[0]]['obsmjd'] = apogee_choices[i]['obstime']
-		plugplan[wplate[0]]['exposure_length'] = apogee_choices[i]['explength']
+		# Save new values to apgpicks
+		thispick = dict()
+		thispick['cart'] = plugplan[wplate[0]]['cart']
+		thispick['plate'] = apogee_choices[i]['plate']
+		thispick['first_backup'] = apogee_choices[i]['first_backup']
+		thispick['second_backup'] = apogee_choices[i]['second_backup']
+		thispick['obsmjd'] = apogee_choices[i]['obstime']
+		thispick['exposure_length'] = apogee_choices[i]['explength']
+		plugplan[wplate[0]]['cart'] = -1
 		apgsaved[i] = 1
+		apgpicks.append(thispick)
 	# Second loop: assign plates to carts which are replugs
 	for i in range(len(apogee_choices)):
 		if apgsaved[i] == 1: continue
-		carts_avail = [x for x in range(len(plugplan)) if plugplan[x]['plate'] == 0 and (plugplan[x]['cartsurveys'] == 1 or plugplan[x]['cartsurveys'] == 3)]
+		carts_avail = [x for x in range(len(plugplan)) if plugplan[x]['cart'] >= 0 and (plugplan[x]['cartsurveys'] == 1 or plugplan[x]['cartsurveys'] == 3)]
 		if len(carts_avail) == 0: continue
-		# Save new values to plugplan
-		plugplan[carts_avail[0]]['plate'] = apogee_choices[i]['plate']
-		plugplan[carts_avail[0]]['first_backup'] = apogee_choices[i]['first_backup']
-		plugplan[carts_avail[0]]['second_backup'] = apogee_choices[i]['second_backup']
-		plugplan[carts_avail[0]]['obsmjd'] = apogee_choices[i]['obstime']
-		plugplan[carts_avail[0]]['exposure_length'] = apogee_choices[i]['explength']
+		# Save new values to apgpicks
+		thispick = dict()
+		thispick['cart'] = plugplan[carts_avail[0]]['cart']
+		thispick['plate'] = apogee_choices[i]['plate']
+		thispick['first_backup'] = apogee_choices[i]['first_backup']
+		thispick['second_backup'] = apogee_choices[i]['second_backup']
+		thispick['obsmjd'] = apogee_choices[i]['obstime']
+		thispick['exposure_length'] = apogee_choices[i]['explength']
+		plugplan[carts_avail[0]]['cart'] = -1
+		apgpicks.append(thispick)
 		
 	# Save eBOSS choices to cartridges
+	ebopicks = []
 	for i in range(len(eboss_choices)):
 		wplate = [x for x in range(len(plugplan)) if eboss_choices[i]['plate'] == plugplan[x]['oldplate']]
 		if len(wplate) == 0: continue
-		# Save new values to plugplan
-		plugplan[wplate[0]]['plate'] = eboss_choices[i]['plate']
-		plugplan[wplate[0]]['first_backup'] = -1
-		plugplan[wplate[0]]['second_backup'] = -1
-		plugplan[wplate[0]]['obsmjd'] = eboss_choices[i]['transittime']
-		plugplan[wplate[0]]['exposure_length'] = 0
+		# Save new values to ebopicks
+		thispick = dict()
+		thispick['cart'] = plugplan[wplate[0]]['cart']
+		thispick['plate'] = eboss_choices[i]['plate']
+		thispick['first_backup'] = -1
+		thispick['second_backup'] = -1
+		thispick['obsmjd'] = eboss_choices[i]['transittime']
+		ebopicks.append(thispick)
 	
-	return plugplan
+	return apgpicks, manpicks, ebopicks
 		
