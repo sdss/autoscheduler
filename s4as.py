@@ -49,12 +49,16 @@ def run_scheduler(plan=False):
 	plan = dict()
 	# Reformat schedule dict for output
 	plan['schedule'] = dict()
-	plan['schedule']['apg_start'] = schedule[currjd]['bright_start']
-	plan['schedule']['apg_end'] = schedule[currjd]['bright_end']
-	plan['schedule']['man_start'] = schedule[currjd]['manga_start']
-	plan['schedule']['man_end'] = schedule[currjd]['manga_end']
-	plan['schedule']['ebo_start'] = schedule[currjd]['eboss_start']
-	plan['schedule']['ebo_end'] = schedule[currjd]['eboss_end']
+	plan['schedule']['jd'] = schedule[currjd]['jd']
+	if schedule[currjd]['bright_start'] > 0:
+		plan['schedule']['apg_start'] = schedule[currjd]['bright_start'] - schedule[currjd]['jd']
+		plan['schedule']['apg_end'] = schedule[currjd]['bright_end'] - schedule[currjd]['jd']
+	if schedule[currjd]['manga_start'] > 0:
+		plan['schedule']['man_start'] = schedule[currjd]['manga_start'] - schedule[currjd]['jd']
+		plan['schedule']['man_end'] = schedule[currjd]['manga_end'] - schedule[currjd]['jd']
+	if schedule[currjd]['eboss_start'] > 0:
+		plan['schedule']['ebo_start'] = schedule[currjd]['eboss_start'] - schedule[currjd]['jd']
+		plan['schedule']['ebo_end'] = schedule[currjd]['eboss_end'] - schedule[currjd]['jd']
 	# Return cart assignments for chosen plates
 	plan['apogee'] = apgcart
 	plan['manga'] = mancart

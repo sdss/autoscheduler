@@ -12,6 +12,7 @@ apogee_simulation/platelists/apogee2_2016-02-10_forBen.dat -text
 apogee_simulation/platelists/eboss.1113.txt -text
 apogee_simulation/s4as.pro -text
 apogee_simulation/set_params.pro -text
+/app.config -text
 autoscheduler/__init__.py -text
 autoscheduler/apogee/__init__.py -text
 autoscheduler/apogee/apogee.pro -text
@@ -25,6 +26,7 @@ documentation/autoscheduler[!!-~]diagram.graffle -text
 documentation/autoscheduler[!!-~]diagram.pdf -text
 platelists/apogee2_2016-02-10_forBen.dat -text
 platelists/eboss.1113.txt -text
+/run_scheduler_web.py -text
 /s4as.py -text
 schedules/Sch_base.2yrs.txt.frm.dat -text
 schedules/Sch_base.4yrs.txt.frm.dat -text
@@ -32,3 +34,20 @@ schedules/Sch_base.6yrs.txt -text
 schedules/Sch_base.6yrs.txt.frm.dat -text
 schedules/Sch_base.sdss3.txt.frm.dat -text
 schedules/gen_schedule.pro -text
+web/__init__.py -text
+web/color_print.py -text
+web/config.py -text
+web/configuration_files/dev-utah.sdss.edu.cfg -text
+web/configuration_files/localhost.cfg -text
+web/configuration_files/sdss-db4.local.cfg -text
+web/controllers/__init__.py -text
+web/controllers/index.py -text
+web/designpatterns.py -text
+web/jinja_filters.py -text
+web/lib/__init__.py -text
+web/lib/app_globals.py -text
+web/lib/helpers.py -text
+web/model/__init__.py -text
+web/model/database.py -text
+web/templates/index.html -text
+web/templates/layout.html -text
