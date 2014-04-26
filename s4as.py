@@ -43,14 +43,14 @@ def run_scheduler(plan=False):
 	plan['schedule'] = dict()
 	plan['schedule']['mjd'] = schedule['jd'] - 2400000
 	if schedule['bright_start'] > 0:
-		plan['schedule']['apg_start'] = schedule['bright_start'] - schedule['jd']
-		plan['schedule']['apg_end'] = schedule['bright_end'] - schedule['jd']
+		plan['schedule']['apg_start'] = schedule['bright_start'] - 2400000
+		plan['schedule']['apg_end'] = schedule['bright_end'] - 2400000
 	if schedule['manga_start'] > 0:
-		plan['schedule']['man_start'] = schedule['manga_start'] - schedule['jd']
-		plan['schedule']['man_end'] = schedule['manga_end'] - schedule['jd']
+		plan['schedule']['man_start'] = schedule['manga_start'] - 2400000
+		plan['schedule']['man_end'] = schedule['manga_end'] - 2400000
 	if schedule['eboss_start'] > 0:
-		plan['schedule']['ebo_start'] = schedule['eboss_start'] - schedule['jd']
-		plan['schedule']['ebo_end'] = schedule['eboss_end'] - schedule['jd']
+		plan['schedule']['ebo_start'] = schedule['eboss_start'] - 2400000
+		plan['schedule']['ebo_end'] = schedule['eboss_end'] - 2400000
 	# Return cart assignments for chosen plates
 	plan['apogee'] = apgcart
 	plan['manga'] = mancart
