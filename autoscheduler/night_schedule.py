@@ -18,7 +18,7 @@ def read_schedule(filename, mjd=0, surveys=['apogee','manga','eboss']):
 						 'bright_end': float(tmp[5]), 'dark_start': float(tmp[6]), 'dark_end': float(tmp[7]), 
 						 'eboss_start': float(tmp[8]),'eboss_end': float(tmp[9]), 'manga_start': float(tmp[10]), 'manga_end': float(tmp[11])})
 	# Determine what line in the schedule to use for tonight
-	if mjd == 0: tonight = round(autoscheduler.get_juldate())
+	if mjd == 0: tonight = round(get_juldate())
 	else: tonight = 2400000 + mjd
 	print ("[PY] Scheduling MJD %5d" % (tonight - 2400000))
 	

@@ -32,7 +32,7 @@ def get_eboss_plates(plan=False):
 	# Determine what is currently plugged
 	sql_start = time()
 	eboplug = session.execute("SET SCHEMA 'platedb'; "+
-		"SELECT crt.number, plt.pk, ptg.ra, ptg.dec "+
+		"SELECT crt.number, plt.pk, ptg.center_ra, ptg.center_dec "+
 		"FROM ((((((platedb.active_plugging AS ac "+
 			"JOIN platedb.plugging AS plg ON (ac.plugging_pk=plg.pk)) "+
 			"LEFT JOIN platedb.cartridge AS crt ON (plg.cartridge_pk=crt.pk)) "+
@@ -46,7 +46,7 @@ def get_eboss_plates(plan=False):
 	
 	for i in eboplug:
 		plate = coo.ICRSCoordinates(i[2], i[3])
-		transitmjd = obs.calendar_to_jd(apo.nextRiseSetTransit(field)[2])
+		transitmjd = obs.calendar_to_jd(apo.nextRiseSetTransit(plate)[2])
 		ebo.append({'platepk': i[1], 'transittime': transitmjd})
 		
 	return ebo
