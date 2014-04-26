@@ -17,28 +17,20 @@ def run_scheduler(plan=False):
 	pwd = os.path.dirname(os.path.realpath(__file__))
 	schedule_start_time = time()
 	schedule = autoscheduler.read_schedule(pwd+'/schedules/Sch_base.sdss3.txt')
-	# Determine what line in the schedule to use for tonight
-	tonight = round(autoscheduler.get_juldate())
-	currjd = [x for x in range(len(schedule)) if schedule[x]['jd'] == 2456733]
-	if not len(currjd) > 0:
-		raise AssertionError, "MJD %5d does not exist in schedule file." % (tonight-2400000)
-	currjd = currjd[0]
 	schedule_end_time = time()
 	print("[PY] Schedule read in complete (%3.1f min)" % ((schedule_end_time - schedule_start_time)/60.0))
-	
-	print ("[PY] Scheduling MJD %5d" % (tonight-2400000))
 	
 	# Schedule surveys for tonight
 	apogee_choices, manga_choices, eboss_choices = [], [], []
 	# Schedule APOGEE-II
-	if schedule[currjd]['bright_start'] > 0:
-		apogee_choices = apg.schedule_apogee(schedule[currjd], plan=plan)
+	if schedule['bright_start'] > 0:
+		apogee_choices = apg.schedule_apogee(schedule, plan=plan)
 	# Schedule MaNGA
-	#if schedule[currjd]['manga'] > 0:
-	#	manga_choices = schedule_manga(schedule[currjd])
+	#if schedule['manga'] > 0:
+	#	manga_choices = schedule_manga(schedule)
 	# Schedule eBOSS
-	if schedule[currjd]['eboss'] > 0:
-		eboss_choices = ebo.schedule_eboss(schedule[currjd], plan=plan)
+	if schedule['eboss'] > 0:
+		eboss_choices = ebo.schedule_eboss(schedule, plan=plan)
 	
 	# Take results and assign to carts
 	apgcart, mancart, ebocart = autoscheduler.assign_carts(apogee_choices, manga_choices, eboss_choices)
@@ -49,16 +41,16 @@ def run_scheduler(plan=False):
 	plan = dict()
 	# Reformat schedule dict for output
 	plan['schedule'] = dict()
-	plan['schedule']['jd'] = schedule[currjd]['jd']
-	if schedule[currjd]['bright_start'] > 0:
-		plan['schedule']['apg_start'] = schedule[currjd]['bright_start'] - schedule[currjd]['jd']
-		plan['schedule']['apg_end'] = schedule[currjd]['bright_end'] - schedule[currjd]['jd']
-	if schedule[currjd]['manga_start'] > 0:
-		plan['schedule']['man_start'] = schedule[currjd]['manga_start'] - schedule[currjd]['jd']
-		plan['schedule']['man_end'] = schedule[currjd]['manga_end'] - schedule[currjd]['jd']
-	if schedule[currjd]['eboss_start'] > 0:
-		plan['schedule']['ebo_start'] = schedule[currjd]['eboss_start'] - schedule[currjd]['jd']
-		plan['schedule']['ebo_end'] = schedule[currjd]['eboss_end'] - schedule[currjd]['jd']
+	plan['schedule']['mjd'] = schedule['jd'] - 2400000
+	if schedule['bright_start'] > 0:
+		plan['schedule']['apg_start'] = schedule['bright_start'] - schedule['jd']
+		plan['schedule']['apg_end'] = schedule['bright_end'] - schedule['jd']
+	if schedule['manga_start'] > 0:
+		plan['schedule']['man_start'] = schedule['manga_start'] - schedule['jd']
+		plan['schedule']['man_end'] = schedule['manga_end'] - schedule['jd']
+	if schedule['eboss_start'] > 0:
+		plan['schedule']['ebo_start'] = schedule['eboss_start'] - schedule['jd']
+		plan['schedule']['ebo_end'] = schedule['eboss_end'] - schedule['jd']
 	# Return cart assignments for chosen plates
 	plan['apogee'] = apgcart
 	plan['manga'] = mancart

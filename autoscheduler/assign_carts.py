@@ -56,7 +56,7 @@ def assign_carts(apogee_choices, manga_choices, eboss_choices):
 		thispick['plate'] = apogee_choices[i]['plate']
 		thispick['first_backup'] = apogee_choices[i]['first_backup']
 		thispick['second_backup'] = apogee_choices[i]['second_backup']
-		thispick['obsmjd'] = apogee_choices[i]['obstime']
+		thispick['obsmjd'] = apogee_choices[i]['obstime'] - 2400000
 		thispick['exposure_length'] = apogee_choices[i]['explength']
 		plugplan[wplate[0]]['cart'] = -1
 		apgsaved[i] = 1
@@ -72,7 +72,7 @@ def assign_carts(apogee_choices, manga_choices, eboss_choices):
 		thispick['plate'] = apogee_choices[i]['plate']
 		thispick['first_backup'] = apogee_choices[i]['first_backup']
 		thispick['second_backup'] = apogee_choices[i]['second_backup']
-		thispick['obsmjd'] = apogee_choices[i]['obstime']
+		thispick['obsmjd'] = apogee_choices[i]['obstime'] - 2400000
 		thispick['exposure_length'] = apogee_choices[i]['explength']
 		plugplan[carts_avail[0]]['cart'] = -1
 		apgpicks.append(thispick)
@@ -86,9 +86,6 @@ def assign_carts(apogee_choices, manga_choices, eboss_choices):
 		thispick = dict()
 		thispick['cart'] = plugplan[wplate[0]]['cart']
 		thispick['plate'] = eboss_choices[i]['plate']
-		thispick['first_backup'] = -1
-		thispick['second_backup'] = -1
-		thispick['obsmjd'] = eboss_choices[i]['transittime']
 		ebopicks.append(thispick)
 	
 	return apgpicks, manpicks, ebopicks

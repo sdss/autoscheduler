@@ -4,7 +4,7 @@ import datetime
 # DESCRIPTION: reads in scheduler formatted nightly schedule
 # INPUT: filename -- name of the base schedule file supplied by survey coordinator
 # OUTPUT: schedule -- list of dicts that contain the relevant survey times for each night.
-def read_schedule(filename):
+def read_schedule(filename, mjd=0, surveys=['apogee','manga','eboss']):
 	# Read in formatted file
 	schf = open(filename+'.frm.dat', 'r')
 	schlines = schf.read().splitlines()
@@ -17,7 +17,15 @@ def read_schedule(filename):
 		schedule.append({'jd': float(tmp[0]), 'eboss': int(tmp[1]), 'manga': int(tmp[2]), 'bright_start': float(tmp[4]), 
 						 'bright_end': float(tmp[5]), 'dark_start': float(tmp[6]), 'dark_end': float(tmp[7]), 
 						 'eboss_start': float(tmp[8]),'eboss_end': float(tmp[9]), 'manga_start': float(tmp[10]), 'manga_end': float(tmp[11])})
-	return schedule
+	# Determine what line in the schedule to use for tonight
+	if mjd == 0: tonight = round(autoscheduler.get_juldate())
+	else: tonight = 2400000 + mjd
+	print ("[PY] Scheduling MJD %5d" % (tonight - 2400000))
+	
+	currjd = [x for x in range(len(schedule)) if schedule[x]['jd'] == tonight]
+	if not len(currjd) > 0:
+		raise AssertionError, "MJD %5d does not exist in schedule file." % (tonight-2400000)
+	return schedule[currjd[0]]
 	
 	
 def get_juldate():
