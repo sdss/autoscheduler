@@ -29,12 +29,6 @@ def schedule_apogee(schedule, plan=False):
 			lengths.append(par['exposure'] / 60)
 		# Because APOGEE-II is first, the last exposure will not have overhead
 		lengths[-1] = par['exposure'] / 60
-			
-		# Adjust the dark time program start time, if necessary
-		if schedule['manga'] == 1 and (schedule['eboss'] == 0 or schedule['manga_start'] < schedule['eboss_start']):
-			schedule['manga_start'] = schedule['bright_start'] + sum(lengths) / 24
-		if schedule['eboss'] == 1 and (schedule['manga'] == 0 or schedule['eboss_start'] < schedule['manga_start']):
-			schedule['eboss_start'] = schedule['bright_start'] + sum(lengths) / 24
 	
 	# APOGEE-II ends the night
 	else:
