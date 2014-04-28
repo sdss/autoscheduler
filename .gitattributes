@@ -15,9 +15,12 @@ apogee_simulation/set_params.pro -text
 /app.config -text
 autoscheduler/__init__.py -text
 autoscheduler/apogee/__init__.py -text
-autoscheduler/apogee/apogee.pro -text
-autoscheduler/apogee/observability.pro -text
+autoscheduler/apogee/get_apogee_plates.py -text
+autoscheduler/apogee/moonpos.py -text
+autoscheduler/apogee/observability.py -text
+autoscheduler/apogee/pick_apogee_plates.py -text
 autoscheduler/apogee/schedule_apogee.py -text
+autoscheduler/apogee/set_apogee_priorities.py -text
 autoscheduler/assign_carts.py -text
 autoscheduler/eboss/__init__.py -text
 autoscheduler/eboss/schedule_eboss.py -text
