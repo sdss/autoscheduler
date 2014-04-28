@@ -38,8 +38,8 @@ def schedule_apogee(schedule, plan=False):
 	
 	# APOGEE-II ends the night
 	else:
-		# Determine whether we can add an exposure (leftover time > 30min)
-		if len(times) < par['ncarts'] and nightlength - sum(lengths) > (0.5 + par['overhead'] / 60):
+		# Determine whether we can add an exposure (leftover time > 20min)
+		if len(times) < par['ncarts'] and nightlength - sum(lengths) > (0.33 + par['overhead'] / 60):
 			times.append(schedule['bright_start'] + len(times) * (par['exposure'] + par['overhead']) / 60 / 24)
 			lengths.append(nightlength - sum(lengths))
 
