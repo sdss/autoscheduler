@@ -18,7 +18,7 @@ def run_scheduler(plan=False):
 	schedule_start_time = time()
 	schedule = autoscheduler.read_schedule(pwd+'/schedules/Sch_base.sdss3.txt')
 	schedule_end_time = time()
-	print("[PY] Schedule read in complete (%3.1f min)" % ((schedule_end_time - schedule_start_time)/60.0))
+	print("[PY] Schedule read in complete (%.3f sec)" % (schedule_end_time - schedule_start_time))
 	
 	# Schedule surveys for tonight
 	apogee_choices, manga_choices, eboss_choices = [], [], []
@@ -36,7 +36,7 @@ def run_scheduler(plan=False):
 	apgcart, mancart, ebocart = autoscheduler.assign_carts(apogee_choices, manga_choices, eboss_choices)
 	
 	as_end_time = time()
-	print("[PY] run_scheduler complete in (%d sec)" % ((as_end_time - as_start_time)))
+	print("[PY] run_scheduler complete in (%.3f sec)" % ((as_end_time - as_start_time)))
 	
 	plan = dict()
 	# Reformat schedule dict for output
