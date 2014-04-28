@@ -29,7 +29,7 @@ def assign_carts(apogee_choices, manga_choices, eboss_choices):
 	
 	# Read in all plates that are currently plugged
 	currentplug = session.execute("SET SCHEMA 'platedb'; "+
-		"SELECT crt.number, plt.pk "+
+		"SELECT crt.number, plt.plateid "+
 		"FROM (((((platedb.active_plugging AS ac "+
 			"JOIN platedb.plugging AS plg ON (ac.plugging_pk=plg.pk)) "+
 			"LEFT JOIN platedb.cartridge AS crt ON (plg.cartridge_pk=crt.pk)) "+
@@ -82,12 +82,12 @@ def assign_carts(apogee_choices, manga_choices, eboss_choices):
 	# Save eBOSS choices to cartridges
 	ebopicks = []
 	for i in range(len(eboss_choices)):
-		wplate = [x for x in range(len(plugplan)) if eboss_choices[i]['platepk'] == plugplan[x]['oldplate']]
+		wplate = [x for x in range(len(plugplan)) if eboss_choices[i]['plateid'] == plugplan[x]['oldplate']]
 		if len(wplate) == 0: continue
 		# Save new values to ebopicks
 		thispick = dict()
 		thispick['cart'] = plugplan[wplate[0]]['cart']
-		thispick['plate'] = eboss_choices[i]['platepk']
+		thispick['plate'] = eboss_choices[i]['plateid']
 		ebopicks.append(thispick)
 	
 	cart_end = time()

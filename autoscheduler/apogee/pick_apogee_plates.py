@@ -77,11 +77,11 @@ def pick_plates(apg, obs, par, times, lengths, schedule):
 			
 		# Determine block choices
 		if chosen[c,0] < 0: thisplate = -1
-		else: thisplate = apg[chosen[c,0]].platepk
+		else: thisplate = apg[chosen[c,0]].plateid
 		if chosen[c,1] < 0: thisbak1 = -1
-		else: thisbak1 = apg[chosen[c,1]].platepk
+		else: thisbak1 = apg[chosen[c,1]].plateid
 		if chosen[c,2] < 0: thisbak2 = -1
-		else: thisbak2 = apg[chosen[c,2]].platepk
+		else: thisbak2 = apg[chosen[c,2]].plateid
 	
 		picks.append({'obstime': thistime, 'explength': thislength, 'plate': thisplate, 'first_backup': thisbak1, 'second_backup': thisbak2})
 		
