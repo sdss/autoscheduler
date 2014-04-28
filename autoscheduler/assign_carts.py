@@ -29,7 +29,7 @@ def assign_carts(apogee_choices, manga_choices, eboss_choices):
 	
 	# Read in all plates that are currently plugged
 	currentplug = session.execute("SET SCHEMA 'platedb'; "+
-		"SELECT crt.number, plt.plateid "+
+		"SELECT crt.number, plt.plate_id "+
 		"FROM (((((platedb.active_plugging AS ac "+
 			"JOIN platedb.plugging AS plg ON (ac.plugging_pk=plg.pk)) "+
 			"LEFT JOIN platedb.cartridge AS crt ON (plg.cartridge_pk=crt.pk)) "+

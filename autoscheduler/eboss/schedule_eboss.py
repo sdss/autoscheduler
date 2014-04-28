@@ -32,7 +32,7 @@ def get_eboss_plates(plan=False):
 	# Determine what is currently plugged
 	sql_start = time()
 	eboplug = session.execute("SET SCHEMA 'platedb'; "+
-		"SELECT crt.number, plt.plateid, ptg.center_ra, ptg.center_dec "+
+		"SELECT crt.number, plt.plate_id, ptg.center_ra, ptg.center_dec "+
 		"FROM ((((((platedb.active_plugging AS ac "+
 			"JOIN platedb.plugging AS plg ON (ac.plugging_pk=plg.pk)) "+
 			"LEFT JOIN platedb.cartridge AS crt ON (plg.cartridge_pk=crt.pk)) "+
