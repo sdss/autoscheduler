@@ -1,4 +1,5 @@
 from __future__ import print_function, division
+from time import time
 import numpy as np
 import os
 
@@ -9,6 +10,7 @@ import os
 #		 eboss_choices -- dictionary list containing all eBOSS plate choices for tonight
 # OUTPUT: plugplan -- dictionary list containing all plugging choices for tonight
 def assign_carts(apogee_choices, manga_choices, eboss_choices):
+	cart_start = time()
 	# Create database connection
 	if (os.path.dirname(os.path.realpath(__file__))).find('utah.edu') >= 0: from sdss.internal.database.connections.UtahLocalConnection import db
 	else: from sdss.internal.database.connections.APODatabaseUserLocalConnection import db
@@ -87,6 +89,9 @@ def assign_carts(apogee_choices, manga_choices, eboss_choices):
 		thispick['cart'] = plugplan[wplate[0]]['cart']
 		thispick['plate'] = eboss_choices[i]['platepk']
 		ebopicks.append(thispick)
+	
+	cart_end = time()
+	print("[PY] Assigned cartridges (%.3f sec)" % (cart_end - cart_start))
 	
 	return apgpicks, manpicks, ebopicks
 		
