@@ -46,4 +46,4 @@ def set_priorities(apg, par, schedule):
 		for f in wfield:
 			if apg[p].apgver > apg[f].apgver and apg[f].priority > 1: apg[p].priority /= 2
 	set_pri_end = time()
-	print("[PY] Prioritized APOGEE-II plates (%.3f min)" % (set_pri_end - set_pri_start))
+	print("[PY] Prioritized APOGEE-II plates (%.3f sec)" % (set_pri_end - set_pri_start))
