@@ -17,14 +17,14 @@ def pick_plates(apg, obs, par, times, lengths, schedule):
 		cslot = pickorder[t]
 		priorder = np.argsort(obs[:,cslot])
 		# Pick main plate
-		if obs[priorder[-1],t] <= 0:
+		if obs[priorder[-1],cslot] <= 0:
 			print("[PY] No good APG-II plates for block %1d. Max priority = %4.1f" % (cslot, max(obs[:,cslot])))
 			chosen[cslot,0] = -1
 		else: chosen[cslot,0] = priorder[-1]
 		# Pick backup plates
-		if obs[priorder[-2],t] <= 0: chosen[cslot,1] = -1
+		if obs[priorder[-2],cslot] <= 0: chosen[cslot,1] = -1
 		else: chosen[cslot,1] = priorder[-2]
-		if obs[priorder[-3],t] <= 0: chosen[cslot,2] = -1
+		if obs[priorder[-3],cslot] <= 0: chosen[cslot,2] = -1
 		else: chosen[cslot,2] = priorder[-3]
 		
 		# Remove chosen plate, if it is not stack-able.
