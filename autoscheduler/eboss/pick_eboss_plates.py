@@ -47,7 +47,7 @@ def pick_plates(ebo, par, times, obs):
 		priorder = np.argsort(obs[:,t])
 		p = priorder[-1]
 		if obs[p,t] < 0:
-			print("[WA] No eBOSS plates for slot %2d. Max priority = %4.1f" % (t, max(obs[:,t])))
+			print("[WARN] No eBOSS plates for slot %2d. Max priority = %4.1f" % (t, max(obs[:,t])))
 			continue
 		nleft = ebo[p].visleft(par)
 		# Check to see whether plate can be observed for the entire necessary block
