@@ -37,7 +37,7 @@ def observability(ebo, par, times):
 			if obsarr[p,t] < 0: continue
 		
 			if (transitmjd - times[t]) * 15 < ebo[p].minha: obsarr[p,t] = -1
-			if (times[t]+lengths[t]/24 - transitmjd) * 15 > ebo[p].maxha: obsarr[p,t] = -1
+			if (times[t]+par['exposure']/24 - transitmjd) * 15 > ebo[p].maxha: obsarr[p,t] = -1
 		
 			# Compute horiztonal coordinates
 			horz = apo.apparentCoordinates(apyscoo, datetime=[times[t] + par['exposure'] / 3 / 24 * x for x in range(3)])

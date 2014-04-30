@@ -22,7 +22,7 @@ def schedule_eboss(schedule, plan=False):
 	# Determine observability
 	obs = observability(ebo, par, times)
 
-
+	return []
 
 
 		
