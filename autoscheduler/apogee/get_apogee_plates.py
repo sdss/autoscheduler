@@ -1,8 +1,6 @@
 from __future__ import print_function, division
 from time import time
 import os
-import astropysics.coords as coo
-import astropysics.obstools as obs
 
 # APGPLATE OBJECT DENITION
 # DESCRIPTION: APOGEE Plate Object
@@ -80,7 +78,7 @@ def get_plates(plan=False):
 				"LEFT JOIN platedb.plate_to_survey AS p2s ON (p2s.plate_pk=plt.pk)) "+
 				"LEFT JOIN platedb.plate_pointing as pltg ON (pltg.plate_pk=plt.pk)) "+
 				"LEFT JOIN platedb.pointing AS ptg ON (pltg.pointing_pk=ptg.pk)) "+
-			"WHERE p2s.survey_pk = 1 ORDER BY crt.number").fetchall()
+			"WHERE p2s.survey_pk=1 ORDER BY crt.number").fetchall()
 	
 	# Setup APOGEE-II data structure
 	apg = []

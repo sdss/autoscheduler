@@ -3,7 +3,7 @@ from time import time
 import numpy as np
 import astropysics.coords as coo
 import astropysics.obstools as obs
-from moonpos import moonpos
+from ..moonpos import moonpos
 
 def observability(apg, par, times, lengths):
 	obs_start = time()
@@ -46,5 +46,5 @@ def observability(apg, par, times, lengths):
 			badsecz = [x for x in secz if x < 1.003 or x > par['maxz']]
 			if len(badsecz) > 0: obsarr[p,t] = -2
 	obs_end = time()
-	print("[PY] Determine APOGEE-II observability (%.3f sec)" % (obs_end - obs_start))
+	print("[PY] Determined APOGEE-II observability (%.3f sec)" % (obs_end - obs_start))
 	return obsarr
