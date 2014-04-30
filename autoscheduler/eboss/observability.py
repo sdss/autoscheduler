@@ -10,6 +10,12 @@ def observability(ebo, par, times):
 	apo = obs.Site(32.789278, -105.820278)
 	obsarr = np.zeros([len(ebo), len(times)])
 	
+	# Determine moon coordinates
+	mpos = []
+	for t in range(len(times)):
+		moonra, moondec = moonpos(times[t])
+		mpos.append(coo.ICRSCoordinates(moonra, moondec))
+	
 	# Loop over all plates
 	for p in range(len(ebo)):
 		# Initalize obsarr row
@@ -21,23 +27,20 @@ def observability(ebo, par, times):
 		if transitmjd - int(times[0]) > 1: transitmjd -= 1
 		if transitmjd - int(times[0]) < -1: transitmjd += 1
 		
-		# Gaussian prioritization on time from transit
 		for t in range(len(times)): 
+			# Gaussian prioritization on time from transit
 			obsarr[p,t] += 50.0 * float(np.exp( -(transitmjd - times[t]+par['exposure']/2/24)**2 / (2 * (15)**2)))
 		
-		# Moon avoidance
-		for t in range(len(times)):
-			moonra, moondec = moonpos(times[t])
-			mooncoo = coo.ICRSCoordinates(moonra, moondec)
+			# Moon avoidance
 			moondist = mooncoo - apyscoo
-			if moondist.d < par['moon_threshold']: obsarr[p,t] = -3
+			if moondist.d < par['moon_threshold']: 
+				obsarr[p,t] = -3
+				continue
 		
-		# Determine whether HAs of block are within observational range
-		for t in range(len(times)):
-			if obsarr[p,t] < 0: continue
-		
-			if (transitmjd - times[t]) * 15 < ebo[p].minha: obsarr[p,t] = -1
-			if (times[t]+par['exposure']/24 - transitmjd) * 15 > ebo[p].maxha: obsarr[p,t] = -1
+			# Determine whether HAs of block are within observational range
+			if (transitmjd - times[t]) * 15 < ebo[p].minha or (times[t]+par['exposure']/24 - transitmjd) * 15 > ebo[p].maxha:
+				obsarr[p,t] = -1
+				continue
 		
 			# Compute horiztonal coordinates
 			horz = apo.apparentCoordinates(apyscoo, datetime=times[t] + par['exposure'] / 2 / 24)
