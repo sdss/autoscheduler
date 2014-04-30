@@ -28,6 +28,7 @@ autoscheduler/eboss/pick_eboss_plates.py -text
 autoscheduler/eboss/schedule_eboss.py -text
 autoscheduler/moonpos.py -text
 autoscheduler/night_schedule.py -text
+documentation/README.txt -text
 documentation/autoscheduler[!!-~]diagram.graffle -text
 documentation/autoscheduler[!!-~]diagram.pdf -text
 platelists/apogee2_2016-02-10_forBen.dat -text
