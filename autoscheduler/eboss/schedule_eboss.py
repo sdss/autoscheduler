@@ -3,6 +3,7 @@ from time import time
 import numpy as np
 
 from get_eboss_plates import get_plates
+from observability import observability
 
 # SCHEDULE_EBOSS
 # DESCRIPTION: Main eBOSS scheduling routine.

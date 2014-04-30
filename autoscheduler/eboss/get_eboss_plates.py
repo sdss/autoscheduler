@@ -61,7 +61,7 @@ def get_plates(plan=False):
 	# Setup eBOSS data structure
 	ebo = []
 	for i in range(len(stage1)):
-		ebo.append(apgplate())
+		ebo.append(eboplate())
 		ebo[i].ra = stage1[i][1]
 		ebo[i].dec = stage1[i][2]
 		ebo[i].plateid = stage1[i][3]
