@@ -18,7 +18,7 @@ def pick_plates(apg, obs, par, times, lengths, schedule):
 		priorder = np.argsort(obs[:,cslot])
 		# Pick main plate
 		if obs[priorder[-1],cslot] <= 0:
-			print("[PY] No good APG-II plates for block %1d. Max priority = %4.1f" % (cslot, max(obs[:,cslot])))
+			print("[WA] No good APG-II plates for block %1d. Max priority = %4.1f" % (cslot, max(obs[:,cslot])))
 			chosen[cslot,0] = -1
 		else: chosen[cslot,0] = priorder[-1]
 		# Pick backup plates
