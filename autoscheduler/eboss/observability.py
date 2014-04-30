@@ -40,8 +40,8 @@ def observability(ebo, par, times):
 			if (times[t]+par['exposure']/24 - transitmjd) * 15 > ebo[p].maxha: obsarr[p,t] = -1
 		
 			# Compute horiztonal coordinates
-			horz = apo.apparentCoordinates(apyscoo, datetime=times[t] + par['exposure'] / 2 / 24
-			secz = 1/np.cos((90.0 - horz.alt.d) * np.pi / 180
+			horz = apo.apparentCoordinates(apyscoo, datetime=times[t] + par['exposure'] / 2 / 24)
+			secz = 1/np.cos((90.0 - horz.alt.d) * np.pi / 180)
 			# Check whether any of the points contain a bad airmass value
 			if secz < 1.003 or secz > par['maxz']: obsarr[p,t] = -2
 	obs_end = time()
