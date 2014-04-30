@@ -82,12 +82,12 @@ def assign_carts(apogee_choices, manga_choices, eboss_choices):
 	# Save eBOSS choices to cartridges
 	ebopicks = []
 	for i in range(len(eboss_choices)):
-		wplate = [x for x in range(len(plugplan)) if eboss_choices[i]['plateid'] == plugplan[x]['oldplate']]
+		wplate = [x for x in range(len(plugplan)) if eboss_choices[i]['plate'] == plugplan[x]['oldplate']]
 		if len(wplate) == 0: continue
 		# Save new values to ebopicks
 		thispick = dict()
 		thispick['cart'] = plugplan[wplate[0]]['cart']
-		thispick['plate'] = eboss_choices[i]['plateid']
+		thispick['plate'] = eboss_choices[i]['plate']
 		ebopicks.append(thispick)
 	
 	cart_end = time()

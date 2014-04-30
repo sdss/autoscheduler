@@ -19,6 +19,13 @@ def schedule_eboss(schedule, plan=False):
 	# Get all plate information from the database
 	ebo = get_plates(plan=plan)
 	
+	# If we are not planning, just return the plates read in along with cart numbers
+	if not plan:
+		eboss_choices = []
+		for p in range(len(ebo)):
+			eboss_choices.append({'plate': ebo[p].plateid, 'cart': ebo[p].plugged})
+		return eboss_choices
+	
 	# Determine observability
 	obs = observability(ebo, par, times)
 
