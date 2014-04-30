@@ -32,7 +32,7 @@ def observability(ebo, par, times):
 			obsarr[p,t] += 50.0 * float(np.exp( -(transitmjd - times[t]+par['exposure']/2/24)**2 / (2 * (15)**2)))
 		
 			# Moon avoidance
-			moondist = mooncoo - apyscoo
+			moondist = mpos[t] - apyscoo
 			if moondist.d < par['moon_threshold']: 
 				obsarr[p,t] = -3
 				continue
