@@ -42,12 +42,12 @@ def pick_plates(ebo, par, times, obs):
 	# Loop through all un-scheduled blocks and place plates
 	ebossrest_start = time()
 	for t in range(len(chosen)):
-		if chosen[t] >= 0 or np.unique(chosen) > par['ncarts']: continue
+		if chosen[t] >= 0 or len(np.unique(chosen)) > par['ncarts']: continue
 		# Choose the highest-priority plate for this slot
 		priorder = np.argsort(obs[:,t])
 		p = priorder[-1]
 		if obs[p,t] < 0:
-			print("[WA] No eBOSS plates for slot %2d. Max priority = %4.1f" % (t, max(obs[:,t]))
+			print("[WA] No eBOSS plates for slot %2d. Max priority = %4.1f" % (t, max(obs[:,t])))
 			continue
 		nleft = ebo[p].visleft(par)
 		# Check to see whether plate can be observed for the entire necessary block
