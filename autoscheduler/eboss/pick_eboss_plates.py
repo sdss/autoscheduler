@@ -40,7 +40,28 @@ def pick_plates(ebo, par, times, obs):
 	print("[PY] Placed eBOSS already-plugged plates (%.3f sec)" % (pickplug_end - pickplug_start))
 			
 	# Loop through all un-scheduled blocks and place plates
-	# TO-DO
+	ebossrest_start = time()
+	for t in range(len(chosen)):
+		if chosen[t] >= 0 or np.unique(chosen) > par['ncarts']: continue
+		# Choose the highest-priority plate for this slot
+		priorder = np.argsort(obs[:,t])
+		p = priorder[-1]
+		if obs[p,t] < 0:
+			print("[WA] No eBOSS plates for slot %2d. Max priority = %4.1f" % (t, max(obs[:,t]))
+			continue
+		nleft = ebo[p].visleft(par)
+		# Check to see whether plate can be observed for the entire necessary block
+		endblock = min([t+nleft, len(chosen)-1])
+		if obs[p,endblock] < 0:
+			for i in range(len(times)): obs[p,i] = -10
+			continue
+		# Place plate in expected number of slots
+		for i in range(nleft):
+			if t+i >= len(chosen): continue
+			chosen[t+i] = ebo[p].plateid
+		for i in range(len(times)): obs[p,i] = -10
+	ebossrest_end = time()
+	print("[PY] Placed new eBOSS plates (%.3f sec)" % (pickplug_end - pickplug_start))
 
 	print(chosen)
 	
@@ -48,5 +69,6 @@ def pick_plates(ebo, par, times, obs):
 	chosenplates = np.unique(chosen)
 	eboss_choices = []
 	for p in chosenplates:
+		if p < 0: continue
 		eboss_choices.append({'plate': p})
 	return eboss_choices
