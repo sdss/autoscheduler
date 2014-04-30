@@ -1,6 +1,7 @@
 from __future__ import print_function, division
 from time import time
 import os
+import math
 
 # EBOPLATE OBJECT DENITION
 # DESCRIPTION: eBOSS Plate Object
@@ -22,6 +23,14 @@ class eboplate(object):
 	manual_priority = 0.0
 	priority = 0.0
 	plugged = 0
+	
+	# Number of visits to complete
+	def visleft(self, par):
+		rleft = (par['snr'] - self.snr) / par['snr_avg']
+		bleft = (par['snb'] - self.snb) / par['snb_avg']
+		maxleft = max([rleft, bleft])
+		if maxleft <= 0: return 0
+		return math.ciel(maxleft)
 
 # GET_PLATES
 # DESCRIPTION: Reads in eBOSS plate information from platedb

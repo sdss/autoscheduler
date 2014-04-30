@@ -4,6 +4,7 @@ import numpy as np
 
 from get_eboss_plates import get_plates
 from observability import observability
+from pick_eboss_plates import pick_plates
 
 # SCHEDULE_EBOSS
 # DESCRIPTION: Main eBOSS scheduling routine.
@@ -23,13 +24,16 @@ def schedule_eboss(schedule, plan=False):
 	if not plan:
 		eboss_choices = []
 		for p in range(len(ebo)):
-			eboss_choices.append({'plate': ebo[p].plateid, 'cart': ebo[p].plugged})
+			eboss_choices.append({'plate': ebo[p].plateid})
 		return eboss_choices
 	
 	# Determine observability
 	obs = observability(ebo, par, times)
+	
+	# Pick plates for tonight
+	eboss_choices = pick_plates(ebo, par, times, obs)
 
-	return []
+	return eboss_choices
 
 
 		
