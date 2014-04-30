@@ -40,11 +40,10 @@ def observability(ebo, par, times):
 			if (times[t]+par['exposure']/24 - transitmjd) * 15 > ebo[p].maxha: obsarr[p,t] = -1
 		
 			# Compute horiztonal coordinates
-			horz = apo.apparentCoordinates(apyscoo, datetime=[times[t] + par['exposure'] / 3 / 24 * x for x in range(3)])
-			secz = [1/np.cos((90.0 - horz[x].alt.d) * np.pi / 180) for x in range(len(horz))]
+			horz = apo.apparentCoordinates(apyscoo, datetime=times[t] + par['exposure'] / 2 / 24
+			secz = 1/np.cos((90.0 - horz.alt.d) * np.pi / 180
 			# Check whether any of the points contain a bad airmass value
-			badsecz = [x for x in secz if x < 1.003 or x > par['maxz']]
-			if len(badsecz) > 0: obsarr[p,t] = -2
+			if secz < 1.003 or secz > par['maxz']: obsarr[p,t] = -2
 	obs_end = time()
 	print("[PY] Determined eBOSS observability (%.3f sec)" % (obs_end - obs_start))
 	return obsarr

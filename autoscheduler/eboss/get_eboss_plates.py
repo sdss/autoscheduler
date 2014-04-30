@@ -81,7 +81,7 @@ def get_plates(plan=False):
 		ebo[i].platepk = stage1[i][7]
 		ebo[i].plugged = 0
 	stage1_end = time()
-	print("[SQL] Read in eBOSS plates (%d sec)" % ((stage1_end - stage1_start)))
+	print("[SQL] Read in eBOSS plates (%.3f sec)" % ((stage1_end - stage1_start)))
 	
 	# Read in previous eBOSS observations
 	# TO-DO
