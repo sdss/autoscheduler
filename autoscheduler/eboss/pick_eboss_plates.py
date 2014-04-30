@@ -14,7 +14,7 @@ def pick_plates(ebo, par, times, obs):
 		nleft = ebo[p].visleft(par)
 		# Plate is complete or no longer observable, we can't keep it plugged
 		if nleft == 0 or max(obs[p,:]) < 0:
-			for i in range(len(times)): obs[p,t] = -10
+			for t in range(len(times)): obs[p,t] = -10
 			continue
 		# Find optimal slots to choose
 		optslot = [x for x in range(len(times)) if obs[p,x] == max(obs[p,:])][0]
@@ -28,7 +28,7 @@ def pick_plates(ebo, par, times, obs):
 		# Optimal range is wholly within the night, place it
 		else:
 			for i in range(nleft): chosen[optslot-centerslot+i] = ebo[p].plateid
-		for i in range(len(times)): obs[p,t] = -10
+		for t in range(len(times)): obs[p,t] = -10
 	pickplug_end = time()
 	print("[PY] Placed eBOSS already-plugged plates (%.3f sec)" % (pickplug_end - pickplug_start))
 			
@@ -36,7 +36,8 @@ def pick_plates(ebo, par, times, obs):
 	# TO-DO
 	
 	# Return all chosen plates
-	chosenplates = np.uniq(chosen)
+	chosenplates = np.unique(chosen)
 	eboss_choices = []
 	for p in chosenplates:
 		eboss_choices.append({'plate': p})
+	return eboss_choices

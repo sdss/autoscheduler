@@ -30,7 +30,7 @@ class eboplate(object):
 		bleft = (par['snb'] - self.snb) / par['snb_avg']
 		maxleft = max([rleft, bleft])
 		if maxleft <= 0: return 0
-		return math.ciel(maxleft)
+		return math.ceil(maxleft)
 
 # GET_PLATES
 # DESCRIPTION: Reads in eBOSS plate information from platedb
