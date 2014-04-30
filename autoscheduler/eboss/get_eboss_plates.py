@@ -62,14 +62,14 @@ def get_plates(plan=False):
 	ebo = []
 	for i in range(len(stage1)):
 		ebo.append(eboplate())
-		ebo[i].ra = stage1[i][1]
-		ebo[i].dec = stage1[i][2]
-		ebo[i].plateid = stage1[i][3]
-		ebo[i].ha = stage1[i][4]
-		ebo[i].manual_priority = stage1[i][5]
-		ebo[i].maxha = stage1[i][8]
-		ebo[i].minha = stage1[i][9]
-		ebo[i].platepk = stage1[i][10]
+		ebo[i].ra = stage1[i][0]
+		ebo[i].dec = stage1[i][1]
+		ebo[i].plateid = stage1[i][2]
+		ebo[i].ha = stage1[i][3]
+		ebo[i].manual_priority = stage1[i][4]
+		ebo[i].maxha = stage1[i][5]
+		ebo[i].minha = stage1[i][6]
+		ebo[i].platepk = stage1[i][7]
 		ebo[i].plugged = 0
 	stage1_end = time()
 	print("[SQL] Read in eBOSS plates (%d sec)" % ((stage1_end - stage1_start)))
@@ -90,8 +90,8 @@ def get_plates(plan=False):
 		"WHERE p2s.survey_pk=2 ORDER BY crt.number").fetchall()
 	# Save currently plugged plates to data
 	for c,p in stage3:
-		wplate = [x for x in range(len(apg)) if apg[x].plateid == p][0]
-		apg[wplate].plugged = c
+		wplate = [x for x in range(len(ebo)) if ebo[x].plateid == p][0]
+		ebo[wplate].plugged = c
 	stage3_end = time()
 	print("[SQL] Read in currently plugged eBOSS plates (%.3f sec)" % ((stage3_end - stage3_start)))
 		
