@@ -12,13 +12,14 @@ def pick_plates(ebo, par, times, obs):
 	for p in range(len(ebo)):
 		if ebo[p].plugged == 0: continue
 		nleft = ebo[p].visleft(par)
+		print(nleft, max(obs[p,:]))
 		# Plate is complete or no longer observable, we can't keep it plugged
 		if nleft == 0 or max(obs[p,:]) < 0:
 			for t in range(len(times)): obs[p,t] = -10
 			continue
 		# Find optimal slots to choose
 		optslot = [x for x in range(len(times)) if obs[p,x] == max(obs[p,:])][0]
-		centerslot = round(nleft / 2)-1
+		centerslot = int(round(nleft / 2)-1)
 		# Optimal slot is too close to beginning of night, start from beginning
 		if optslot < centerslot:
 			for i in range(nleft): chosen[i] = ebo[p].plateid
@@ -34,6 +35,8 @@ def pick_plates(ebo, par, times, obs):
 			
 	# Loop through all un-scheduled blocks and place plates
 	# TO-DO
+
+	print(chosen)
 	
 	# Return all chosen plates
 	chosenplates = np.unique(chosen)
