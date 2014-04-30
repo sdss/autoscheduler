@@ -22,6 +22,8 @@ autoscheduler/apogee/schedule_apogee.py -text
 autoscheduler/apogee/set_apogee_priorities.py -text
 autoscheduler/assign_carts.py -text
 autoscheduler/eboss/__init__.py -text
+autoscheduler/eboss/get_eboss_plates.py -text
+autoscheduler/eboss/observability.py -text
 autoscheduler/eboss/schedule_eboss.py -text
 autoscheduler/moonpos.py -text
 autoscheduler/night_schedule.py -text
