@@ -16,7 +16,7 @@ def run_scheduler(plan=False):
 	# Read in schedule file
 	pwd = os.path.dirname(os.path.realpath(__file__))
 	schedule_start_time = time()
-	schedule = autoscheduler.read_schedule(pwd+'/schedules/Sch_base.sdss3.txt')
+	schedule = autoscheduler.read_schedule(pwd+'/schedules/Sch_base.sdss3.txt.frm.dat')
 	schedule_end_time = time()
 	print("[PY] Schedule read in complete (%.3f sec)" % (schedule_end_time - schedule_start_time))
 	

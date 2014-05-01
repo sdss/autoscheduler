@@ -6,7 +6,7 @@ import datetime
 # OUTPUT: schedule -- list of dicts that contain the relevant survey times for each night.
 def read_schedule(filename, mjd=0, surveys=['apogee','manga','eboss']):
 	# Read in formatted file
-	schf = open(filename+'.frm.dat', 'r')
+	schf = open(filename, 'r')
 	schlines = schf.read().splitlines()
 	schf.close()
 	# Assign values to schedule dict list
