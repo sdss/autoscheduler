@@ -14,7 +14,7 @@ index_page = flask.Blueprint("index_page", __name__)
 def func_name():
     
     # Get parameters from URL
-    mjd = request.args.get("mjd", -1)
+    mjd = int(request.args.get("mjd", -1))
     surveys = request.args.get("surveys", 'apogee,eboss,manga').split(',')
     mode = request.args.get("mode", 'observing')
     
