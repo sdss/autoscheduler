@@ -12,13 +12,20 @@ index_page = flask.Blueprint("index_page", __name__)
 
 @index_page.route('/', methods=['GET'])
 def func_name():
-    ''' Documentation here. '''
-    templateDict = {}
+    
+    # Get parameters from URL
+    mjd = request.args.get("mjd", -1)
+    surveys = request.args.get("surveys", 'apogee,eboss,manga').split(',')
+    mode = request.args.get("mode", 'observing')
+    
+    if mode == 'planning': plan = True
+    else: plan = False
 
-    plugresults = s4as.run_scheduler()
+    plugresults = s4as.run_scheduler(plan=plan, mjd=mjd, surveys=surveys)
+    
 
-    session = db.Session()
+
+    #session = db.Session()
 
     return flask.jsonify(**plugresults)
-#    return render_template("index.html", **templateDict)
 

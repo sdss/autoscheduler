@@ -10,13 +10,13 @@ import autoscheduler.eboss as ebo
 from time import time
 import os
 
-def run_scheduler(plan=False):
+def run_scheduler(plan=False, mjd=-1, surveys=['apogee','eboss','manga']):
 	as_start_time = time()
 	
 	# Read in schedule file
 	pwd = os.path.dirname(os.path.realpath(__file__))
 	schedule_start_time = time()
-	schedule = autoscheduler.read_schedule(pwd+'/schedules/Sch_base.sdss3.txt.frm.dat')
+	schedule = autoscheduler.read_schedule(pwd+'/schedules/Sch_base.sdss3.txt.frm.dat', mjd=mjd, surveys=surveys)
 	schedule_end_time = time()
 	print("[PY] Schedule read in complete (%.3f sec)" % (schedule_end_time - schedule_start_time))
 	
