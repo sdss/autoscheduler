@@ -53,13 +53,9 @@ def assign_carts(apogee_choices, manga_choices, eboss_choices):
 		wplate = [x for x in range(len(plugplan)) if apogee_choices[i]['plate'] == plugplan[x]['oldplate']]
 		if len(wplate) == 0: continue
 		# Save new values to apgpicks
-		thispick = dict()
+		thispick = apogee_choices[i]
 		thispick['cart'] = plugplan[wplate[0]]['cart']
 		thispick['plate'] = apogee_choices[i]['plate']
-		thispick['first_backup'] = apogee_choices[i]['first_backup']
-		thispick['second_backup'] = apogee_choices[i]['second_backup']
-		thispick['obsmjd'] = apogee_choices[i]['obstime'] - 2400000
-		thispick['exposure_length'] = apogee_choices[i]['explength']
 		plugplan[wplate[0]]['cart'] = -1
 		apgsaved[i] = 1
 		apgpicks.append(thispick)
@@ -69,13 +65,8 @@ def assign_carts(apogee_choices, manga_choices, eboss_choices):
 		carts_avail = [x for x in range(len(plugplan)) if plugplan[x]['cart'] >= 0 and (plugplan[x]['cartsurveys'] == 1 or plugplan[x]['cartsurveys'] == 3)]
 		if len(carts_avail) == 0: continue
 		# Save new values to apgpicks
-		thispick = dict()
+		thispick = apogee_choices[i]
 		thispick['cart'] = plugplan[carts_avail[0]]['cart']
-		thispick['plate'] = apogee_choices[i]['plate']
-		thispick['first_backup'] = apogee_choices[i]['first_backup']
-		thispick['second_backup'] = apogee_choices[i]['second_backup']
-		thispick['obsmjd'] = apogee_choices[i]['obstime'] - 2400000
-		thispick['exposure_length'] = apogee_choices[i]['explength']
 		plugplan[carts_avail[0]]['cart'] = -1
 		apgpicks.append(thispick)
 		
@@ -85,9 +76,8 @@ def assign_carts(apogee_choices, manga_choices, eboss_choices):
 		wplate = [x for x in range(len(plugplan)) if eboss_choices[i]['plate'] == plugplan[x]['oldplate']]
 		if len(wplate) == 0: continue
 		# Save new values to ebopicks
-		thispick = dict()
+		thispick = eboss_choices[i]
 		thispick['cart'] = plugplan[wplate[0]]['cart']
-		thispick['plate'] = eboss_choices[i]['plate']
 		ebopicks.append(thispick)
 	
 	cart_end = time()
