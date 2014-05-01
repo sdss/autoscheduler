@@ -1,3 +1,7 @@
+!!!! IMPORTANT !!!!
+Right now, this and 'autoscheduler diagram.pdf' are NOT the most updated version of the autoscheduler API. Look at wiki/Software/Autoscheduler on the trac to view the most up-to-date changes.
+
+
 ==== HOW TO RUN ====
 The autoscheduler can be run in two ways: on the command line, or through a web API interface.
 
