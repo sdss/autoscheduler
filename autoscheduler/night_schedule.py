@@ -28,6 +28,31 @@ def read_schedule(filename, mjd=-1, surveys=['apogee','eboss','manga']):
 		raise AssertionError, "MJD %5d does not exist in schedule file." % (tonight-2400000)
 		
 	# See if schedule needs to be adjusted based on what surveys are being run tonight
+	# Is eBOSS offline, but MaNGA isn't? MaNGA gets all of dark time.
+	if 'manga' in surveys and not 'eboss' in surveys:
+		schedule[currjd[0]]['manga_start'] = schedule[currjd[0]]['dark_start']
+		schedule[currjd[0]]['manga_end'] = schedule[currjd[0]]['dark_end']
+		schedule[currjd[0]]['eboss_start'] = 0
+		schedule[currjd[0]]['eboss_end'] = 0
+		schedule[currjd[0]]['eboss'] = 0
+	# Is MaNGA offline, but eBOSS isn't? eBOSS gets all of dark time.
+	if 'eboss' in surveys and not 'manga' in surveys:
+		schedule[currjd[0]]['eboss_start'] = schedule[currjd[0]]['dark_start']
+		schedule[currjd[0]]['eboss_end'] = schedule[currjd[0]]['dark_end']
+		schedule[currjd[0]]['manga_start'] = 0
+		schedule[currjd[0]]['manga_end'] = 0
+		schedule[currjd[0]]['manga'] = 0
+	# Are both dark-time surveys offline? APOGEE-II gets everything.
+	if not 'eboss' in surveys and not 'manga' in surveys:
+		schedule[currjd[0]]['bright_start'] = min([x for x in [schedule[currjd[0]]['bright_start'], schedule[currjd[0]]['dark_start']] if x > 0])
+		schedule[currjd[0]]['bright_end'] = max([x for x in [schedule[currjd[0]]['bright_end'], schedule[currjd[0]]['dark_end']] if x > 0])
+		schedule[currjd[0]]['eboss_start'] = 0
+		schedule[currjd[0]]['eboss_end'] = 0
+		schedule[currjd[0]]['eboss'] = 0
+		schedule[currjd[0]]['manga_start'] = 0
+		schedule[currjd[0]]['manga_end'] = 0
+		schedule[currjd[0]]['manga'] = 0
+	# APOGEE-II is offline. What happens?
 	# TO-DO
 	
 	return schedule[currjd[0]]
