@@ -3,7 +3,7 @@ from time import time
 import numpy as np
 
 
-def pick_plates(ebo, par, times, obs):
+def pick_plates(ebo, par, times, obs, loud=True):
 	# Setup
 	chosen = [-1 for x in times]
 
@@ -37,7 +37,7 @@ def pick_plates(ebo, par, times, obs):
 		# Remove plate from further picking
 		for t in range(len(times)): obs[p,t] = -10
 	pickplug_end = time()
-	print("[PY] Placed eBOSS already-plugged plates (%.3f sec)" % (pickplug_end - pickplug_start))
+	if loud: print("[PY] Placed eBOSS already-plugged plates (%.3f sec)" % (pickplug_end - pickplug_start))
 			
 	# Loop through all un-scheduled blocks and place plates
 	ebossrest_start = time()
@@ -50,7 +50,7 @@ def pick_plates(ebo, par, times, obs):
 		priorder = np.argsort(obs[:,t])
 		p = priorder[-1]
 		if obs[p,t] < 0:
-			print("[WARN] No eBOSS plates for slot %2d. Max priority = %4.1f" % (t, max(obs[:,t])))
+			if loud: print("[WARN] No eBOSS plates for slot %2d. Max priority = %4.1f" % (t, max(obs[:,t])))
 			t += 1
 			continue
 		nleft = ebo[p].visleft(par)
@@ -66,7 +66,7 @@ def pick_plates(ebo, par, times, obs):
 			chosen[t+i] = ebo[p].plateid
 		for i in range(len(times)): obs[p,i] = -10
 	ebossrest_end = time()
-	print("[PY] Placed new eBOSS plates (%.3f sec)" % (pickplug_end - pickplug_start))
+	if loud: print("[PY] Placed new eBOSS plates (%.3f sec)" % (pickplug_end - pickplug_start))
 
 	print(chosen)
 	

@@ -36,7 +36,7 @@ class eboplate(object):
 # DESCRIPTION: Reads in eBOSS plate information from platedb
 # INPUT: none
 # OUTPUT: ebo -- list of dicts with all eBOSS plate information
-def get_plates(plan=False):
+def get_plates(plan=False, loud=True):
 	# Create database connection
 	if (os.path.dirname(os.path.realpath(__file__))).find('utah.edu') >= 0: from sdss.internal.database.connections.UtahLocalConnection import db
 	else: from sdss.internal.database.connections.APODatabaseUserLocalConnection import db
@@ -81,7 +81,7 @@ def get_plates(plan=False):
 		ebo[i].platepk = stage1[i][7]
 		ebo[i].plugged = 0
 	stage1_end = time()
-	print("[SQL] Read in eBOSS plates (%.3f sec)" % ((stage1_end - stage1_start)))
+	if loud: print("[SQL] Read in eBOSS plates (%.3f sec)" % ((stage1_end - stage1_start)))
 	
 	# Read in previous eBOSS observations
 	# TO-DO
@@ -102,7 +102,7 @@ def get_plates(plan=False):
 		wplate = [x for x in range(len(ebo)) if ebo[x].plateid == p][0]
 		ebo[wplate].plugged = c
 	stage3_end = time()
-	print("[SQL] Read in currently plugged eBOSS plates (%.3f sec)" % ((stage3_end - stage3_start)))
+	if loud: print("[SQL] Read in currently plugged eBOSS plates (%.3f sec)" % ((stage3_end - stage3_start)))
 		
 	return ebo
 	

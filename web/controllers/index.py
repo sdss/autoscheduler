@@ -17,11 +17,12 @@ def func_name():
     mjd = int(request.args.get("mjd", -1))
     surveys = request.args.get("surveys", 'apogee,eboss,manga').split(',')
     mode = request.args.get("mode", 'observing')
+    verbose = bool(request.args.get("v", False))
     
     if mode == 'planning': plan = True
     else: plan = False
 
-    plugresults = s4as.run_scheduler(plan=plan, mjd=mjd, surveys=surveys)
+    plugresults = s4as.run_scheduler(plan=plan, mjd=mjd, surveys=surveys, loud=verbose)
     
 
 

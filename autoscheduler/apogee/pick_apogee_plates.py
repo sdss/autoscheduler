@@ -2,7 +2,7 @@ from __future__ import print_function, division
 from time import time
 import numpy as np
 
-def pick_plates(apg, obs, par, times, lengths, schedule):
+def pick_plates(apg, obs, par, times, lengths, schedule, loud=True):
 	pick_start = time()
 	# Check how many plates are available in each slot
 	nslot = np.zeros(len(times))
@@ -18,7 +18,7 @@ def pick_plates(apg, obs, par, times, lengths, schedule):
 		priorder = np.argsort(obs[:,cslot])
 		# Pick main plate
 		if obs[priorder[-1],cslot] <= 0:
-			print("[WARN] No good APG-II plates for block %1d. Max priority = %4.1f" % (cslot, max(obs[:,cslot])))
+			if loud: print("[WARN] No good APG-II plates for block %1d. Max priority = %4.1f" % (cslot, max(obs[:,cslot])))
 			chosen[cslot,0] = -1
 		else: chosen[cslot,0] = priorder[-1]
 		# Pick backup plates
@@ -40,7 +40,7 @@ def pick_plates(apg, obs, par, times, lengths, schedule):
 	for t in range(len(times)-1):
 		if chosen[t,0] < 0: continue
 		if chosen[t,0] != chosen[t+1,0]: continue
-		print("[PY] APG-II stack chosen")
+		if loud: print("[PY] APG-II stack chosen")
 		# Create new arrays
 		newtimes, newlengths, newchosen = np.zeros(len(times)-1), np.zeros(len(times)-1), np.zeros([len(times)-1,3])
 		# Loop through previous blocks
@@ -60,7 +60,7 @@ def pick_plates(apg, obs, par, times, lengths, schedule):
 		# Overwrite old arrays
 		times, lengths, chosen = newtimes, newlengths, newchosen
 	pick_end = time()
-	print("[PY] Chose APOGEE-II plates (%.3f sec)" % (pick_end - pick_start))
+	if loud: print("[PY] Chose APOGEE-II plates (%.3f sec)" % (pick_end - pick_start))
 	
 	# Create output struct
 	picks = []

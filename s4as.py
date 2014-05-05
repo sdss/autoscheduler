@@ -10,33 +10,33 @@ import autoscheduler.eboss as ebo
 from time import time
 import os
 
-def run_scheduler(plan=False, mjd=-1, surveys=['apogee','eboss','manga']):
+def run_scheduler(plan=False, mjd=-1, surveys=['apogee','eboss','manga'], loud=True):
 	as_start_time = time()
 	
 	# Read in schedule file
 	pwd = os.path.dirname(os.path.realpath(__file__))
 	schedule_start_time = time()
-	schedule = autoscheduler.read_schedule(pwd+'/schedules/Sch_base.sdss3.txt.frm.dat', mjd=mjd, surveys=surveys)
+	schedule = autoscheduler.read_schedule(pwd+'/schedules/Sch_base.sdss3.txt.frm.dat', mjd=mjd, surveys=surveys, loud=loud)
 	schedule_end_time = time()
-	print("[PY] Schedule read in complete (%.3f sec)" % (schedule_end_time - schedule_start_time))
+	if loud: print("[PY] Schedule read in complete (%.3f sec)" % (schedule_end_time - schedule_start_time))
 	
 	# Schedule surveys for tonight
 	apogee_choices, manga_choices, eboss_choices = [], [], []
 	# Schedule APOGEE-II
 	if schedule['bright_start'] > 0:
-		apogee_choices = apg.schedule_apogee(schedule, plan=plan)
+		apogee_choices = apg.schedule_apogee(schedule, plan=plan, loud=loud)
 	# Schedule MaNGA
 	#if schedule['manga'] > 0:
-	#	manga_choices = schedule_manga(schedule)
+	#	manga_choices = schedule_manga(schedule, plan=plan, loud=loud)
 	# Schedule eBOSS
 	if schedule['eboss'] > 0:
-		eboss_choices = ebo.schedule_eboss(schedule, plan=plan)
+		eboss_choices = ebo.schedule_eboss(schedule, plan=plan, loud=loud)
 	
 	# Take results and assign to carts
 	apgcart, mancart, ebocart = autoscheduler.assign_carts(apogee_choices, manga_choices, eboss_choices)
 	
 	as_end_time = time()
-	print("[PY] run_scheduler complete in (%.3f sec)" % ((as_end_time - as_start_time)))
+	if loud: print("[PY] run_scheduler complete in (%.3f sec)" % ((as_end_time - as_start_time)))
 	
 	plan = dict()
 	# Reformat schedule dict for output

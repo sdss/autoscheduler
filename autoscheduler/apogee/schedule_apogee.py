@@ -10,7 +10,7 @@ from pick_apogee_plates import pick_plates
 # DESCRIPTION: Main APOGEE-II scheduling routine.
 # INPUT: schedule -- dictionary defining important schedule times throughout the night
 # OUTPUT: apogee_choices -- dictionary list containing plate choices + observing times for tonight 
-def schedule_apogee(schedule, plan=False):
+def schedule_apogee(schedule, plan=False, loud=True):
 	# Define APOGEE-II observing parameters
 	par = {'exposure': 67, 'overhead': 20, 'ncarts': 9, 'maxz': 3, 'moon_threshold': 15, 'sn_target': 3136}
 
@@ -38,16 +38,16 @@ def schedule_apogee(schedule, plan=False):
 			lengths.append(nightlength - sum(lengths))
 
 	# Get all plate information from the database
-	apg = get_plates(plan=plan)
+	apg = get_plates(plan=plan, loud=loud)
 	
 	# Prioritize all plates
-	set_priorities(apg, par, schedule)
+	set_priorities(apg, par, schedule, loud=loud)
 	
 	# Determine observability range of all plates
-	obs = observability(apg, par, times, lengths)
+	obs = observability(apg, par, times, lengths, loud=loud)
 	
 	# Pick plates for tonight
-	picks = pick_plates(apg, obs, par, times, lengths, schedule)
+	picks = pick_plates(apg, obs, par, times, lengths, schedule, loud=loud)
 	
 	return picks
 

@@ -6,7 +6,7 @@ import numpy as np
 # DESCRIPTION: Sets priority values for all available APOGEE-II plates
 # INPUT: apg -- list of objects with all APOGEE-II plate information
 # OUTPUT: none
-def set_priorities(apg, par, schedule):
+def set_priorities(apg, par, schedule, loud=True):
 	set_pri_start = time()
 	# Loop through all plates and set priorities
 	for p in range(len(apg)):
@@ -46,4 +46,4 @@ def set_priorities(apg, par, schedule):
 		for f in wfield:
 			if apg[p].apgver > apg[f].apgver and apg[f].priority > 1: apg[p].priority /= 2
 	set_pri_end = time()
-	print("[PY] Prioritized APOGEE-II plates (%.3f sec)" % (set_pri_end - set_pri_start))
+	if loud: print("[PY] Prioritized APOGEE-II plates (%.3f sec)" % (set_pri_end - set_pri_start))

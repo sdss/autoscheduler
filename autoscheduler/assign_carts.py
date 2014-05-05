@@ -9,7 +9,7 @@ import os
 #		 manga_choices -- dictionary list containing all MaNGA plate choices for tonight
 #		 eboss_choices -- dictionary list containing all eBOSS plate choices for tonight
 # OUTPUT: plugplan -- dictionary list containing all plugging choices for tonight
-def assign_carts(apogee_choices, manga_choices, eboss_choices):
+def assign_carts(apogee_choices, manga_choices, eboss_choices, loud=True):
 	cart_start = time()
 	# Create database connection
 	if (os.path.dirname(os.path.realpath(__file__))).find('utah.edu') >= 0: from sdss.internal.database.connections.UtahLocalConnection import db
@@ -95,7 +95,7 @@ def assign_carts(apogee_choices, manga_choices, eboss_choices):
 		ebopicks.append(thispick)
 	
 	cart_end = time()
-	print("[PY] Assigned cartridges (%.3f sec)" % (cart_end - cart_start))
+	if loud: print("[PY] Assigned cartridges (%.3f sec)" % (cart_end - cart_start))
 	
 	return apgpicks, manpicks, ebopicks
 		

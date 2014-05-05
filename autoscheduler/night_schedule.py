@@ -4,7 +4,7 @@ import datetime
 # DESCRIPTION: reads in scheduler formatted nightly schedule
 # INPUT: filename -- name of the base schedule file supplied by survey coordinator
 # OUTPUT: schedule -- list of dicts that contain the relevant survey times for each night.
-def read_schedule(filename, mjd=-1, surveys=['apogee','eboss','manga']):
+def read_schedule(filename, mjd=-1, surveys=['apogee','eboss','manga'], loud=True):
 	# Read in formatted file
 	schf = open(filename, 'r')
 	schlines = schf.read().splitlines()
@@ -20,7 +20,7 @@ def read_schedule(filename, mjd=-1, surveys=['apogee','eboss','manga']):
 	# Determine what line in the schedule to use for tonight
 	if mjd < 0: tonight = round(get_juldate())
 	else: tonight = 2400000 + mjd
-	print ("[PY] Scheduling MJD %5d" % (tonight - 2400000))
+	if loud: print ("[PY] Scheduling MJD %5d" % (tonight - 2400000))
 	
 	# Find line to use in the schedule file
 	currjd = [x for x in range(len(schedule)) if schedule[x]['jd'] == tonight]

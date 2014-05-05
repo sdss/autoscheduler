@@ -48,7 +48,7 @@ class apgplate(object):
 # DESCRIPTION: Reads in APOGEE-II plate information from platedb
 # INPUT: none
 # OUTPUT: apg -- list of objects with all APOGEE-II plate information
-def get_plates(plan=False):
+def get_plates(plan=False, loud=True):
 	# Create database connection
 	if (os.path.dirname(os.path.realpath(__file__))).find('utah.edu') >= 0: from sdss.internal.database.connections.UtahLocalConnection import db
 	else: from sdss.internal.database.connections.APODatabaseUserLocalConnection import db
@@ -105,7 +105,7 @@ def get_plates(plan=False):
 		if len(tmp) > 3: apg[i].vplan = tmp[3]
 		apg[i].apgver = 100*tmp[0] + 10*tmp[1] + tmp[2]
 	stage1_end = time()
-	print("[SQL] Read in APOGEE-II plates (%.3f sec)" % ((stage1_end - stage1_start)))
+	if loud: print("[SQL] Read in APOGEE-II plates (%.3f sec)" % ((stage1_end - stage1_start)))
 	
 	# Read in previous APOGEE observations
 	stage2_start = time()
@@ -124,7 +124,7 @@ def get_plates(plan=False):
 			"GROUP BY plt.plate_id, obs.mjd ORDER BY plt.plate_id").fetchall()
 	except: pass
 	stage2_end = time()
-	print("[SQL] Read in past APOGEE observations (%.3f sec)" % ((stage2_end - stage2_start)))
+	if loud: print("[SQL] Read in past APOGEE observations (%.3f sec)" % ((stage2_end - stage2_start)))
 	
 	# Parse previous APOGEE observations
 	for i in range(len(stage2)):
@@ -162,7 +162,7 @@ def get_plates(plan=False):
 			"LEFT JOIN platedb.plate_pointing as pltg ON (pltg.plate_pk=plt.pk)) "+
 		"WHERE p2s.survey_pk = 1 ORDER BY crt.number").fetchall()
 	stage3_end = time()
-	print("[SQL] Read in currently plugged APOGEE plates (%.3f sec)" % ((stage3_end - stage3_start)))
+	if loud: print("[SQL] Read in currently plugged APOGEE plates (%.3f sec)" % ((stage3_end - stage3_start)))
 	
 	# Save currently plugged plates to data
 	for c,p in stage3:

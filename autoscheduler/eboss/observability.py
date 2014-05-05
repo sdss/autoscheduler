@@ -48,5 +48,5 @@ def observability(ebo, par, times):
 			# Check whether any of the points contain a bad airmass value
 			if secz < 1.003 or secz > par['maxz']: obsarr[p,t] = -2
 	obs_end = time()
-	print("[PY] Determined eBOSS observability (%.3f sec)" % (obs_end - obs_start))
+	if loud: print("[PY] Determined eBOSS observability (%.3f sec)" % (obs_end - obs_start))
 	return obsarr
