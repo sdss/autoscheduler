@@ -4,9 +4,9 @@ import datetime
 # DESCRIPTION: reads in scheduler formatted nightly schedule
 # INPUT: filename -- name of the base schedule file supplied by survey coordinator
 # OUTPUT: schedule -- list of dicts that contain the relevant survey times for each night.
-def read_schedule(filename, mjd=-1, surveys=['apogee','eboss','manga'], loud=True):
-	# Read in formatted file
-	schf = open(filename, 'r')
+def read_schedule(pwd, mjd=-1, surveys=['apogee','eboss','manga'], loud=True):
+	# Read in SDSS-III schedule
+	schf = open(pwd+'/schedules/Sch_base.sdss3.txt.frm.dat', 'r')
 	schlines = schf.read().splitlines()
 	schf.close()
 	# Assign values to schedule dict list
@@ -17,6 +17,19 @@ def read_schedule(filename, mjd=-1, surveys=['apogee','eboss','manga'], loud=Tru
 		schedule.append({'jd': float(tmp[0]), 'eboss': int(tmp[1]), 'manga': int(tmp[2]), 'bright_start': float(tmp[4]), 
 						 'bright_end': float(tmp[5]), 'dark_start': float(tmp[6]), 'dark_end': float(tmp[7]), 
 						 'eboss_start': float(tmp[8]),'eboss_end': float(tmp[9]), 'manga_start': float(tmp[10]), 'manga_end': float(tmp[11])})
+	# Read in SDSS-IV schedule
+	schf = open(pwd+'/schedules/Sch_base.6yrs.txt.frm.dat', 'r')
+	schlines = schf.read().splitlines()
+	schf.close()
+	# Assign values to schedule dict list
+	schedule = []
+	for i in range(len(schlines)):
+		tmp = schlines[i].split()
+		# Assign already-computed values to dict
+		schedule.append({'jd': float(tmp[0]), 'eboss': int(tmp[1]), 'manga': int(tmp[2]), 'bright_start': float(tmp[4]), 
+						 'bright_end': float(tmp[5]), 'dark_start': float(tmp[6]), 'dark_end': float(tmp[7]), 
+						 'eboss_start': float(tmp[8]),'eboss_end': float(tmp[9]), 'manga_start': float(tmp[10]), 'manga_end': float(tmp[11])})
+						 
 	# Determine what line in the schedule to use for tonight
 	if mjd < 0: tonight = round(get_juldate())
 	else: tonight = 2400000 + mjd

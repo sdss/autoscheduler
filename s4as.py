@@ -16,7 +16,7 @@ def run_scheduler(plan=False, mjd=-1, surveys=['apogee','eboss','manga'], loud=T
 	# Read in schedule file
 	pwd = os.path.dirname(os.path.realpath(__file__))
 	schedule_start_time = time()
-	schedule = autoscheduler.read_schedule(pwd+'/schedules/Sch_base.sdss3.txt.frm.dat', mjd=mjd, surveys=surveys, loud=loud)
+	schedule = autoscheduler.read_schedule(pwd, mjd=mjd, surveys=surveys, loud=loud)
 	schedule_end_time = time()
 	if loud: print("[PY] Schedule read in complete (%.3f sec)" % (schedule_end_time - schedule_start_time))
 	
