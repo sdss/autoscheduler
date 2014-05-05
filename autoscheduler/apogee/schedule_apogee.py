@@ -12,7 +12,7 @@ from pick_apogee_plates import pick_plates
 # OUTPUT: apogee_choices -- dictionary list containing plate choices + observing times for tonight 
 def schedule_apogee(schedule, plan=False):
 	# Define APOGEE-II observing parameters
-	par = {'exposure': 60, 'overhead': 20, 'ncarts': 9, 'maxz': 3, 'moon_threshold': 15, 'sn_target': 3136}
+	par = {'exposure': 67, 'overhead': 20, 'ncarts': 9, 'maxz': 3, 'moon_threshold': 15, 'sn_target': 3136}
 
 	# Define APOGEE-II blocks for tonight
 	nightlength = (schedule['bright_end'] - schedule['bright_start']) * 24
