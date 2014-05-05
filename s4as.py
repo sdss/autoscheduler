@@ -33,7 +33,7 @@ def run_scheduler(plan=False, mjd=-1, surveys=['apogee','eboss','manga'], loud=T
 		eboss_choices = ebo.schedule_eboss(schedule, plan=plan, loud=loud)
 	
 	# Take results and assign to carts
-	apgcart, mancart, ebocart = autoscheduler.assign_carts(apogee_choices, manga_choices, eboss_choices)
+	apgcart, mancart, ebocart = autoscheduler.assign_carts(apogee_choices, manga_choices, eboss_choices, loud=loud)
 	
 	as_end_time = time()
 	if loud: print("[PY] run_scheduler complete in (%.3f sec)" % ((as_end_time - as_start_time)))
