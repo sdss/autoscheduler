@@ -31,7 +31,7 @@ def read_schedule(pwd, mjd=-1, surveys=['apogee','eboss','manga'], loud=True):
 						 'eboss_start': float(tmp[8]),'eboss_end': float(tmp[9]), 'manga_start': float(tmp[10]), 'manga_end': float(tmp[11])})
 						 
 	# Determine what line in the schedule to use for tonight
-	if mjd < 0: tonight = int(get_juldate() - 0.3)
+	if mjd < 0: tonight = int(get_juldate() - 0.2)
 	else: tonight = 2400000 + int(mjd)
 	if loud: print ("[PY] Scheduling MJD %5d" % (tonight - 2400000))
 	
