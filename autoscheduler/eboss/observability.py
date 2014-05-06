@@ -5,7 +5,7 @@ import astropysics.coords as coo
 import astropysics.obstools as obs
 from ..moonpos import moonpos
 
-def observability(ebo, par, times):
+def observability(ebo, par, times, loud=True):
 	obs_start = time()
 	apo = obs.Site(32.789278, -105.820278)
 	obsarr = np.zeros([len(ebo), len(times)])
