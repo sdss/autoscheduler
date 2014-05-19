@@ -34,14 +34,14 @@ class apgplate(object):
 	def maxhist(self):
 		obsstr = self.hist.split(',')
 		if len(obsstr) == 0 or obsstr[0] == '': return float(0.0)
-		obshist = [float(x) for x in obsstr]
+		obshist = [float(x) for x in obsstr if x != '']
 		return max(obshist)
 		
 	# Determine first observation time
 	def minhist(self):
 		obsstr = self.hist.split(',')
 		if len(obsstr) == 0 or obsstr[0] == '': return float(0.0)
-		obshist = [float(x) for x in obsstr]
+		obshist = [float(x) for x in obsstr if x != '']
 		return min(obshist)
 
 # GET_PLATES
@@ -51,7 +51,7 @@ class apgplate(object):
 def get_plates(plan=False, loud=True):
 	# Create database connection
 	if (os.path.dirname(os.path.realpath(__file__))).find('utah.edu') >= 0: from sdss.internal.database.connections.UtahLocalConnection import db
-	else: from sdss.internal.database.connections.APODatabaseUserLocalConnection import db
+	else: from sdss.internal.database.connections.APOSDSSIIIUserLocalConnection import db
 	session = db.Session()
 	
 	# Pull all relevant plate information for APOGEE plates

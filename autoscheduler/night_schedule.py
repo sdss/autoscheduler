@@ -22,7 +22,6 @@ def read_schedule(pwd, mjd=-1, surveys=['apogee','eboss','manga'], loud=True):
 	schlines = schf.read().splitlines()
 	schf.close()
 	# Assign values to schedule dict list
-	schedule = []
 	for i in range(len(schlines)):
 		tmp = schlines[i].split()
 		# Assign already-computed values to dict

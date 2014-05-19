@@ -49,6 +49,12 @@ def schedule_apogee(schedule, plan=False, loud=True):
 	# Pick plates for tonight
 	picks = pick_plates(apg, obs, par, times, lengths, schedule, loud=loud)
 	
+	# Print out all plate information (just for testing purposes)
+	df = open('apogee.txt', 'w')
+	for p in range(len(apg)):
+		print("%20s %5d %3d %3d %5.2f %5.2f  %5.1f %8.2f %8.2f  %s" % (apg[p].name, apg[p].plateid, apg[p].vplan, apg[p].vdone, apg[p].minha, apg[p].maxha, apg[p].sn, apg[p].priority, max(obs[p,:]), apg[p].hist), file=df)
+	df.close()
+
 	return picks
 
 		

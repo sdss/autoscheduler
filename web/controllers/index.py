@@ -4,7 +4,7 @@ import os
 import sys
 import flask
 from flask import request, render_template, send_from_directory, current_app
-from ..model.database import db
+#from ..model.database import db
 
 import s4as
 

@@ -41,7 +41,7 @@ from web import create_app
 app = create_app(debug=args.debug)
 
 # Can't create the database connection unless we've created the app
-from web.model.database import db
+#from web.model.database import db
 
 
 # Close session at end of each request/response.
