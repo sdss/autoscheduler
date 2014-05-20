@@ -72,7 +72,7 @@ def pick_plates(apg, obs, par, times, lengths, schedule, loud=True):
 		if schedule['dark_start'] == 0: thistime = times[c]
 		elif schedule['bright_start'] < schedule['dark_start']: thistime = times[c]
 		else:
-			if lengths[c] >= par['exposure']/60: thistime = times[c]
+			if lengths[c] >= par['exposure']/60: thistime = times[c] + par['overhead']/60/24
 			else: thistime = times[c] + par['overhead']/60/24
 			
 		# Determine block choices

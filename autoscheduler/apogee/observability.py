@@ -18,6 +18,7 @@ def observability(apg, par, times, lengths, loud=True):
 		moonra, moondec = moonpos(times[t])
 		mpos.append(coo.ICRSCoordinates(moonra, moondec))
 	
+	df = open('apogeeobs.txt', 'w')
 	# Loop over all plates
 	for p in range(len(apg)):
 		# Initalize obsarr row
@@ -27,8 +28,8 @@ def observability(apg, par, times, lengths, loud=True):
 		# Compute observing constants
 		platecoo = coo.ICRSCoordinates(apg[p].ra, apg[p].dec)
 		platelst = float(apg[p].ra + apg[p].ha) / 15
-		minlst = platelst + float(apg[p].minha) / 15
-		maxlst = platelst + float(apg[p].maxha) / 15
+		minlst = float(apg[p].ra + apg[p].minha) / 15
+		maxlst = float(apg[p].ra + apg[p].maxha) / 15
 		
 		for t in range(len(times)):
 			# Gaussian prioritization on time from transit
@@ -52,8 +53,11 @@ def observability(apg, par, times, lengths, loud=True):
 			badsecz = [x for x in secz if x < 1.003 or x > par['maxz']]
 			if len(badsecz) > 0: obsarr[p,t] = -2
 			
+		print(apg[p].plateid, minlst, maxlst, apo.localTime(minlst, utc=True), apo.localTime(maxlst, utc=True), obsarr[p,:], file=df)
+			
 	obs_end = time()
 	if loud: print("[PY] Determined APOGEE-II observability (%.3f sec)" % (obs_end - obs_start))
 
+	df.close()
 	
 	return obsarr

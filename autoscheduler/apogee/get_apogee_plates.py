@@ -50,8 +50,10 @@ class apgplate(object):
 # OUTPUT: apg -- list of objects with all APOGEE-II plate information
 def get_plates(plan=False, loud=True):
 	# Create database connection
-	if (os.path.dirname(os.path.realpath(__file__))).find('utah.edu') >= 0: from sdss.internal.database.connections.UtahLocalConnection import db
-	else: from sdss.internal.database.connections.APOSDSSIIIUserLocalConnection import db
+	if (os.path.dirname(os.path.realpath(__file__))).find('utah.edu') >= 0: 
+		from sdss.internal.database.connections.UtahLocalConnection import db
+	else: 
+		from sdss.internal.database.connections.APOSDSSIIIUserLocalConnection import db
 	session = db.Session()
 	
 	# Pull all relevant plate information for APOGEE plates
@@ -87,15 +89,15 @@ def get_plates(plan=False, loud=True):
 	for i in range(len(stage1)):
 		apg.append(apgplate())
 		apg[i].locationid = stage1[i][0]
-		apg[i].ra = stage1[i][1]
-		apg[i].dec = stage1[i][2]
+		apg[i].ra = float(stage1[i][1])
+		apg[i].dec = float(stage1[i][2])
 		apg[i].plateid = stage1[i][3]
-		apg[i].ha = stage1[i][4]
+		apg[i].ha = float(stage1[i][4])
 		apg[i].manual_priority = stage1[i][5]
 		designid = int(stage1[i][6])
 		apg[i].name = stage1[i][7]
-		apg[i].maxha = stage1[i][8]
-		apg[i].minha = stage1[i][9]
+		apg[i].maxha = float(stage1[i][8]) + 7.5
+		apg[i].minha = float(stage1[i][9]) - 7.5
 		apg[i].platepk = stage1[i][10]
 		apg[i].plugged = 0
 		
