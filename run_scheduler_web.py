@@ -22,7 +22,7 @@ parser.add_argument('-d','--debug',
                     required=False)
 parser.add_argument('-p','--port',
                     help='Port to use in debug mode.',
-                    default=16100,
+                    default=16000,
                     type=int,
                     required=False)
 parser.add_argument('-r','--rules',
