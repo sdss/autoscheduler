@@ -1,0 +1,27 @@
+---
+logging:
+    logLevel: WARNING
+    logFileLevel: INFO
+    logFilePath: '~/.totoro/totoro.log'
+
+dbConnection:
+    user: albireo
+    password: ''
+    host: localhost
+    port: 5432
+    database: apo_platedb
+
+observingPlan:
+    schedule: +data/Sch_base.6yrs.txt.frm.dat
+
+observatory:
+    longitude: 254.179722   # In East degrees
+    latitude: 32.766666667
+    altitude: 2788
+    name: APO
+
+dustMap:
+    useGrid: false
+    mapDir: $DUST_DIR/maps
+    maps: [SFD_dust_4096_ngp.fits, SFD_dust_4096_sgp.fits]
+    grid: +data/IGincrease.fits
