@@ -103,9 +103,12 @@ def get_plates(plan=False, loud=True):
 		
 		# Get APOGEE version number and vplan for this plate
 		dvdata = session.execute("SELECT array_to_string(array_agg(dv.value),',') FROM platedb.design_value as dv WHERE (dv.design_field_pk=342 OR dv.design_field_pk=343 OR dv.design_field_pk=344 OR dv.design_field_pk=351) AND dv.design_pk=%d" % (designid)).fetchall()
-		tmp = [int(x) for x in dvdata[0][0].split(',')]
-		if len(tmp) > 3: apg[i].vplan = tmp[3]
-		apg[i].apgver = 100*tmp[0] + 10*tmp[1] + tmp[2]
+		if dvdata[0][0]:
+			tmp = [int(x) for x in dvdata[0][0].split(',')]
+			if len(tmp) > 3: apg[i].vplan = tmp[3]
+			apg[i].apgver = 100*tmp[0] + 10*tmp[1] + tmp[2]
+		else:
+			apg[i].apgver = 999
 	stage1_end = time()
 	if loud: print("[SQL] Read in APOGEE-II plates (%.3f sec)" % ((stage1_end - stage1_start)))
 	
@@ -122,7 +125,7 @@ def get_plates(plan=False, loud=True):
 				"LEFT JOIN platedb.observation AS obs ON (exp.observation_pk=obs.pk)) "+
 				"LEFT JOIN platedb.plate_pointing AS pltg ON (obs.plate_pointing_pk=pltg.pk)) "+
 				"RIGHT JOIN platedb.plate AS plt ON (pltg.plate_pk=plt.pk)) "+
-			"WHERE exp.survey_pk=1 AND expf.label='Object' AND qr.snr_standard!='NaN' AND (qr.snr_standard >= 10.0 OR apr.snr >= 10.0) "+
+			"WHERE (exp.survey_pk=1 or exp.survey_pk=37) AND expf.label='Object' AND qr.snr_standard!='NaN' AND (qr.snr_standard >= 10.0 OR apr.snr >= 10.0) "+
 			"GROUP BY plt.plate_id, obs.mjd ORDER BY plt.plate_id").fetchall()
 	except: pass
 	stage2_end = time()
@@ -162,13 +165,14 @@ def get_plates(plan=False, loud=True):
 			"LEFT JOIN platedb.plate AS plt ON (plg.plate_pk=plt.pk)) "+
 			"LEFT JOIN platedb.plate_to_survey AS p2s ON (p2s.plate_pk=plt.pk)) "+
 			"LEFT JOIN platedb.plate_pointing as pltg ON (pltg.plate_pk=plt.pk)) "+
-		"WHERE p2s.survey_pk = 1 ORDER BY crt.number").fetchall()
+		"WHERE (p2s.survey_pk=1 OR p2s.survey_pk=37) ORDER BY crt.number").fetchall()
 	stage3_end = time()
 	if loud: print("[SQL] Read in currently plugged APOGEE plates (%.3f sec)" % ((stage3_end - stage3_start)))
 	
 	# Save currently plugged plates to data
 	for c,p in stage3:
-		wplate = [x for x in range(len(apg)) if apg[x].plateid == p][0]
-		apg[wplate].plugged = c
+		wplate = [x for x in range(len(apg)) if apg[x].plateid == p]
+		if len(wplate) == 0: continue
+		apg[wplate[0]].plugged = c
 		
 	return apg
