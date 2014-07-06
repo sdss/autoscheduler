@@ -20,7 +20,6 @@ from __future__ import print_function
 from ..exceptions import TotoroWarning, TotoroError
 from warnings import warn
 from .. import Session
-
 session = Session()
 
 
@@ -30,8 +29,8 @@ class BaseDBClass(object):
 
     def __init__(self, inp, format='pk', autocomplete=True, **kwargs):
 
-        if not isinstance(inp, (int, dict)):
-            raise TypeError('inp must be and integer or a dictionary.')
+        # if not isinstance(inp, (int, dict)) and type(inp) != 'long':
+        #     raise TypeError('inp must be and integer or a dictionary.')
 
         if format != 'dict':
             if autocomplete is False:
@@ -71,7 +70,7 @@ class BaseDBClass(object):
                 qResult = session.query(self.__DBClass__).get(inp)
             else:
                 qResult = session.query(self.__DBClass__).filter(
-                    getattr(self.__DBClass__, format) == inp)
+                    getattr(self.__DBClass__, format) == inp).one()
 
                 if qResult.count() == 0:
                     raise TotoroError('no results found for '

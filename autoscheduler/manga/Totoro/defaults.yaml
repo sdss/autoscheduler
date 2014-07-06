@@ -1,12 +1,12 @@
 ---
 logging:
     logLevel: WARNING
-    logFileLevel: INFO
+    logFileLevel: DEBUG
     logFilePath: '~/.totoro/totoro.log'
 
 dbConnection:
-    user: albireo
-    password: ''
+    user: sdss3_admin
+    password: '4-surveys'
     host: localhost
     port: 5432
     database: apo_platedb
@@ -25,3 +25,20 @@ dustMap:
     mapDir: $DUST_DIR/maps
     maps: [SFD_dust_4096_ngp.fits, SFD_dust_4096_sgp.fits]
     grid: +data/IGincrease.fits
+
+SNthresholds:
+    plateRed: 70
+    plateBlue: 30
+    exposureRed: 3.75
+    exposureBlue: 1.8
+
+exposure:
+    minExpTime: 899
+    maxSeeing: 2.5
+
+set:
+    excellentSeeing: 1.5
+    poorSeeing: 2
+    maxHARange: 15
+    maxSeeingRange: 0.8
+    maxSNFactor: 2

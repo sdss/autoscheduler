@@ -41,4 +41,4 @@ Base = db.Base
 
 from platedb import ModelClasses as plateDB
 from mangadb import ModelClasses as mangaDB
-from mangadb import SampleModelClasses as mangaSampleDB
+# from mangadb import SampleModelClasses as mangaSampleDB

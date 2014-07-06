@@ -14,8 +14,11 @@ Revision history:
 
 from __future__ import division
 from __future__ import print_function
+from ..exceptions import TotoroNotImplemented
 import numpy as np
 from .. import config
+from astropysics import obstools
+from .. import log
 
 
 def mlhalimit(dec):
@@ -35,9 +38,9 @@ def mlhalimit(dec):
     halimit[np.where((dec < -10) | (dec > 80))] = 0.0
 
     if len(halimit) == 1:
-        return halimit[0]
+        return halimit[0] * 15
     else:
-        return halimit
+        return halimit * 15
 
 
 def computeAirmass(dec, ha, lat=config['observatory']['latitude'],
@@ -57,3 +60,43 @@ def computeAirmass(dec, ha, lat=config['observatory']['latitude'],
         return airmass[0]
     else:
         return airmass
+
+
+def isPlateComplete(inp, inputType='plate_pk'):
+
+    if inputType.lower() == 'plate_pk':
+        from ..dbclasses import Plate
+        plate = Plate(inp, format='pk')
+        return plate.complete
+    else:
+        raise TotoroNotImplemented('inputType={0} not yet implemented'.format(
+            inputType))
+
+
+def createSite(longitude=None, latitude=None, altitude=None,
+               name=None, verbose=False, **kwargs):
+    """Returns an astropysics.obstools.site instance. By default, uses the
+    coordinates for APO."""
+
+    if None in [longitude, latitude, altitude, name]:
+        assert 'observatory' in config.keys()
+
+    longitude = config['observatory']['longitude'] \
+        if longitude is None else longitude
+    latitude = config['observatory']['latitude'] \
+        if latitude is None else latitude
+    altitude = config['observatory']['altitude'] \
+        if altitude is None else altitude
+
+    if name is None:
+        if 'name' not in config['observatory']:
+            name = ''
+        else:
+            name = config['observatory']['name']
+
+    site = obstools.Site(latitude, longitude, name=name, alt=altitude)
+
+    if verbose:
+        log.info('Created site with name \'{0}\''.format(name))
+
+    return site

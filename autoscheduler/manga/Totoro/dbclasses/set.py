@@ -16,19 +16,32 @@ from __future__ import division
 from __future__ import print_function
 from .baseDBClass import BaseDBClass
 from .exposure import Exposure
-from .. import mangaDB, Session
+from .. import mangaDB, Session, plateDB
+from .. import log
+from ..utils import checkExposure, checkSet, createSite
+import numpy as np
 
 session = Session()
 
 
 class Set(BaseDBClass):
 
-    exposures = []
-
     def __init__(self, inp, format='pk', autocomplete=True,
-                 exposures=True, **kwargs):
+                 exposures=True, verbose=True, **kwargs):
+
+        self.exposures = []
+        self.verbose = verbose
+
+        self.site = createSite()
 
         self.__DBClass__ = mangaDB.Set
+        super(Set, self).__init__(inp, format=format,
+                                  autocomplete=autocomplete)
+
+        self.ra, self.dec = self.getCoordinates()
+
+        if verbose:
+            log.debug('Loaded set with pk={0}'.format(self.pk))
 
         if exposures:
             self.loadExposuresFromDB()
@@ -39,70 +52,97 @@ class Set(BaseDBClass):
             mangaSet = session.query(mangaDB.Set).get(self.pk)
 
         for mangaExposure in mangaSet.exposures:
-            for plateDBExposure in mangaExposure.platedb_exposure_pk:
-                self.exposures.append(Exposure(plateDBExposure,
-                                               autocomplete=True,
-                                               format='pk',
-                                               extendFromMaNGA=True))
+            self.exposures.append(Exposure(mangaExposure.platedbExposure.pk,
+                                           autocomplete=True,
+                                           format='pk',
+                                           extendFromMaNGA=True,
+                                           verbose=self.verbose))
 
-    # def __init__(self, ID=None, exposures=None, complete=None, avgSeeing=None,
-    #              SN_red=None, SN_blue=None, HAlimits=None, quality=None,
-    #              plugging=None, **kwargs):
+    def getCoordinates(self):
 
-    #     if exposures is not None:
-    #         list.__init__(self, exposures)
+        with session.begin():
+            pointing = session.query(plateDB.Pointing).join(
+                plateDB.PlatePointing).join(plateDB.Observation).join(
+                    plateDB.Exposure).join(mangaDB.Exposure).join(
+                        mangaDB.Set).filter(
+                            mangaDB.Set.pk == self.pk).one()
 
-    #     self.plugging = plugging
+        return np.array([pointing.center_ra, pointing.center_dec], np.float)
 
-    #     self.ID = ID
-    #     self._complete = complete
-    #     self._avgSeeing = avgSeeing
-    #     self._SN_red = SN_red
-    #     self._SN_blue = SN_blue
-    #     self._HAlimits = HAlimits
-    #     self._quality = quality
-    #     self._kwargs = kwargs
+    def getHARange(self):
+        """Returns the HA range of the exposures in the set."""
 
-    # def addExposures(self, startTime, nExposures=NDITHERS(), **kwargs):
+        expHARanges = np.array([exposure.getHARange()
+                                for exposure in self.exposures
+                                if exposure.valid])
 
-    #     ditherPos = DITHER_POSITIONS_NEEDED()
+        return np.array([np.min(expHARanges), np.max(expHARanges)])
 
-    #     expTimeDelta = time.TimeDelta(EXPTIME() / EFFICIENCY(), format='sec')
-    #     for nn in range(nExposures):
+    def getHALimits(self):
+        """Returns the HA limits to add more exposures to the set."""
 
-    #         SN_red = np.array([AVG_SN_RED(), AVG_SN_RED()])
-    #         SN_blue = np.array([AVG_SN_BLUE(), AVG_SN_BLUE()])
-    #         HAstart = self.getHA(startTime)
+        haRange = self.getHARange()
+        return np.array([np.max(haRange) - 15., np.min(haRange) + 15.])
 
-    #         self.append(Exposure(Set=self, startTime=startTime,
-    #                     expTime=EXPTIME(), SN_blue=SN_blue, SN_red=SN_red,
-    #                     ditherPos=ditherPos[nn], HAstart=HAstart, **kwargs))
+    def getDitherPositions(self):
+        """Returns a list of dither positions in the set."""
 
-    #         log.info('Added exposure with dither position {0}'.format(
-    #             ditherPos[nn]) + ' at HA={0:.4f} to set {1}.'.format(
-    #             HAstart.hour, self.ID))
+        return [exp.ditherPosition for exp in self.exposures]
 
-    #         startTime = startTime + expTimeDelta
+    def getSN2Array(self):
+        """Returns an array with the cumulated SN2 of the valid exposures in
+        the set. The return format is [b1SN2, b2SN2, r1SN2, r2SN2]."""
 
-    #     return startTime
+        validExposures = []
+        for exposure in self.exposures:
+            if checkExposure(exposure.manga_pk):
+                validExposures.append(exposure)
 
-    # # def estimateSN(self, tt):
+        if len(validExposures) == 0:
+            return np.array([0.0, 0.0, 0.0, 0.0])
+        else:
+            return np.sum([exp.getSN2Array() for exp in validExposures],
+                          axis=0)
 
-    # def getHA(self, tt):
-    #     ha = coo.Longitude(
-    #         jd2lmst(tt).hour - self.plugging.parent.centre.ra.hour,
-    #         unit=uu.hour, wrap_angle='180d')
-    #     return ha
+    def getQuality(self):
+        """Returns the quality of the set (Excellent, Good, Poor)."""
 
-    # def getValidExposures(self):
+        return checkSet(self.pk, verbose=False)
 
-    #     newList = [exp for exp in self if exp.valid is True
-    #                and exp.obsType == 'sci']
+    def getValidExposures(self):
 
-    #     return Set(ID=self.ID, exposures=newList, complete=self._complete,
-    #                avgSeeing=self._avgSeeing, SN_red=self._SN_red,
-    #                SN_blue=self._SN_blue, HAlimits=self._HAlimits,
-    #                quality=self._quality, **self._kwargs)
+        validExposures = []
+        for exp in self.exposures:
+            if exp.valid is True:
+                validExposures.append(exp)
+
+        return validExposures
+
+    def getAverageSeeing(self):
+
+        seeings = []
+        for exp in self.exposures:
+            if exp.valid:
+                seeings.append(exp.manga_seeing)
+
+        return np.mean(seeings)
+
+    def getUTVisibilityWindow(self):
+
+        ha0, ha1 = self.getHALimits()
+
+        lst0 = (ha0 + self.ra) % 360. / 15
+        lst1 = (ha1 + self.ra) % 360. / 15
+
+
+        # Needs to add date
+        ut0 = '{0:%H:%M}'.format(self.site.localTime(
+            lst0, utc=True, returntype='datetime'))
+        ut1 = '{0:%H:%M}'.format(self.site.localTime(
+            lst1, utc=True, returntype='datetime'))
+
+        return (ut0, ut1)
+
 
     # def _getCompletionStatus(self):
 

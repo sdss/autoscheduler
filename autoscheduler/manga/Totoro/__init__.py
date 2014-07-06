@@ -38,5 +38,5 @@ dustMap = DustMap()
 
 log.info('Creating connection with DB.')
 from .APOplateDB import Session, Base, db, engine
-from .APOplateDB import plateDB, mangaDB, mangaSampleDB
-from .scheduler import Planner
+from .APOplateDB import plateDB, mangaDB
+from .scheduler import Planner, Nightly

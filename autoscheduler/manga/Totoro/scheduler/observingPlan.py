@@ -111,6 +111,20 @@ class ObservingPlan(object):
     #     return (tt[idxStart][self.survey + '_0'],
     #             tt[idxEnd][self.survey + '_1'])
 
+    def getMaNGAStart(self, startDate):
+        """Returns the JD of the start of the MaNGA observation for a given
+        start date."""
+
+        day = self[self['JD'] == int(startDate)]
+        return day['JD0'][0]
+
+    def getMaNGAEnd(self, startDate):
+        """Returns the JD of the end of the MaNGA observation for a given
+        start date."""
+
+        day = self[self['JD'] == int(startDate)]
+        return day['JD1'][0]
+
     def getObservingBlocks(self, startDate, endDate):
         """Returns an astropy table with the observation dates
         for each night between startDate and endDate."""

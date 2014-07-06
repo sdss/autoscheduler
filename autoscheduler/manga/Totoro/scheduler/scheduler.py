@@ -17,9 +17,11 @@ from __future__ import print_function
 from astropysics import obstools
 # from ..exceptions import TotoroError
 from .observingPlan import ObservingPlan
-from ..dbclasses import Fields
-from .. import config
+# from ..dbclasses import Fields
+from ..dbclasses import Plates
+from ..utils import createSite
 from .. import log
+from ..utils.tabularOutput import printTabularOutput
 
 
 class BaseScheduler(object):
@@ -33,48 +35,25 @@ class BaseScheduler(object):
     def __init__(self, startDate=None, endDate=None, **kwargs):
 
         self.observingPlan = ObservingPlan(**kwargs)
-        self.createSite(**kwargs)
+        self.site = createSite(**kwargs)
         self.setStartEndDate(startDate, endDate, **kwargs)
-
-    def createSite(self, longitude=None, latitude=None, altitude=None,
-                   name=None, **kwargs):
-
-        if None in [longitude, latitude, altitude, name]:
-            assert 'observatory' in config.keys()
-
-        longitude = config['observatory']['longitude'] \
-            if longitude is None else longitude
-        latitude = config['observatory']['latitude'] \
-            if latitude is None else latitude
-        altitude = config['observatory']['altitude'] \
-            if altitude is None else altitude
-
-        if name is None:
-            if 'name' not in config['observatory']:
-                name = ''
-            else:
-                name = config['observatory']['name']
-
-        self.site = obstools.Site(latitude, longitude, name=name, alt=altitude)
-
-        log.info('Created site with name \'{0}\''.format(name))
 
     def setStartEndDate(self, startDate, endDate, scope='planner', **kwargs):
         """Sets the start and end date if they haven't been defined."""
 
-        if startDate is None:
-            # Uses the current LST
-            startDate = obstools.calendar_to_jd(None)
-
         if startDate < self.observingPlan.getSurveyStart():
             startDate = self.observingPlan.getSurveyStart()
-
-        if endDate is None:
-            endDate = self.observingPlan.getSurveyEnd()
 
         if scope == 'planner':
             startDate = int(startDate)
             endDate = int(endDate) + 1
+
+        elif scope == 'nightly':
+            if startDate is None:
+                startDate = self.observingPlan.getMaNGAStart(
+                    obstools.calendar_to_jd(None))
+            if endDate is None:
+                endDate = self.observingPlan.getMaNGAEnd(startDate)
 
         self.startDate = startDate
         self.endDate = endDate
@@ -106,6 +85,34 @@ class Planner(BaseScheduler):
 
         log.info('Beginning to load fields from DB.')
         self.fields = Fields(rejectCompleted=True, **kwargs)
+
+
+class Nightly(BaseScheduler):
+
+    def __init__(self, startDate=None, endDate=None, **kwargs):
+
+        log.info('Running in NIGHTLY MODE.')
+
+        startDate = 2456843.1
+        super(Nightly, self).__init__(startDate=startDate,
+                                      endDate=endDate, scope='nightly',
+                                      **kwargs)
+        self.getPlates()
+
+    def getPlates(self, **kwargs):
+        """Gets the plugged plates."""
+
+        log.info('Finding plugged plates.')
+        self.plates = Plates(onlyPlugged=True, onlyAtAPO=True,
+                             onlyIncomplete=False, **kwargs)
+
+        if len(self.plates) == 0:
+            log.info('no plugged plates found.')
+
+    def printTabularOutput(self):
+        """Prints a series of tables with information about the schedule."""
+
+        printTabularOutput(self.plates)
 
     # def simulate(self):
     #     """Applies the scheduling logic and returns the planner schedule."""

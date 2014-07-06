@@ -17,21 +17,26 @@ from __future__ import print_function
 from .. import Session, plateDB, mangaDB
 from .baseDBClass import BaseDBClass
 from .set import Set
+from .. import log
 
 session = Session()
 
 
 class Plugging(BaseDBClass):
 
-    sets = []
-    # _complete = False
-
     def __init__(self, inp, format='pk', autocomplete=True,
                  sets=True, **kwargs):
 
+        self.sets = []
+
         self.__DBClass__ = plateDB.Plugging
-        super(BaseDBClass, self).__init__(inp, format=format,
-                                          autocomplete=autocomplete)
+        super(Plugging, self).__init__(inp, format=format,
+                                       autocomplete=autocomplete)
+
+        self.plateid = self._getPlateID()
+
+        log.debug('Loaded plugging with pk={0} for plateid={1}'.format(
+            self.pk, self.plateid))
 
         if sets:
             self.loadSetsFromDB()
@@ -41,14 +46,26 @@ class Plugging(BaseDBClass):
         with session.begin():
             sets = session.query(mangaDB.Set).join(mangaDB.Exposure).join(
                 plateDB.Exposure).join(plateDB.Observation).filter(
-                plateDB.Observation.plugging_pk == self.pk)
+                plateDB.Observation.plugging_pk == self.pk).all()
 
         for set in sets:
             self.sets.append(Set(set.pk, autocomplete=True,
                                  format='pk', exposures=True))
 
-    def getValidSets(self):
-        return [ss for ss in self.sets if ss.valid]
+    def _getPlateID(self):
+
+        with session.begin():
+            return session.query(plateDB.Plate).join(
+                plateDB.Plugging).filter(
+                plateDB.Plugging.pk == self.pk).one().plate_id
+
+    def getPluggingStatus(self):
+        """Returns the status of the plugging."""
+
+        with session.begin():
+            plStatus = session.query(plateDB.PluggingStatus).join(
+                plateDB.Plugging).filter(plateDB.Plugging.pk == self.pk).one()
+            return plStatus.label
 
     # @property
     # def complete(self):
