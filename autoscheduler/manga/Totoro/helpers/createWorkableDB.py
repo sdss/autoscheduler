@@ -17,30 +17,36 @@ import os
 import sys
 import subprocess
 
-
 USER = 'albireo'
 PASSWORD = ''
 
-# SCHEMA = os.path.join(os.path.dirname(__file__), 'plateDB_Test.dump')
-SCHEMA = os.path.join(os.path.dirname(__file__),
-                      '../ignore/platedb_20140415.sql')
-# SCHEMA = os.path.join(os.path.expanduser(os.environ['PLATEDB']),
-                      # 'schema/platedb_schema_2013.08.27.sql')
-MANGADB_SCHEMA = os.path.join(os.path.dirname(__file__),
-                              '../ignore/mangaDB.sql')
-# MANGADATADB_SCHEMA = os.path.join(os.path.expanduser(os.environ['PLATEDB']),
-#                                   'schema/mangaDataDB.sql')
-MANGASAMPLEDB_SCHEMA = os.path.join(os.path.expanduser(os.environ['PLATEDB']),
-                                    'schema/mangaSampleDB.sql')
-CATALOGDB_SCHEMA = os.path.join(os.path.expanduser(os.environ['PLATEDB']),
-                                'schema/catalogdb.sql')
-
-
-OVERWRITE = False
+OVERWRITE = True
 DBNAME = 'apo_platedb'
 ADD_LABELS = False
 ADD_TILES = False
-POPULATE = False
+POPULATE = True
+
+
+def createWorkableDB(plateDB):
+
+    schema = os.path.expanduser(plateDB)
+    mangaDBSchema = os.path.join(os.path.expanduser(os.environ['PLATEDB']),
+                                 'schema/mangaDB.sql')
+    catalogDBSchema = os.path.join(os.path.expanduser(os.environ['PLATEDB']),
+                                   'schema/catalogdb.sql')
+
+    if POPULATE:
+        populateDBs(schema, mangaDBSchema, catalogDBSchema)
+
+    # # Adds labels and generic fields to the database
+    # if ADD_LABELS:
+    #     addLabels(DBNAME)
+
+    # if ADD_TILES:
+    #     from Totoro.helpers import addFromTilingCatalogue
+    #     print('Adding tiles')
+    #     samplePath = os.environ['MANGASAMPLE']
+    #     addFromTilingCatalogue(samplePath, isSample=True)
 
 
 def _createConnection(database, user, password):
@@ -89,7 +95,7 @@ def addLabels(dbName):
     conn.close()
 
 
-def populateDBs():
+def populateDBs(schema, mangaDBSchema, catalogDBSchema):
     # Checks if the database exists and removes it if OVERWRITE is TRUE
     conn, cur = _createConnection('postgres', 'postgres', 'postgres')
     cur.execute('select datname from pg_database')
@@ -112,12 +118,12 @@ def populateDBs():
 
     # Restores the schemas
     print('Populating catalogDB')
-    cc = subprocess.Popen('psql {0} < {1}'.format(DBNAME, CATALOGDB_SCHEMA),
+    cc = subprocess.Popen('psql {0} < {1}'.format(DBNAME, catalogDBSchema),
                           shell=True, stdout=subprocess.PIPE)
     cc.communicate()
 
     print('Populating plateDB')
-    cc = subprocess.Popen('psql {0} < {1}'.format(DBNAME, SCHEMA), shell=True,
+    cc = subprocess.Popen('psql {0} < {1}'.format(DBNAME, schema), shell=True,
                           stdout=subprocess.PIPE)
     cc.communicate()
 
@@ -127,35 +133,20 @@ def populateDBs():
     # cc.communicate()
 
     print('Populating mangaDB')
-    cc = subprocess.Popen('psql {0} < {1}'.format(DBNAME, MANGADB_SCHEMA),
+    cc = subprocess.Popen('psql {0} < {1}'.format(DBNAME, mangaDBSchema),
                           stdout=subprocess.PIPE, shell=True)
     cc.communicate()
 
-    print('Populating mangaSampleDB')
-    cc = subprocess.Popen('psql {0} < {1}'.format(DBNAME,
-                                                  MANGASAMPLEDB_SCHEMA),
-                          stdout=subprocess.PIPE, shell=True)
-    cc.communicate()
 
-if POPULATE:
-    populateDBs()
+if __name__ == '__main__':
 
-# Adds labels and generic fields to the database
-if ADD_LABELS:
-    addLabels(DBNAME)
+    # Tests the model classes
 
-if ADD_TILES:
-    from Totoro.helpers import addFromTilingCatalogue
-    print('Adding tiles')
-    samplePath = os.environ['MANGASAMPLE']
-    addFromTilingCatalogue(samplePath, isSample=True)
+    from hooloovookit import DatabaseConnection
+    DatabaseConnection.DatabaseConnection(name='apo_platedb',
+                                          user='albireo',
+                                          password='')
+    # from platedb import ModelClasses
+    # from mangadb import ModelClasses
 
-# Tests the model classes
-
-from hooloovookit import DatabaseConnection
-DatabaseConnection.DatabaseConnection(name='apo_platedb',
-                                      user='albireo',
-                                      password='')
-from platedb import ModelClasses
-from mangadb import ModelClasses, DataModelClasses, SampleModelClasses
-
+    createWorkableDB(sys.argv[1])
