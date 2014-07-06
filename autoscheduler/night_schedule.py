@@ -36,8 +36,9 @@ def read_schedule(pwd, mjd=-1, surveys=['apogee','eboss','manga'], loud=True):
 	
 	# Find line to use in the schedule file
 	currjd = [x for x in range(len(schedule)) if schedule[x]['jd'] == tonight]
+	# If this line doesn't exist, find the closest day
 	if not len(currjd) > 0:
-		raise AssertionError, "MJD %5d does not exist in schedule file." % (tonight-2400000)
+		currjd = np.argsort(np.abs(np.array(schedule[x]['jd'])-tonight))
 		
 	# See if schedule needs to be adjusted based on what surveys are being run tonight
 	# Is eBOSS offline, but MaNGA isn't? MaNGA gets all of dark time.
