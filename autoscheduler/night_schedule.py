@@ -7,7 +7,7 @@ import numpy as np
 # OUTPUT: schedule -- list of dicts that contain the relevant survey times for each night.
 def read_schedule(pwd, mjd=-1, surveys=['apogee','eboss','manga'], loud=True):
 	# Read in SDSS-III schedule
-	schf = open(pwd+'/schedules/Sch_base.sdss3.txt.frm.dat', 'r')
+	schf = open(pwd+'/schedules/Sch_base.6yrs.txt.frm.dat', 'r')
 	schlines = schf.read().splitlines()
 	schf.close()
 	# Assign values to schedule dict list
