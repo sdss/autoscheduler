@@ -17,6 +17,10 @@ from __future__ import print_function
 from astropy import table
 import numpy as np
 from ..core.colourPrint import _color_text
+import sys
+import re
+
+ansi_escape = re.compile(r'\x1b[^m]*m')
 
 
 def printTabularOutput(plates, **kwargs):
@@ -29,7 +33,10 @@ def printTabularOutput(plates, **kwargs):
         print()
         pText = observedOutPuts[idx].pprint()
         for line in pText:
-            print(line)
+            if sys.stdout.isatty():
+                print(line)
+            else:
+                print(ansi_escape.sub('', line))
 
     return
 
