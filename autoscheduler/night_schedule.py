@@ -1,4 +1,5 @@
 import datetime
+import numpy as np
 
 # READ_SCHEDULE
 # DESCRIPTION: reads in scheduler formatted nightly schedule
