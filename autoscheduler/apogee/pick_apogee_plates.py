@@ -33,10 +33,10 @@ def pick_plates(apg, obs, par, times, lengths, schedule, loud=True):
 		
 		# Remove chosen design, if it is not stack-able.
 		if apg[chosen[cslot,0]].stack == 0: 
-			for c in chosen_designs: obs[c, range(len(times)) != cslot] = -10
+			for x in chosen_designs: obs[x, range(len(times)) != cslot] = -10
 		# This plate is stack-able, only remove non-adjacent blocks
 		else: 
-			for c in chosen_designs: obs[c, cslot-1:cslot+2] = -10
+			for x in chosen_designs: obs[x, cslot-1:cslot+2] = -10
 		
 	# Check for stacked fields
 	for t in range(len(times)-1):
@@ -79,13 +79,13 @@ def pick_plates(apg, obs, par, times, lengths, schedule, loud=True):
 			
 		# Determine block choices
 		if chosen[c,0] < 0: thisplate = -1
-		else: thisplate = apg[chosen[c,0]].plateid
+		else: thisplate = apg[int(chosen[c,0])].plateid
 		if chosen[c,1] < 0: thisbak1 = -1
-		else: thisbak1 = apg[chosen[c,1]].plateid
+		else: thisbak1 = apg[int(chosen[c,1])].plateid
 		if chosen[c,2] < 0: thisbak2 = -1
-		else: thisbak2 = apg[chosen[c,2]].plateid
+		else: thisbak2 = apg[int(chosen[c,2])].plateid
 	
-		picks.append({'obsmjd': thistime-2400000, 'exposure_length': thislength, 'plate': thisplate, 'first_backup': thisbak1, 'second_backup': thisbak2, 'visits_expected': apg[chosen[c,0]].vplan, 'visits_complete': apg[chosen[c,0]].vdone, 'sn': int(apg[chosen[c,0]].sn)})
+		picks.append({'obsmjd': thistime-2400000, 'exposure_length': thislength, 'plate': thisplate, 'first_backup': thisbak1, 'second_backup': thisbak2, 'visits_expected': apg[int(chosen[c,0])].vplan, 'visits_complete': apg[int(chosen[c,0])].vdone, 'sn': int(apg[int(chosen[c,0])].sn)})
 		
 	return picks
 	
