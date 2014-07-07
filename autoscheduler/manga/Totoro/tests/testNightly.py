@@ -17,8 +17,8 @@ from Totoro import Nightly
 def testNightly():
 
     pp = Nightly()
-    # pp.getFields()
-    # pp.simulate()
+    pp.getFields()
+    pp.simulate()
     pp.printTabularOutput()
 
     return pp
