@@ -33,13 +33,13 @@ def read_schedule(pwd, mjd=-1, surveys=['apogee','eboss','manga'], loud=True):
 	# Determine what line in the schedule to use for tonight
 	if mjd < 0: tonight = int(get_juldate() - 0.07)
 	else: tonight = 2400000 + int(mjd)
-	if loud: print ("[PY] Scheduling MJD %5d" % (tonight - 2400000))
+	if loud: print("[PY] Scheduling MJD %5d" % (tonight - 2400000))
 	
 	# Find line to use in the schedule file
 	currjd = [x for x in range(len(schedule)) if schedule[x]['jd'] == tonight]
 	# If this line doesn't exist, find the closest day
 	if not len(currjd) > 0:
-		currjd = np.argsort(np.abs(np.array(schedule[x]['jd'])-tonight))
+		currjd = np.argsort([np.abs(schedule[x]['jd']-tonight) for x in range(len(schedule))])
 		
 	# See if schedule needs to be adjusted based on what surveys are being run tonight
 	# Is eBOSS offline, but MaNGA isn't? MaNGA gets all of dark time.
