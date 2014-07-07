@@ -107,10 +107,8 @@ def get_plates(plan=False, loud=True):
 			tmp = [int(x) for x in dvdata[0][0].split(',')]
 			apg[i].apgver = 100*tmp[0] + 10*tmp[1] + tmp[2]
 			if len(tmp) > 3: apg[i].vplan = tmp[3]
-			else: apg[i].vplan = 3
 		else:
 			apg[i].apgver = 999
-			apg[i].vplan = 3
 	stage1_end = time()
 	if loud: print("[SQL] Read in APOGEE-II plates (%.3f sec)" % ((stage1_end - stage1_start)))
 	
