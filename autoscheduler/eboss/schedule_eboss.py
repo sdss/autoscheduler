@@ -32,6 +32,13 @@ def schedule_eboss(schedule, plan=False, loud=True):
     # Determine observability
     obs = observability(ebo, par, times, loud=loud)
     
+    of = open("eboss.txt", 'w')
+    for p in range(len(ebo)):
+    	obsstr = ''
+    	for i in obs[p,:]: obsstr += "%3d " % (i)
+        print("%5d %9.5f %9.5f %3d %6.2f %6.2f    %s " % (ebo[p].plateid, ebo[p].ra, ebo[p].dec, ebo[p].manual_priority, (ebo[p].ra+ebo[p].minha)/15, (ebo[p].ra+ebo[p].maxha)/15, obsstr), file=of)
+    of.close()
+    
     # Pick plates for tonight
     eboss_choices = pick_plates(ebo, par, times, obs, loud=loud)
 
