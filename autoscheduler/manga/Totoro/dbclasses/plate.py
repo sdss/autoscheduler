@@ -40,20 +40,6 @@ class Plates(list):
                 self, [Plate(plate.pk, format='pk', autocomplete=True)
                        for plate in plates])
 
-            # log.info('{0} fields acquired'.format(len(_fields)))
-
-            # if rejectCompleted:
-            #     nFields = len(_fields)
-            #     _incompleteFields = list(self)
-            #     _incompleteFields[:] = [xx for xx in self
-            #                             if xx.complete is True]
-
-            #     list.__init__(self, _incompleteFields)
-
-            #     log.info('{0} fields rejected because '.format(
-            #              nFields - len(_incompleteFields)) +
-            #              'they where completed.')
-
         else:
 
             raise TotoroNotImplemented('creating Plate instances from pk '
@@ -141,9 +127,36 @@ class Plate(BaseDBClass):
         if sets:
             self.loadSetsFromDB()
 
+    @classmethod
+    def fromPlateID(cls, plateid, **kwargs):
+
+        with session.begin():
+            plate = session.query(
+                plateDB.Plate).filter(plateDB.Plate.plate_id == plateid).one()
+
+        return cls(plate.pk, **kwargs)
+
     def checkPlate(self):
+
         if not hasattr(self, 'pk') or not hasattr(self, 'plate_id'):
             raise AttributeError('Plate instance has no pk or plate_id.')
+
+        if not self.isMaNGA:
+            raise TotoroError('this is not a MaNGA plate!')
+
+    @property
+    def isMaNGA(self):
+
+        with session.begin():
+            surveyCount = session.query(plateDB.Survey).join(
+                plateDB.PlateToSurvey).join(plateDB.Plate).filter(
+                    plateDB.Plate.pk == 11049,
+                    plateDB.Survey.label == 'MaNGA').count()
+
+        if surveyCount == 1:
+            return True
+
+        return False
 
     def getCoords(self):
 
