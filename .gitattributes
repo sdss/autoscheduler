@@ -28,6 +28,7 @@ autoscheduler/eboss/pick_eboss_plates.py -text
 autoscheduler/eboss/schedule_eboss.py -text
 autoscheduler/manga/Totoro/APOplateDB.py -text
 autoscheduler/manga/Totoro/__init__.py -text
+autoscheduler/manga/Totoro/backup/conversion.py.bak -text
 autoscheduler/manga/Totoro/backup/defaults.py -text
 autoscheduler/manga/Totoro/backup/logger.py.bak -text
 autoscheduler/manga/Totoro/backup/mangaDB.sql -text
@@ -72,7 +73,6 @@ autoscheduler/manga/Totoro/tests/testNightly.py -text
 autoscheduler/manga/Totoro/tests/testOutput.dat -text
 autoscheduler/manga/Totoro/tests/testPlanner.py -text
 autoscheduler/manga/Totoro/utils/__init__.py -text
-autoscheduler/manga/Totoro/utils/conversion.py.bak -text
 autoscheduler/manga/Totoro/utils/coordUtils.py -text
 autoscheduler/manga/Totoro/utils/coordinates.py -text
 autoscheduler/manga/Totoro/utils/mangaLogic.py -text
