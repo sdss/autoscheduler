@@ -70,7 +70,6 @@ autoscheduler/manga/Totoro/scheduler/scheduler.py -text
 autoscheduler/manga/Totoro/tests/__init__.py -text
 autoscheduler/manga/Totoro/tests/testMangaSampleParameters.py -text
 autoscheduler/manga/Totoro/tests/testNightly.py -text
-autoscheduler/manga/Totoro/tests/testOutput.dat -text
 autoscheduler/manga/Totoro/tests/testPlanner.py -text
 autoscheduler/manga/Totoro/utils/__init__.py -text
 autoscheduler/manga/Totoro/utils/coordUtils.py -text
