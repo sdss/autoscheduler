@@ -16,6 +16,8 @@ def schedule_eboss(schedule, plan=False, loud=True):
     
     # Divide eBOSS time into blocks
     times = np.arange(schedule['eboss_start'], schedule['eboss_end'], par['exposure']/60/24)
+    # Somehow this procedure gets run even when there is no eBOSS time
+    if len(times) == 0: return []
 
     # Get all plate information from the database
     ebo = get_plates(plan=plan, loud=loud)
