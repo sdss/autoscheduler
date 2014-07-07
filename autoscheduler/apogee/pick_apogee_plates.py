@@ -21,20 +21,22 @@ def pick_plates(apg, obs, par, times, lengths, schedule, loud=True):
 			if loud: print("[WARN] No good APG-II plates for block %1d. Max priority = %4.1f" % (cslot, max(obs[:,cslot])))
 			chosen[cslot,0] = -1
 		else: chosen[cslot,0] = priorder[-1]
-		# Pick backup plates
-		if obs[priorder[-2],cslot] <= 0: chosen[cslot,1] = -1
-		else: chosen[cslot,1] = priorder[-2]
-		if obs[priorder[-3],cslot] <= 0: chosen[cslot,2] = -1
-		else: chosen[cslot,2] = priorder[-3]
+		# Pick backup plates, or abort if no good plates
+		if obs[priorder[-2],cslot] <= 0:
+			chosen[cslot,1], chosen[cslot,2] = -1, -1
+			continue
+		chosen[cslot,1], chosen[cslot,2] = priorder[-2], priorder[-3]
 		
-		# Remove chosen plate, if it is not stack-able.
-		if apg[chosen[cslot,0]].stack == 0:
-			for i in range(len(times)):
-				if i != cslot: obs[chosen[cslot,0],i] = -10
+		# Find all plates on the same field, and similar designs (location ID + apogee version) to the chosen plate
+		chosen_field = [x for x in range(len(apg)) if apg[x].locationid == apg[chosen[cslot,0]].locationid]
+		chosen_designs = [x for x in chosen_field if apg[x].apgver == apg[chosen[cslot,0]].apgver]
+		
+		# Remove chosen design, if it is not stack-able.
+		if apg[chosen[cslot,0]].stack == 0: 
+			for c in chosen_designs: obs[c, range(len(times)) != cslot] = -10
 		# This plate is stack-able, only remove non-adjacent blocks
-		else:
-			for i in range(len(times)): 
-				if abs(i-cslot) > 1: obs[chosen[cslot,0],i] = -10
+		else: 
+			for c in chosen_designs: obs[c, cslot-1:cslot+2] = -10
 		
 	# Check for stacked fields
 	for t in range(len(times)-1):
