@@ -62,15 +62,24 @@ def computeAirmass(dec, ha, lat=config['observatory']['latitude'],
         return airmass
 
 
-def isPlateComplete(inp, inputType='plate_pk'):
+def isPlateComplete(inp, format='plate_pk', forceSetRearrangement=False):
+    """Returns if a plate is complete using the MaNGA logic."""
 
-    if inputType.lower() == 'plate_pk':
-        from ..dbclasses import Plate
-        plate = Plate(inp, format='pk')
-        return plate.complete
-    else:
-        raise TotoroNotImplemented('inputType={0} not yet implemented'.format(
-            inputType))
+    from ..dbclasses import Plate
+
+    format = format.lower()
+
+    if format in ['plate_pk', 'pk']:
+
+        plate = Plate(inp, format='pk',
+                      reorganiseExposures=forceSetRearrangement)
+
+    elif format in ['plate_id', 'id']:
+
+        plate = Plate.fromPlateID(
+            inp, reorganiseExposures=forceSetRearrangement)
+
+    return plate.isComplete
 
 
 def createSite(longitude=None, latitude=None, altitude=None,

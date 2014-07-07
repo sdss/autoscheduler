@@ -68,6 +68,7 @@ autoscheduler/manga/Totoro/scheduler/__init__.py -text
 autoscheduler/manga/Totoro/scheduler/observingPlan.py -text
 autoscheduler/manga/Totoro/scheduler/scheduler.py -text
 autoscheduler/manga/Totoro/tests/__init__.py -text
+autoscheduler/manga/Totoro/tests/testDB.py -text
 autoscheduler/manga/Totoro/tests/testMangaSampleParameters.py -text
 autoscheduler/manga/Totoro/tests/testNightly.py -text
 autoscheduler/manga/Totoro/tests/testPlanner.py -text
