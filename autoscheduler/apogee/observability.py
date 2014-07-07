@@ -32,8 +32,31 @@ def observability(apg, par, times, lengths, loud=True):
 		maxlst = float(apg[p].ra + apg[p].maxha) / 15
 		
 		for t in range(len(times)):
+			# Adjust LSTs for 24 hour wrapping
+			usedminlst, usedmaxlst = minlst, maxlst
+			if minlst < 0 and beglst[t] > 12 and endlst[t] > 12:
+				usedminlst += 24
+				usedmaxlst += 24
+			if maxlst > 24 and beglst[t] < 12 and endlst[t] < 12:
+				usedminlst -= 24
+				usedmaxlst -= 24
+			if beglst[t] > endlst[t]:
+				if minlst < 12: usedminlst += 24
+				if maxlst > 12: usedmaxlst -= 24
+				
+			# Adjust LSTs for Gaussian with 24 hour wrapping
+			if beglst[t] > endlst[t]:
+				lstsum = beglst[t]+endlst[t]-24
+				if platelst > 12: usedplatelst = platelst - 24
+				else: usedplatelst = platelst
+			else:
+				lstsum = beglst[t]+endlst[t]
+				if beglst[t] > 18 and platelst < 4: usedplatelst = platelst + 24
+				elif beglst[t] < 4 and platelst > 18: usedplatelst = platelst - 24
+				else: usedplatelst = platelst
+		
 			# Gaussian prioritization on time from transit
-			obsarr[p,t] += 50.0 * float(np.exp( -(platelst - (beglst[t]+endlst[t])/2 + lengths[t]/2)**2 / 2))
+			obsarr[p,t] += 50.0 * float(np.exp( -(usedplatelst - lstsum/2 + lengths[t]/2)**2 / 2))
 
 			# Moon avoidance
 			moondist = mpos[t] - platecoo

@@ -10,7 +10,7 @@ def observability(ebo, par, times, loud=True):
     apo = obs.Site(32.789278, -105.820278)
     obsarr = np.zeros([len(ebo), len(times)])
     beglst = [apo.localSiderialTime(x) for x in times]
-    endlst = [apo.localSiderialTime(times[x] + par['exposure']/24) for x in range(len(times))]
+    endlst = [apo.localSiderialTime(times[x] + par['exposure']/60/24) for x in range(len(times))]
     
     # Determine moon coordinates
     mpos = []
@@ -30,22 +30,45 @@ def observability(ebo, par, times, loud=True):
         maxlst = float(ebo[p].ra + ebo[p].maxha) / 15
         
         for t in range(len(times)): 
+            # Adjust LSTs for 24 hour wrapping
+            usedminlst, usedmaxlst = minlst, maxlst
+            if minlst < 0 and beglst[t] > 12 and endlst[t] > 12:
+                usedminlst += 24
+                usedmaxlst += 24
+            if maxlst > 24 and beglst[t] < 12 and endlst[t] < 12:
+            	usedminlst -= 24
+            	usedmaxlst -= 24
+            if beglst[t] > endlst[t]:
+            	if minlst < 12: usedminlst += 24
+            	if maxlst > 12: usedmaxlst -= 24
+            	
+            # Adjust LSTs for Gaussian with 24 hour wrapping
+            if beglst[t] > endlst[t]:
+            	lstsum = beglst[t]+endlst[t]-24
+            	if platelst > 12: usedplatelst = platelst - 24
+            	else: usedplatelst = platelst
+            else:
+                lstsum = beglst[t]+endlst[t]
+                if beglst[t] > 18 and platelst < 4: usedplatelst = platelst + 24
+                elif beglst[t] < 4 and platelst > 18: usedplatelst = platelst - 24
+                else: usedplatelst = platelst
+        
             # Gaussian prioritization on time from transit
-            obsarr[p,t] += 50.0 * float(np.exp( -(platelst - (beglst[t]+endlst[t])/2 + par['exposure']/2)**2 / 2))
+            obsarr[p,t] += 50.0 * float(np.exp( -(usedplatelst - lstsum/2 + par['exposure']/60/2)**2 / 2))
         
             # Moon avoidance
             moondist = mpos[t] - platecoo
             if moondist.d < par['moon_threshold']:
                 obsarr[p,t] = -3
                 continue
-        
+            
             # Determine whether HAs of block are within observational range
-            if beglst[t] < minlst or endlst[t] > maxlst: 
+            if beglst[t] < usedminlst or endlst[t] > usedmaxlst: 
                 obsarr[p,t] = -1
                 continue
         
             # Compute horiztonal coordinates
-            horz = apo.apparentCoordinates(platecoo, datetime=times[t] + par['exposure'] / 2 / 24)
+            horz = apo.apparentCoordinates(platecoo, datetime=times[t] + par['exposure'] / 60 / 2 / 24)
             secz = 1/np.cos((90.0 - horz[0].alt.d) * np.pi / 180)
             # Check whether any of the points contain a bad airmass value
             if secz < 1.003 or secz > par['maxz']: obsarr[p,t] = -2
