@@ -111,10 +111,15 @@ def createSite(longitude=None, latitude=None, altitude=None,
     return site
 
 
-def isIntervalInsideOther(aa, bb, wrapAt=360):
+def isIntervalInsideOther(aa, bb, wrapAt=360, onlyOne=False):
     """Checks if the interval aa (a numpy.ndarray of length 2) is inside bb."""
 
-    if ((aa[0] - bb[0]) % wrapAt < (bb[1]-bb[0]) % wrapAt) and \
-            ((aa[1] - bb[0]) % wrapAt < (bb[1]-bb[0]) % wrapAt):
+    p1 = ((aa[0] - bb[0]) % wrapAt < (bb[1]-bb[0]) % wrapAt)
+    p2 = ((aa[1] - bb[0]) % wrapAt < (bb[1]-bb[0]) % wrapAt)
+
+    if p1 and p2:
         return True
+    elif onlyOne and (p1 or p2):
+        return True
+
     return False
