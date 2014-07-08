@@ -25,7 +25,7 @@ session = Session()
 class Plugging(BaseDBClass):
 
     def __init__(self, inp, format='pk', autocomplete=True,
-                 sets=True, **kwargs):
+                 sets=False, **kwargs):
 
         self.sets = []
 

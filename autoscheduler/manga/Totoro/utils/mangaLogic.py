@@ -23,29 +23,34 @@ import numpy as np
 from ..exceptions import TotoroError
 from ..exceptions import TotoroUserWarning
 from warnings import warn
-from ..utils import mlhalimit
+from ..utils import mlhalimit, isIntervalInsideOther
 
 
 session = Session()
 
 
-def reorganiseExposures(plate_id, force=False, checkExposures=True):
+def rearrageExposures(plate, force=False, checkExposures=True):
     """Assigns a set to each exposure for a given plate."""
 
     from ..dbclasses.set import Set, Exposure
+    from ..dbclasses import Plate
 
-    log.debug('Reorganising exposures for plate_id=%d' % plate_id)
+    if isinstance(plate, Plate):
+        pass
+    else:
+        plate = Plate.fromPlateID(
+            plate, reorganiseExposures=False, sets=False)
+
+    log.debug('Reorganising exposures for plate_id=%d' % plate.plate_id)
 
     with session.begin():
-        plate = session.query(plateDB.Plate).filter(
-            plateDB.Plate.plate_id == plate_id).one()
         exposures = session.query(plateDB.Exposure).join(
-            plateDB.ExposureFlavor).join(plateDB.ExposureStatus).join(
-                plateDB.Observation).join(plateDB.PlatePointing).join(
-                    plateDB.Plate).filter(
-                        plateDB.Plate.pk == plate.pk and
-                        plateDB.ExposureFlavor.label == 'Science' and
-                        plateDB.ExposureStatus.label == 'Good').all()
+            plateDB.ExposureFlavor, plateDB.ExposureStatus,
+            plateDB.Observation, plateDB.PlatePointing, plateDB.Plate).filter(
+                plateDB.Plate.plate_id == plate.plate_id,
+                plateDB.ExposureFlavor.label == 'Science',
+                plateDB.ExposureStatus.label == 'Good').order_by(
+                    plateDB.Exposure.pk)
 
     expsToSet = []
     for exposure in exposures:
@@ -56,74 +61,60 @@ def reorganiseExposures(plate_id, force=False, checkExposures=True):
             continue
 
         if force:
+            # This should remove the set_pk of all the exposures in the set
+            # we are deleting.
             removeSet(exposure.mangadbExposure[0].set_pk)
             with session.begin():
                 exposure.mangadbExposure[0].set_pk = None
-            if checkExposure(exposure.mangadbExposure[0].pk, force=True):
-                expsToSet.append(exposure)
+            expsToSet.append(exposure)
         else:
-            if (exposure.mangadbExposure[0].set_pk is None and
-                    checkExposure(exposure.mangadbExposure[0].pk)):
+            if exposure.mangadbExposure[0].set_pk is None:
                 expsToSet.append(exposure)
 
     if force:
         sets = []
     else:
-
         with session.begin():
-            setsDB = session.query(mangaDB.Set).join(mangaDB.Exposure).join(
-                plateDB.Exposure).join(plateDB.Observation).join(
-                    plateDB.PlatePointing).join(plateDB.Plate).filter(
-                        plateDB.Plate.plate_id == plate_id and
-                        (mangaDB.Set.status.label == 'Good' or
-                         mangaDB.Set.status.label == 'Excellent'))
+            setsDB = session.query(mangaDB.Set).join(
+                mangaDB.Exposure, plateDB.Exposure, plateDB.Observation,
+                plateDB.PlatePointing, plateDB.Plate).filter(
+                    plateDB.Plate.plate_id == plate.plate_id,
+                    mangaDB.Set.status.label.in_(['Good', 'Excellent']))
 
         sets = [Set(setDB.pk, verbose=False) for setDB in setsDB]
 
     exps = [Exposure(expDB.pk, verbose=False) for expDB in expsToSet]
 
     for exp in exps:
-        toNewSet = True
-        expDitherPosition = exp.ditherPosition
-        expHARange = exp.getHARange()
+
+        if not exp.valid:
+            log.debug(
+                'not assigning mangaDB exposure pk={0} because is invalid'
+                .format(exp.manga_pk))
+            continue
+
+        createNewSet = True
 
         for set in sets:
-            setHALimits = set.getHALimits()
-            setDitherPositions = set.getDitherPositions()
 
-            if np.min(expHARange) >= np.min(setHALimits) and \
-                    np.max(expHARange) <= np.max(setHALimits):
+            if set.complete:
+                continue
 
-                if expDitherPosition != 'C' and \
-                        expDitherPosition not in setDitherPositions:
+            set.exposures.append(exp)
 
-                    exp.manga_set_pk = set.pk
-                    set.exposures.append(exp)
-
-                    with session.begin():
-                        expDB = session.query(mangaDB.Exposure).get(
-                            exp.manga_pk)
-                        expDB.set_pk = set.pk
-
-                    tmpSet = Set(set.pk, verbose=False)
-                    tmpSetQuality = tmpSet.getQuality()
-                    del tmpSet
-
-                    if tmpSetQuality in ['Good', 'Excellent', 'Incomplete']:
-                        log.debug(
-                            'added manga exposure pk=%d to set pk=%d' %
-                            (exp.pk, set.pk))
-                        toNewSet = False
-                        break
-                    else:
-                        with session.begin():
-                            expDB = session.query(mangaDB.Exposure).get(
-                                exp.manga_pk)
-                            expDB.set_pk = None
+            if set.getQuality() != 'Bad':
+                with session.begin():
+                    expDB = session.query(
+                        mangaDB.Exposure).get(exp.manga_pk)
+                    expDB.set_pk = set.pk
+                log.debug('added manga exposure pk={0} to set pk={1}'
+                          .format(exp.manga_pk, set.pk))
+                createNewSet = False
+                break
 
         # If the exposure has not been assigned to a set,
         # creates a new one.
-        if toNewSet:
+        if createNewSet:
             with session.begin():
                 newSet = mangaDB.Set()
                 session.add(newSet)
@@ -131,7 +122,7 @@ def reorganiseExposures(plate_id, force=False, checkExposures=True):
                 expDB = session.query(mangaDB.Exposure).get(exp.manga_pk)
                 expDB.set_pk = newSet.pk
             sets.append(Set(newSet.pk, verbose=False))
-            log.debug('added manga exposure pk=%d to set pk=%d' %
+            log.debug('added manga exposure pk=%d to new set pk=%d' %
                       (exp.manga_pk, newSet.pk))
 
 
@@ -153,86 +144,114 @@ def removeSet(set_pk):
             return True
 
 
-def checkExposure(mangadb_exposure_pk, flag=True, force=False):
+def checkExposure(inp, flag=False, format='pk'):
     """Checks if a given exposures meets MaNGA's quality criteria.
     If flag=True, the exposure will be assigned an exposure_status."""
 
-    with session.begin():
-        mangaExposure = session.query(
-            mangaDB.Exposure).get(mangadb_exposure_pk)
+    from ..dbclasses import Exposure, Plate
 
-    if mangaExposure is None:
+    status = True
+
+    if isinstance(inp, Exposure):
+        exposure = inp
+    else:
+        with session.begin():
+            if format == 'pk':
+                exposureDB = session.query(plateDB.Exposure).get(inp)
+            elif format == 'manga_pk':
+                exposureDB = session.query(plateDB.Exposure).join(
+                    mangaDB.Exposure).filter(mangaDB.Exposure == inp).one()
+            else:
+                raise ValueError('format must be pk or manga_pk.')
+
+        if exposureDB is None:
+            raise TotoroError('the exposure could not be found.')
+        else:
+            exposure = Exposure(exposureDB.pk, verbose=False)
+
+    if exposure.status == 'Override Bad':
         return False
+    elif exposure.status == 'Override Good':
+        return True
 
-    if not force:
-        if mangaExposure.status.label in ['Bad', 'Override Bad']:
-            return False
-        elif mangaExposure.status.label == 'Override Good':
-            return True
+    if exposure.ditherPosition not in ['C', 'E', 'N', 'S']:
+        log.info('mangaDB exposure pk={0} has a wrong dither position {1}'
+                 .format(exposure.manga_pk, exposure.ditherPosition))
+        status = False
+
+    plate = Plate(exposure.getPlatePK(), verbose=False,
+                  sets=False, pluggings=False)
+    visibilityWindow = np.array([-plate.mlhalimit, plate.mlhalimit])
+    HArange = exposure.getHARange()
+    if not isIntervalInsideOther(HArange, visibilityWindow, onlyOne=True):
+        log.debug('mangaDB exposure pk={0} HA range [{1}, {2}] is outside '
+                  'the visibility window of the plate [{3}, {4}]'
+                  .format(exposure.manga_pk, HArange[0], HArange[1],
+                          visibilityWindow[0], visibilityWindow[1]))
+        status = False
+
+    minExpTime = config['exposure']['minExpTime']
+    expTime = exposure.expTime
+    if expTime < minExpTime:
+        log.debug('mangaDB exposure pk={0} has an exposure time shorter than '
+                  'the minimum acceptable.'.format(exposure.manga_pk))
+        status = False
+
+    maxSeeing = config['exposure']['maxSeeing']
+    seeing = exposure.seeing
+    if seeing > maxSeeing:
+        log.debug('mangaDB exposure pk={0} has a seeing larger than '
+                  'the maximum acceptable.'.format(exposure.manga_pk))
+        status = False
 
     minSNred = config['SNthresholds']['exposureRed']
     minSNblue = config['SNthresholds']['exposureBlue']
-    minExpTime = config['exposure']['minExpTime']
-    maxSeeing = config['exposure']['maxSeeing']
+    snArray = exposure.getSN2Array()
 
-    seeing = mangaExposure.seeing
-    sn2Red = np.array([mangaExposure.sn2values[0].r1_sn2,
-                       mangaExposure.sn2values[0].r2_sn2])
-    sn2Blue = np.array([mangaExposure.sn2values[0].b1_sn2,
-                        mangaExposure.sn2values[0].b2_sn2])
-    expTime = mangaExposure.platedbExposure.exposure_time
+    if np.any(snArray[0:2] < minSNblue) or np.any(snArray[2:] < minSNred):
+        log.debug('mangaDB exposure pk={0} has a SN2(s) lower than '
+                  'the minimum acceptable.'.format(exposure.manga_pk))
+        status = False
 
-    if expTime < minExpTime or np.any(sn2Red < minSNred) or \
-            np.any(sn2Blue < minSNblue) or seeing > maxSeeing:
-        if flag:
-            setExposure(mangadb_exposure_pk, 'Override Bad')
-        return False
-    else:
-        if flag:
-            setExposure(mangadb_exposure_pk, 'Good', override=False)
+    if flag and status is False:
+        setExposureStatus(exposure.pk, 'Override Bad')
 
-        return True
+    return status
 
 
-def setExposure(mangadb_exposure, status, format='pk', override=False):
-    """Sets the status of a mangaDB.Exposure to Override Bad."""
-
-    if format == 'pk':
-        with session.begin():
-            mangaExposure = session.query(
-                mangaDB.Exposure).get(mangadb_exposure)
-
-        if mangaExposure is None:
-            raise TotoroError('no mangaDB.Exposure with pk={0}'.format(
-                mangadb_exposure))
-
-    else:
-        mangaExposure = mangadb_exposure
+def setExposureStatus(inp, status, format='pk'):
+    """Sets the status of an exposure."""
 
     with session.begin():
-        if override and 'Override' not in status:
-            status = 'Override ' + status
+        if format == 'pk':
+            exposure = session.query(mangaDB.Exposure).join(
+                plateDB.Exposure).filter(plateDB.Exposure.pk == inp.pk).one()
+        elif format == 'manga_pk':
+            exposure = session.query(mangaDB.Exposure).get(inp)
+        else:
+            raise ValueError('format must be pk or manga_pk.')
 
-        statusPK = session.query(mangaDB.ExposureStatus).filter(
-            mangaDB.ExposureStatus.label == status).one().pk
+    with session.begin():
+        statusPK = session.query(mangaDB.ExposureStatus.pk).filter(
+            mangaDB.ExposureStatus.label == status).scalar()
 
-        if mangaExposure.exposure_status_pk == statusPK:
-            return True
+        exposure.exposure_status_pk = statusPK
 
-        mangaExposure.exposure_status_pk = statusPK
-
-    log.debug('mangaDB exposure pk=%d set to %s' % (mangaExposure.pk, status))
+    log.debug('mangaDB exposure pk={0} set to {1}'.format(exposure.pk, status))
 
     return True
 
 
-def checkSet(set_pk, verbose=True):
+def checkSet(input, verbose=True):
     """Checks if a set meets MaNGA's quality criteria. Returns one of the
     following values: 'Good', 'Excellent', 'Poor', 'Bad'."""
 
     from ..dbclasses.set import Set
 
-    set = Set(set_pk, verbose=False)
+    if isinstance(input, Set):
+        set = input
+    else:
+        set = Set(input, verbose=False)
 
     dec = set.exposures[0].dec
     haLimit = mlhalimit(dec)

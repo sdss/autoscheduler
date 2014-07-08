@@ -21,7 +21,7 @@ from ..utils import mlhalimit, isPlateComplete
 import sqlalchemy
 from ..exceptions import TotoroNotImplemented, TotoroError
 from .. import log, config
-from ..utils import reorganiseExposures
+from ..utils import rearrageExposures
 import numpy as np
 from ..utils import createSite
 
@@ -37,7 +37,8 @@ class Plates(list):
             plates = self.getPlates(**kwargs)
 
             list.__init__(
-                self, [Plate(plate.pk, format='pk', autocomplete=True)
+                self, [Plate(plate.pk, format='pk',
+                             autocomplete=True, **kwargs)
                        for plate in plates])
 
         else:
@@ -88,14 +89,14 @@ class Plates(list):
 class Plate(BaseDBClass):
 
     def __init__(self, inp, format='pk', autocomplete=True,
-                 pluggings=True, sets=True, reorganiseExposures=True,
-                 **kwargs):
+                 pluggings=True, sets=True, rearrageExposures=False,
+                 verbose=True, **kwargs):
 
         self.pluggings = None
         self.sets = None
         self._complete = None
 
-        self._reorganiseExposures = reorganiseExposures
+        self._rearrageExposures = rearrageExposures
 
         self.site = createSite()
 
@@ -110,8 +111,9 @@ class Plate(BaseDBClass):
         else:
             self.coords = self.getCoords()
 
-        log.debug('Loaded plate with pk={0}, plateid={1}'.format(
-            self.pk, self.plate_id))
+        if verbose:
+            log.debug('Loaded plate with pk={0}, plateid={1}'.format(
+                self.pk, self.plate_id))
 
         if 'dust' in kwargs:
             self.dust = kwargs['dust']
@@ -150,7 +152,7 @@ class Plate(BaseDBClass):
         with session.begin():
             surveyCount = session.query(plateDB.Survey).join(
                 plateDB.PlateToSurvey).join(plateDB.Plate).filter(
-                    plateDB.Plate.pk == 11049,
+                    plateDB.Plate.pk == self.pk,
                     plateDB.Survey.label == 'MaNGA').count()
 
         if surveyCount == 1:
@@ -184,7 +186,7 @@ class Plate(BaseDBClass):
 
         for plugging in pluggings:
             self.pluggings.append(Plugging(plugging.pk, autocomplete=True,
-                                           format='pk', sets=True))
+                                           format='pk', sets=False))
 
     def loadSetsFromDB(self):
 
@@ -192,8 +194,8 @@ class Plate(BaseDBClass):
 
         self.sets = []
 
-        if self._reorganiseExposures:
-            status = reorganiseExposures(self.plate_id, force=True)
+        if self._rearrageExposures:
+            status = rearrageExposures(self, force=True)
 
             if status is False:
                 raise TotoroError('failed while reorganising exposures.')

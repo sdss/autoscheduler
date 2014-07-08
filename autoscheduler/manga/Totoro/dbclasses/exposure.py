@@ -73,6 +73,9 @@ class Exposure(BaseDBClass):
         for column in mangaSN.__table__.columns.keys():
             setattr(self, 'manga_' + column, getattr(mangaSN, column))
 
+        self.status = mangaExposure.status.label
+        self.expTime = mangaExposure.platedbExposure.exposure_time
+
     def getCoordinates(self):
 
         with session.begin():
@@ -116,7 +119,7 @@ class Exposure(BaseDBClass):
         if self._valid is not None:
             return self._valid
         else:
-            return checkExposure(self.manga_pk)
+            return checkExposure(self)
 
     @valid.setter
     def valid(self, value):
@@ -124,14 +127,11 @@ class Exposure(BaseDBClass):
 
     @property
     def ditherPosition(self):
-        return self.manga_dither_position[0]
+        return self.manga_dither_position[0].upper()
 
-    @ditherPosition.setter
-    def ditherPosition(self, value):
-        with session.begin():
-            exposure = session.query(mangaDB.Exposure).get(self.pk)
-            exposure.dither_position = value.upper()
-        self.dither_position = value.upper()
+    @property
+    def seeing(self):
+        return self.manga_seeing
 
     def getUTObserved(self):
 
@@ -150,6 +150,16 @@ class Exposure(BaseDBClass):
             lst1, date=tStart.datetime, utc=True, returntype='datetime'))
 
         return (ut0, ut1)
+
+    def getPlatePK(self):
+
+        with session.begin():
+            platePK = session.query(plateDB.Plate.pk).join(
+                plateDB.PlatePointing, plateDB.Observation,
+                plateDB.Exposure).filter(
+                    plateDB.Exposure.pk == self.pk).scalar()
+
+        return platePK
 
     # def __init__(self, startTime=None, ID=None, expTime=EXPTIME(),
     #              ditherPos='C', obsType='sci', HAstart=0.0,

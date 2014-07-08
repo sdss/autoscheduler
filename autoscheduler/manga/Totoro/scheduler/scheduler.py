@@ -104,7 +104,8 @@ class Nightly(BaseScheduler):
 
         log.info('Finding plugged plates.')
         self.plates = Plates(onlyPlugged=True, onlyAtAPO=True,
-                             onlyIncomplete=False, **kwargs)
+                             onlyIncomplete=False, rearrageExposure=True,
+                             **kwargs)
 
         if len(self.plates) == 0:
             log.info('no plugged plates found.')

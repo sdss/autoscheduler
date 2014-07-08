@@ -95,7 +95,7 @@ class Set(BaseDBClass):
 
         validExposures = []
         for exposure in self.exposures:
-            if checkExposure(exposure.manga_pk):
+            if checkExposure(exposure):
                 validExposures.append(exposure)
 
         if len(validExposures) == 0:
@@ -107,7 +107,7 @@ class Set(BaseDBClass):
     def getQuality(self):
         """Returns the quality of the set (Excellent, Good, Poor)."""
 
-        return checkSet(self.pk, verbose=False)
+        return checkSet(self, verbose=False)
 
     def getValidExposures(self):
 
@@ -143,6 +143,12 @@ class Set(BaseDBClass):
 
         return (ut0, ut1)
 
+    @property
+    def complete(self):
+        if self.getQuality() != 'Incomplete':
+            return True
+        else:
+            return False
 
     # def _getCompletionStatus(self):
 
