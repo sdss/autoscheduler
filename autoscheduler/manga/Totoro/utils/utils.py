@@ -62,7 +62,7 @@ def computeAirmass(dec, ha, lat=config['observatory']['latitude'],
         return airmass
 
 
-def isPlateComplete(inp, format='plate_pk', forceSetRearrangement=False):
+def isPlateComplete(inp, format='plate_pk'):
     """Returns if a plate is complete using the MaNGA logic."""
 
     from ..dbclasses import Plate
@@ -71,13 +71,11 @@ def isPlateComplete(inp, format='plate_pk', forceSetRearrangement=False):
 
     if format in ['plate_pk', 'pk']:
 
-        plate = Plate(inp, format='pk',
-                      reorganiseExposures=forceSetRearrangement)
+        plate = Plate(inp, format='pk', rearrageExposures=True)
 
     elif format in ['plate_id', 'id']:
 
-        plate = Plate.fromPlateID(
-            inp, reorganiseExposures=forceSetRearrangement)
+        plate = Plate.fromPlateID(inp, rearrageExposures=True)
 
     return plate.isComplete
 
