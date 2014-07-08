@@ -1,14 +1,15 @@
-from Totoro import Session, plateDB
+from Totoro import Session, plateDB, mangaDB
 
 session = Session()
 
-with session.begin():
-            survey = session.query(plateDB.Survey).join(
-                plateDB.PlateToSurvey).join(plateDB.Plate).filter(
-                    plateDB.Plate.pk == 11049, plateDB.Survey.label=='MaNGA').count()
+# with session.begin():
+#             survey = session.query(plateDB.Survey).join(
+#                 plateDB.PlateToSurvey).join(plateDB.Plate).filter(
+#                     plateDB.Plate.pk == 11049, plateDB.Survey.label=='MaNGA').count()
 
-print(survey)
+# print(survey)
 
 from Totoro.utils import isPlateComplete
 
 print(isPlateComplete(7495, format='id'))
+
