@@ -183,7 +183,7 @@ def checkExposure(inp, flag=False, format='pk'):
                   sets=False, pluggings=False)
     visibilityWindow = np.array([-plate.mlhalimit, plate.mlhalimit])
     HArange = exposure.getHARange()
-    if not isIntervalInsideOther(HArange, visibilityWindow, onlyOne=True):
+    if not isIntervalInsideOther(HArange, visibilityWindow, onlyOne=False):
         log.debug('mangaDB exposure pk={0} HA range [{1}, {2}] is outside '
                   'the visibility window of the plate [{3}, {4}]'
                   .format(exposure.manga_pk, HArange[0], HArange[1],
