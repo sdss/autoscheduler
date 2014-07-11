@@ -40,6 +40,7 @@ def pick_plates(apg, obs, par, times, lengths, schedule, loud=True):
 		
 	# Check for stacked fields
 	for t in range(len(times)-1):
+		if t+1 >= len(times): continue
 		if chosen[t,0] < 0: continue
 		if chosen[t,0] != chosen[t+1,0]: continue
 		if loud: print("[PY] APG-II stack chosen")
