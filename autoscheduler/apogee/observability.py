@@ -3,7 +3,7 @@ from time import time
 import numpy as np
 import astropysics.coords as coo
 import astropysics.obstools as obs
-from ..moonpos import moonpos
+from sdss.utilities.idlasl import moonpos
 
 def observability(apg, par, times, lengths, loud=True):
 	obs_start = time()
