@@ -137,7 +137,7 @@ def moonpos(jd, radian=False):
 		geolong = lamb
 		geolat = beta
 
-	return ra[0], dec[0]
+	return ra[0], dec[0], dis, geolong, geolat
 	
 	
 	

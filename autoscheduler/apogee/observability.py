@@ -15,8 +15,8 @@ def observability(apg, par, times, lengths, loud=True):
 	# Determine moon coordinates
 	mpos = []
 	for t in range(len(times)):
-		moonra, moondec = moonpos(times[t])
-		mpos.append(coo.ICRSCoordinates(moonra, moondec))
+		mooncoords = moonpos(times[t])
+		mpos.append(coo.ICRSCoordinates(mooncoords[0], mooncoords[1]))
 	
 	df = open('apogeeobs.txt', 'w')
 	# Loop over all plates
