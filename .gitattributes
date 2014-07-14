@@ -80,7 +80,6 @@ autoscheduler/manga/Totoro/utils/tabularOutput.py -text
 autoscheduler/manga/Totoro/utils/utils.py -text
 autoscheduler/manga/Totoro/version.py -text
 autoscheduler/manga/__init__.py -text
-autoscheduler/moonpos.py -text
 autoscheduler/night_schedule.py -text
 documentation/README.txt -text
 documentation/autoscheduler[!!-~]diagram.graffle -text
