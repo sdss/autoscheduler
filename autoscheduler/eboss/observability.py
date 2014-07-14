@@ -15,8 +15,8 @@ def observability(ebo, par, times, loud=True):
     # Determine moon coordinates
     mpos = []
     for t in range(len(times)):
-        moonra, moondec = moonpos(times[t])
-        mpos.append(coo.ICRSCoordinates(moonra, moondec))
+        mooncoords = moonpos(times[t])
+        mpos.append(coo.ICRSCoordinates(mooncoords[0], mooncoords[1]))
     
     # Loop over all plates
     for p in range(len(ebo)):
