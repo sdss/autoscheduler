@@ -161,66 +161,11 @@ class Exposure(BaseDBClass):
 
         return platePK
 
-    # def __init__(self, startTime=None, ID=None, expTime=EXPTIME(),
-    #              ditherPos='C', obsType='sci', HAstart=0.0,
-    #              SN_blue=(0.0, 0.0), SN_red=(0.0, 0.0), Set=None,
-    #              avgSeeing=AVG_SEEING(), valid=None, **kwargs):
+    def getMJD(self):
 
-    #     if startTime is None:
-    #         raise ValueError('startTime must be specified.')
-    #     if not isinstance(startTime, time.Time):
-    #         raise ValueError('startTime must be an instance of '
-    #                          'astropy.time.Time.')
-    #     self.startTime = startTime
+        with session.begin():
+            mjd = session.query(plateDB.Observation.mjd).join(
+                plateDB.Exposure).filter(
+                    plateDB.Exposure.pk == self.pk).scalar()
 
-    #     if not isinstance(expTime, Real):
-    #         raise ValueError('expTime must be a number in minutes.')
-    #     self.expTime = expTime
-
-    #     self.ditherPos = ditherPos.upper()
-    #     if self.ditherPos not in DITHER_POSITIONS():
-    #         raise ValueError(
-    #             'invalid dither position {0}.'.format(self.ditherPos))
-
-    #     self.obsType = obsType.lower()
-    #     if self.obsType not in EXPTYPES():
-    #         raise ValueError('invalid obsType {0}.'.format(self.obsType))
-
-    #     self.set = Set
-    #     self.ID = ID
-
-    #     if isinstance(HAstart, coo.Longitude):
-    #         self.HAstart = HAstart
-    #     elif isinstance(HAstart, Real):
-    #         self.HAstart = coo.Longitude(HAstart, unit=uu.hour)
-    #     else:
-    #         raise ValueError('HAstart must be an '
-    #                          'astropy.coordinates.Longitude '
-    #                          'object or a number.')
-
-    #     self.SN_red = np.array(SN_red)
-    #     self.SN_blue = np.array(SN_blue)
-
-    #     if not isinstance(avgSeeing, Real):
-    #         raise ValueError('avgSeeing must be a number in minutes.')
-    #     self.avgSeeing = avgSeeing
-
-    #     self._complete = None
-
-    # @property
-    # def HAend(self):
-    #     return coo.Longitude(
-    #         self.HAstart.hour + self.expTime / 60, unit=uu.hour,
-    #         wrap_angle='180d')
-
-    # @property
-    # def valid(self):
-
-    #     if self._complete is not None and isinstance(self._complete, bool):
-    #         return self._complete
-    #     else:
-    #         return self._checkValidity()
-
-    # @valid.setter
-    # def valid(self, value):
-    #     self._complete = value
+        return int(mjd)

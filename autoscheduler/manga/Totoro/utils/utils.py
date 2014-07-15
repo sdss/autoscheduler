@@ -14,7 +14,6 @@ Revision history:
 
 from __future__ import division
 from __future__ import print_function
-from ..exceptions import TotoroNotImplemented
 import numpy as np
 from .. import config
 from astropysics import obstools
@@ -62,7 +61,7 @@ def computeAirmass(dec, ha, lat=config['observatory']['latitude'],
         return airmass
 
 
-def isPlateComplete(inp, format='plate_pk'):
+def isPlateComplete(inp, format='plate_id'):
     """Returns if a plate is complete using the MaNGA logic."""
 
     from ..dbclasses import Plate
@@ -70,14 +69,45 @@ def isPlateComplete(inp, format='plate_pk'):
     format = format.lower()
 
     if format in ['plate_pk', 'pk']:
-
         plate = Plate(inp, format='pk', rearrageExposures=True)
-
     elif format in ['plate_id', 'id']:
-
         plate = Plate.fromPlateID(inp, rearrageExposures=True)
 
     return plate.isComplete
+
+
+def getAPOcomplete(inp, format='plate_id'):
+    """Returns a dictionary with the APOcomplete output."""
+
+    from ..dbclasses import Plate
+    from collections import OrderedDict
+
+    format = format.lower()
+    inp = np.atleast_1d(inp)
+
+    APOcomplete = OrderedDict()
+
+    for ii in inp:
+
+        if format in ['plate_pk', 'pk']:
+            plate = Plate(ii, format='pk', rearrageExposures=True)
+        elif format in ['plate_id', 'id']:
+            plate = Plate.fromPlateID(ii, rearrageExposures=True)
+
+        APOcomplete[plate.plate_id] = []
+
+        for set in plate.sets:
+            for exp in set.exposures:
+
+                mjd = exp.getMJD()
+                ss = set.pk
+                dPos = exp.ditherPosition.upper()
+                nExp = exp.exposure_no
+
+                APOcomplete[plate.plate_id].append(
+                    [plate.plate_id, mjd, ss, dPos, nExp])
+
+    return APOcomplete
 
 
 def createSite(longitude=None, latitude=None, altitude=None,
