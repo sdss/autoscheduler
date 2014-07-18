@@ -10,7 +10,7 @@ from autoscheduler import s4as
 
 index_page = flask.Blueprint("index_page", __name__)
 
-@index_page.route('/', methods=['GET'])
+@index_page.route('/autoscheduler', methods=['GET'])
 def func_name():
     
     # Get parameters from URL
