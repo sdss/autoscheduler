@@ -16,7 +16,8 @@ def read_schedule(pwd, mjd=-1, surveys=['apogee','eboss','manga'], loud=True):
 	OUTPUT: schedule -- list of dicts that contain the relevant survey times for each night.
 	'''
 	# Read in SDSS-III schedule
-	schf = open(pwd+'/schedules/Sch_base.6yrs.txt.frm.dat', 'r')
+	schdir = '/'.join(pwd.split('/')[0:-2]) + "/schedules/"
+	schf = open(schdir+'Sch_base.6yrs.txt.frm.dat', 'r')
 	schlines = schf.read().splitlines()
 	schf.close()
 	# Assign values to schedule dict list
@@ -28,7 +29,7 @@ def read_schedule(pwd, mjd=-1, surveys=['apogee','eboss','manga'], loud=True):
 						 'bright_end': float(tmp[5]), 'dark_start': float(tmp[6]), 'dark_end': float(tmp[7]), 
 						 'eboss_start': float(tmp[8]),'eboss_end': float(tmp[9]), 'manga_start': float(tmp[10]), 'manga_end': float(tmp[11])})
 	# Read in SDSS-IV schedule
-	schf = open(pwd+'/schedules/Sch_base.6yrs.txt.frm.dat', 'r')
+	schf = open(schdir+'Sch_base.6yrs.txt.frm.dat', 'r')
 	schlines = schf.read().splitlines()
 	schf.close()
 	# Assign values to schedule dict list

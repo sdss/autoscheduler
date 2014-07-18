@@ -4,7 +4,7 @@
 
 # Import necessary modules
 from __future__ import print_function, division
-import autoscheduler
+from autoscheduler import night_schedule, assign_carts
 import autoscheduler.apogee as apg
 import autoscheduler.eboss as ebo
 from time import time
@@ -16,7 +16,7 @@ def run_scheduler(plan=False, mjd=-1, surveys=['apogee','eboss','manga'], loud=T
 	# Read in schedule file
 	pwd = os.path.dirname(os.path.realpath(__file__))
 	schedule_start_time = time()
-	schedule = autoscheduler.read_schedule(pwd, mjd=mjd, surveys=surveys, loud=loud)
+	schedule = night_schedule.read_schedule(pwd, mjd=mjd, surveys=surveys, loud=loud)
 	schedule_end_time = time()
 	if loud: print("[PY] Schedule read in complete (%.3f sec)" % (schedule_end_time - schedule_start_time))
 	
@@ -33,7 +33,7 @@ def run_scheduler(plan=False, mjd=-1, surveys=['apogee','eboss','manga'], loud=T
 		eboss_choices = ebo.schedule_eboss(schedule, plan=plan, loud=loud)
 	
 	# Take results and assign to carts
-	apgcart, mancart, ebocart = autoscheduler.assign_carts(apogee_choices, manga_choices, eboss_choices, loud=loud)
+	apgcart, mancart, ebocart = assign_carts.assign_carts(apogee_choices, manga_choices, eboss_choices, loud=loud)
 	
 	as_end_time = time()
 	if loud: print("[PY] run_scheduler complete in (%.3f sec)" % ((as_end_time - as_start_time)))
