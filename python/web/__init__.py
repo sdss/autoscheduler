@@ -76,13 +76,15 @@ def create_app(debug=False):
     print("Server_name = {0}".format(app.config["SERVER_NAME"]))
     
     # Load Modules as needed
-    execfile(app.config['MODULES_INIT_SCRIPT'], globals())
-    module('load', 'sdss/current')
-    try:
-        import sdss
-    except ImportError:
-        print_error("The Python module 'sdss' could not be loaded.")
-        sys.exit(1)
+    #execfile(app.config['MODULES_INIT_SCRIPT'], globals())
+    #module('load', 'sdss_python_module/trunk')
+    #print(os.environ['PYTHONPATH'].split(os.pathsep), sys.path, os.environ['SDSS_PYTHON_MODULE_DIR'])
+    #import sdss
+    #try:
+    #    import sdss
+    #except ImportError:
+    #    print_error("The Python module 'sdss' could not be loaded.")
+    #    sys.exit(1)
     
     
     # This "with" is necessary to prevent exceptions of the form:
