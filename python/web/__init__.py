@@ -75,6 +75,16 @@ def create_app(debug=False):
     #print(app.config)
     print("Server_name = {0}".format(app.config["SERVER_NAME"]))
     
+    # Load Modules as needed
+    execfile(app.config['MODULES_INIT_SCRIPT'], globals())
+    module('load', 'sdss/current')
+    try:
+        import sdss
+    except ImportError:
+        print_error("The Python module 'sdss' could not be loaded.")
+        sys.exit(1)
+    
+    
     # This "with" is necessary to prevent exceptions of the form:
     #    RuntimeError: working outside of application context
     with app.app_context():
