@@ -39,6 +39,7 @@ def schedule_apogee(schedule, plan=False, loud=True):
 
 	# Get all plate information from the database
 	apg = get_plates(plan=plan, loud=loud)
+	if len(apg) == 0: return []
 	
 	# Prioritize all plates
 	set_priorities(apg, par, schedule, loud=loud)
