@@ -1,11 +1,20 @@
 import datetime
 import numpy as np
 
-# READ_SCHEDULE
-# DESCRIPTION: reads in scheduler formatted nightly schedule
-# INPUT: filename -- name of the base schedule file supplied by survey coordinator
-# OUTPUT: schedule -- list of dicts that contain the relevant survey times for each night.
+def get_juldate():
+	dt = datetime.datetime.utcnow()
+	L = int((dt.month-14.0)/12.0)
+	julian = dt.day - 32075 + int(1461*(dt.year+4800l+L)/4.0) + int(367*(dt.month - 2-L*12)/12.0) - int(int(3*((dt.year+4900l+L)/100.0))/4.0)
+	julian += ((dt.hour/24.0) + (dt.minute/(24.0*60.0)) + (dt.second/86400.) + (dt.microsecond/(86400.*1e6)) - 0.5)	
+	return julian
+
 def read_schedule(pwd, mjd=-1, surveys=['apogee','eboss','manga'], loud=True):
+	'''
+	read_schedule: reads in scheduler formatted nightly schedule
+	
+	INPUT: filename -- name of the base schedule file supplied by survey coordinator
+	OUTPUT: schedule -- list of dicts that contain the relevant survey times for each night.
+	'''
 	# Read in SDSS-III schedule
 	schf = open(pwd+'/schedules/Sch_base.6yrs.txt.frm.dat', 'r')
 	schlines = schf.read().splitlines()
@@ -31,9 +40,12 @@ def read_schedule(pwd, mjd=-1, surveys=['apogee','eboss','manga'], loud=True):
 						 'eboss_start': float(tmp[8]),'eboss_end': float(tmp[9]), 'manga_start': float(tmp[10]), 'manga_end': float(tmp[11])})
 						 
 	# Determine what line in the schedule to use for tonight
-	if mjd < 0: tonight = int(get_juldate() - 0.07)
-	else: tonight = 2400000 + int(mjd)
-	if loud: print("[PY] Scheduling MJD %5d" % (tonight - 2400000))
+	if mjd < 0:
+		tonight = int(get_juldate() - 0.07)
+	else:
+		tonight = 2400000 + int(mjd)
+	if loud:
+		print("[PY] Scheduling MJD %5d" % (tonight - 2400000))
 	
 	# Find line to use in the schedule file
 	currjd = [x for x in range(len(schedule)) if schedule[x]['jd'] == tonight]
@@ -71,10 +83,3 @@ def read_schedule(pwd, mjd=-1, surveys=['apogee','eboss','manga'], loud=True):
 	
 	return schedule[currjd[0]]
 	
-	
-def get_juldate():
-	dt = datetime.datetime.utcnow()
-	L = int((dt.month-14.0)/12.0)
-	julian = dt.day - 32075 + int(1461*(dt.year+4800l+L)/4.0) + int(367*(dt.month - 2-L*12)/12.0) - int(int(3*((dt.year+4900l+L)/100.0))/4.0)
-	julian += ((dt.hour/24.0) + (dt.minute/(24.0*60.0)) + (dt.second/86400.) + (dt.microsecond/(86400.*1e6)) - 0.5)	
-	return julian

@@ -16,11 +16,13 @@ class TotoroNotImplemented():
 
 class TotoroWarning(Warning):
     """Base warning for Totoro."""
-
+    pass
 
 class TotoroUserWarning(UserWarning, TotoroWarning):
     """The primary warning class."""
+    pass
 
 
 class FieldWarning(TotoroWarning):
     """A warning for Field."""
+    pass
