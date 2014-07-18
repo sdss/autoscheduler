@@ -86,8 +86,8 @@ python/autoscheduler/manga/Totoro/utils/utils.py -text
 python/autoscheduler/manga/Totoro/version.py -text
 python/autoscheduler/manga/__init__.py -text
 python/autoscheduler/night_schedule.py -text
+python/autoscheduler/s4as.py -text
 python/run_scheduler_web.py -text
-python/s4as.py -text
 python/web/__init__.py -text
 python/web/color_print.py -text
 python/web/config.py -text

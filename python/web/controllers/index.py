@@ -6,7 +6,7 @@ import flask
 from flask import request, render_template, send_from_directory, current_app
 #from ..model.database import db
 
-import s4as
+from autoscheduler import s4as
 
 index_page = flask.Blueprint("index_page", __name__)
 
