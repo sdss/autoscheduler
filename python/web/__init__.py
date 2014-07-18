@@ -63,7 +63,7 @@ def create_app(debug=False):
             import uwsgi
             server_config_file = os.path.join(os.path.dirname(os.path.abspath(__file__)),
                                               'configuration_files',
-                                              uwsgi.opt['xxxx']) # to set
+                                              uwsgi.opt['flask-config-file']) # to set
         except ImportError:
             print_error("Trying to run in production mode, but not running under uWSGI.\n"
                        "You might try running again with the '--debug' flag.")
