@@ -1,5 +1,4 @@
 * text=auto !eol
-/__init__.py -text
 documentation/README.md -text
 documentation/autoscheduler[!!-~]diagram.graffle -text
 documentation/autoscheduler[!!-~]diagram.pdf -text
