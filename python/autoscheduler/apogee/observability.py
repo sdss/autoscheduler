@@ -18,7 +18,7 @@ def observability(apg, par, times, lengths, loud=True):
 		mooncoords = moonpos(times[t])
 		mpos.append(coo.ICRSCoordinates(mooncoords[0], mooncoords[1]))
 	
-	df = open('apogeeobs.txt', 'w')
+	if loud: df = open('apogeeobs.txt', 'w')
 	# Loop over all plates
 	for p in range(len(apg)):
 		# Initalize obsarr row
@@ -76,11 +76,11 @@ def observability(apg, par, times, lengths, loud=True):
 			badsecz = [x for x in secz if x < 1.003 or x > par['maxz']]
 			if len(badsecz) > 0: obsarr[p,t] = -2
 			
-		print(apg[p].plateid, minlst, maxlst, apo.localTime(minlst, utc=True), apo.localTime(maxlst, utc=True), obsarr[p,:], file=df)
+		if loud: print(apg[p].plateid, minlst, maxlst, apo.localTime(minlst, utc=True), apo.localTime(maxlst, utc=True), obsarr[p,:], file=df)
 			
 	obs_end = time()
 	if loud: print("[PY] Determined APOGEE-II observability (%.3f sec)" % (obs_end - obs_start))
 
-	df.close()
+	if loud: df.close()
 	
 	return obsarr
