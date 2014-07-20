@@ -10,7 +10,7 @@ from pick_eboss_plates import pick_plates
 # DESCRIPTION: Main eBOSS scheduling routine.
 # INPUT: schedule -- dictionary defining important schedule times throughout the night
 # OUTPUT: eboss_choices -- dictionary list containing plate choices + observing times for tonight 
-def schedule_eboss(schedule, plan=False, loud=True):
+def schedule_eboss(schedule, errors, plan=False, loud=True):
     # Define eBOSS observing parameters
     par = {'exposure': 16.5, 'ncarts': 8, 'maxz': 2.0, 'moon_threshold': 30, 'snr_avg': 9.0, 'snb_avg': 4.0, 'snr': 25, 'snb': 10}
     

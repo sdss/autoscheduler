@@ -10,7 +10,7 @@ from pick_apogee_plates import pick_plates
 # DESCRIPTION: Main APOGEE-II scheduling routine.
 # INPUT: schedule -- dictionary defining important schedule times throughout the night
 # OUTPUT: apogee_choices -- dictionary list containing plate choices + observing times for tonight 
-def schedule_apogee(schedule, plan=False, loud=True):
+def schedule_apogee(schedule, errors, plan=False, loud=True):
 	# Define APOGEE-II observing parameters
 	par = {'exposure': 67, 'overhead': 20, 'ncarts': 9, 'maxz': 3, 'moon_threshold': 15, 'sn_target': 3136}
 
@@ -39,7 +39,9 @@ def schedule_apogee(schedule, plan=False, loud=True):
 
 	# Get all plate information from the database
 	apg = get_plates(plan=plan, loud=loud)
-	if len(apg) == 0: return []
+	if len(apg) == 0:
+		errors.append('APOGEE-II PLATE ERROR: No APOGEE-II plates found. Aborting.')
+		return []
 	
 	# Prioritize all plates
 	set_priorities(apg, par, schedule, loud=loud)

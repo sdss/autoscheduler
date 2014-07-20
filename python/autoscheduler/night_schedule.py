@@ -8,7 +8,7 @@ def get_juldate():
 	julian += ((dt.hour/24.0) + (dt.minute/(24.0*60.0)) + (dt.second/86400.) + (dt.microsecond/(86400.*1e6)) - 0.5)	
 	return julian
 
-def read_schedule(pwd, mjd=-1, surveys=['apogee','eboss','manga'], loud=True):
+def read_schedule(pwd, errors, mjd=-1, surveys=['apogee','eboss','manga'], loud=True):
 	'''
 	read_schedule: reads in scheduler formatted nightly schedule
 	
@@ -53,6 +53,7 @@ def read_schedule(pwd, mjd=-1, surveys=['apogee','eboss','manga'], loud=True):
 	# If this line doesn't exist, find the closest day
 	if not len(currjd) > 0:
 		currjd = np.argsort([np.abs(schedule[x]['jd']-tonight) for x in range(len(schedule))])
+		errors.append('MJD ERROR: JD %d not present in schedule file. Using JD = %d instead.' % (tonight, currjd))
 		
 	# See if schedule needs to be adjusted based on what surveys are being run tonight
 	# Is eBOSS offline, but MaNGA isn't? MaNGA gets all of dark time.

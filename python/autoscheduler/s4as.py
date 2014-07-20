@@ -12,11 +12,12 @@ import os
 
 def run_scheduler(plan=False, mjd=-1, surveys=['apogee','eboss','manga'], loud=True):
 	as_start_time = time()
+	errors = []
 	
 	# Read in schedule file
 	pwd = os.path.dirname(os.path.realpath(__file__))
 	schedule_start_time = time()
-	schedule = night_schedule.read_schedule(pwd, mjd=mjd, surveys=surveys, loud=loud)
+	schedule = night_schedule.read_schedule(pwd, errors, mjd=mjd, surveys=surveys, loud=loud)
 	schedule_end_time = time()
 	if loud: print("[PY] Schedule read in complete (%.3f sec)" % (schedule_end_time - schedule_start_time))
 	
@@ -24,16 +25,16 @@ def run_scheduler(plan=False, mjd=-1, surveys=['apogee','eboss','manga'], loud=T
 	apogee_choices, manga_choices, eboss_choices = [], [], []
 	# Schedule APOGEE-II
 	if schedule['bright_start'] > 0:
-		apogee_choices = apg.schedule_apogee(schedule, plan=plan, loud=loud)
+		apogee_choices = apg.schedule_apogee(schedule, errors, plan=plan, loud=loud)
 	# Schedule MaNGA
 	#if schedule['manga'] > 0:
-	#	manga_choices = schedule_manga(schedule, plan=plan, loud=loud)
+	#	manga_choices = schedule_manga(schedule, errors, plan=plan, loud=loud)
 	# Schedule eBOSS
 	if schedule['eboss'] > 0:
-		eboss_choices = ebo.schedule_eboss(schedule, plan=plan, loud=loud)
+		eboss_choices = ebo.schedule_eboss(schedule, errors, plan=plan, loud=loud)
 	
 	# Take results and assign to carts
-	apgcart, mancart, ebocart = assign_carts.assign_carts(apogee_choices, manga_choices, eboss_choices, loud=loud)
+	apgcart, mancart, ebocart = assign_carts.assign_carts(apogee_choices, manga_choices, eboss_choices, errors, loud=loud)
 	
 	as_end_time = time()
 	if loud: print("[PY] run_scheduler complete in (%.3f sec)" % ((as_end_time - as_start_time)))
@@ -55,6 +56,7 @@ def run_scheduler(plan=False, mjd=-1, surveys=['apogee','eboss','manga'], loud=T
 	plan['apogee'] = apgcart
 	plan['manga'] = mancart
 	plan['eboss'] = ebocart
+	plan['errors'] = errors
 	return plan
 
 

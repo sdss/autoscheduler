@@ -3,7 +3,7 @@ from time import time
 import numpy as np
 import os
 
-def assign_carts(apogee_choices, manga_choices, eboss_choices, loud=True):
+def assign_carts(apogee_choices, manga_choices, eboss_choices, errors, loud=True):
 	'''
 	assign_carts: Assigns all survey plate choices to cartridges.
 
