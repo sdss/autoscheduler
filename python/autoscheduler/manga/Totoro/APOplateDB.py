@@ -21,7 +21,7 @@ import sys
 from . import config
 
 try:
-    from hooloovookit.DatabaseConnection import DatabaseConnection
+    from sdss.internal.database.DatabaseConnection import DatabaseConnection
 except ImportError as e:
     print('Couldn\'t find DatabaseConnection:', e)
     print('Did you setup hooloovookit before running?')
@@ -32,13 +32,17 @@ databaseConnectionString = \
     'postgresql+psycopg2://{user}:{password}@{host}:{port}/{database}'.format(
         **config['dbConnection'])
 
-# Intial database connection creation and instances to be exported.
+# # Intial database connection creation and instances to be exported.
 db = DatabaseConnection(database_connection_string=databaseConnectionString)
+
 engine = db.engine
 metadata = db.metadata
 Session = db.Session
 Base = db.Base
 
-from platedb import ModelClasses as plateDB
-from mangadb import ModelClasses as mangaDB
+from sdss.internal.database.apo.platedb import ModelClasses as plateDB
+from sdss.internal.database.apo.mangadb import ModelClasses as mangaDB
+
+# from platedb import ModelClasses as plateDB
+# from mangadb import ModelClasses as mangaDB
 # from mangadb import SampleModelClasses as mangaSampleDB
