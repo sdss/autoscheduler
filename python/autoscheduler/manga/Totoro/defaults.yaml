@@ -26,11 +26,11 @@ dustMap:
     maps: [SFD_dust_4096_ngp.fits, SFD_dust_4096_sgp.fits]
     grid: +data/IGincrease.fits
 
-SNthresholds:
+SN2thresholds:
     plateRed: 70
     plateBlue: 30
-    exposureRed: 3.75
-    exposureBlue: 1.8
+    exposureRed: 3.5
+    exposureBlue: 1.
 
 exposure:
     minExpTime: 899
@@ -41,4 +41,5 @@ set:
     poorSeeing: 2
     maxHARange: 15
     maxSeeingRange: 0.8
-    maxSNFactor: 2
+    maxSN2Factor: 2
+    ditherPositions: ['N', 'S', 'E']

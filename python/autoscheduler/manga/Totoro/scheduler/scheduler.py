@@ -21,7 +21,6 @@ from .observingPlan import ObservingPlan
 from ..dbclasses import Plates
 from ..utils import createSite
 from .. import log
-from ..utils.tabularOutput import printTabularOutput
 
 
 class BaseScheduler(object):
@@ -57,6 +56,7 @@ class BaseScheduler(object):
 
         self.startDate = startDate
         self.endDate = endDate
+        self.currentDate = obstools.calendar_to_jd(None)
 
         log.info('Adjusted start date: {0}'.format(self.startDate))
         log.info('Adjusted end date: {0}'.format(self.endDate))
@@ -89,52 +89,42 @@ class Planner(BaseScheduler):
 
 class Nightly(BaseScheduler):
 
-    def __init__(self, startDate=None, endDate=None, **kwargs):
+    def __init__(self, startDate=None, endDate=None, plates=None, **kwargs):
 
         log.info('Running in NIGHTLY MODE.')
 
-        startDate = 2456843.1
         super(Nightly, self).__init__(startDate=startDate,
                                       endDate=endDate, scope='nightly',
                                       **kwargs)
-        self.getPlates()
+
+        if plates is None:
+            self.plates = self.getPlates()
+        else:
+            self.plates = plates
 
     def getPlates(self, **kwargs):
         """Gets the plugged plates."""
 
         log.info('Finding plugged plates.')
-        self.plates = Plates(onlyPlugged=True, onlyAtAPO=True,
-                             onlyIncomplete=False, rearrageExposure=True,
-                             **kwargs)
+        plates = Plates(onlyPlugged=True, onlyAtAPO=True,
+                        onlyIncomplete=False, rearrageExposure=True,
+                        **kwargs)
 
-        if len(self.plates) == 0:
+        if len(plates) == 0:
             log.info('no plugged plates found.')
+
+        return plates
 
     def printTabularOutput(self):
         """Prints a series of tables with information about the schedule."""
 
-        printTabularOutput(self.plates)
+        from .. import output
 
-    # def simulate(self):
-    #     """Applies the scheduling logic and returns the planner schedule."""
+        output.printTabularOutput(self.plates)
 
-    #     for row in self.observingPlan[0:2]:
-    #         startJD = time.Time(row[SURVEY() + '_0'], scale='utc', format='jd')
-    #         endJD = time.Time(row[SURVEY() + '_1'], scale='utc', format='jd')
-    #         self._observeNight(startJD, endJD)
+    def getOutput(self, format='yaml'):
+        """Returns the nightly output in the selected format."""
 
-    # def _observeNight(self, startJD, endJD):
+        from .. import output
 
-    #     def remainingTime(tt):
-    #         return (endJD - tt).sec
-
-    #     self.fields.plugFields(startJD, endJD)
-    #     currentTime = startJD
-
-    #     while remainingTime(currentTime) > ONE_EXPOSURE:
-    #         print(currentTime)
-    #         fieldToObserve = self.fields.getOptimumField(currentTime)
-    #         currentTime = fieldToObserve.observe(currentTime, until=endJD)
-    #         print(currentTime)
-    #         if currentTime is None:
-    #             print('Help!!!')
+        return output.getNightlyOutput(self, format=format)

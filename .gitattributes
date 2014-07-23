@@ -47,7 +47,6 @@ python/autoscheduler/manga/Totoro/core/colourPrint.py -text
 python/autoscheduler/manga/Totoro/core/configuration.py -text
 python/autoscheduler/manga/Totoro/core/logger.py -text
 python/autoscheduler/manga/Totoro/core/setupTools.py -text
-python/autoscheduler/manga/Totoro/data/IGincrease.fits -text svneol=unset#unset
 python/autoscheduler/manga/Totoro/data/Sch_base.6yrs.txt.frm.dat -text
 python/autoscheduler/manga/Totoro/data/nightly.D.txt -text
 python/autoscheduler/manga/Totoro/data/nightly.D_UTC.txt -text
@@ -66,6 +65,9 @@ python/autoscheduler/manga/Totoro/helpers/addTiles.py.bak -text
 python/autoscheduler/manga/Totoro/helpers/createWorkableDB.py -text
 python/autoscheduler/manga/Totoro/helpers/loadMockData.py -text
 python/autoscheduler/manga/Totoro/helpers/tilecenters_180_SGC.fits -text
+python/autoscheduler/manga/Totoro/output/__init__.py -text
+python/autoscheduler/manga/Totoro/output/output.py -text
+python/autoscheduler/manga/Totoro/output/tabularOutput.py -text
 python/autoscheduler/manga/Totoro/readPath.py -text
 python/autoscheduler/manga/Totoro/scheduler/__init__.py -text
 python/autoscheduler/manga/Totoro/scheduler/observingPlan.py -text
@@ -75,12 +77,13 @@ python/autoscheduler/manga/Totoro/tests/testAPOcomplete.py -text
 python/autoscheduler/manga/Totoro/tests/testDB.py -text
 python/autoscheduler/manga/Totoro/tests/testMangaSampleParameters.py -text
 python/autoscheduler/manga/Totoro/tests/testNightly.py -text
+python/autoscheduler/manga/Totoro/tests/testOutput.pckl -text
+python/autoscheduler/manga/Totoro/tests/testOutput.py -text
 python/autoscheduler/manga/Totoro/tests/testPlanner.py -text
 python/autoscheduler/manga/Totoro/utils/__init__.py -text
 python/autoscheduler/manga/Totoro/utils/coordUtils.py -text
 python/autoscheduler/manga/Totoro/utils/coordinates.py -text
 python/autoscheduler/manga/Totoro/utils/mangaLogic.py -text
-python/autoscheduler/manga/Totoro/utils/tabularOutput.py -text
 python/autoscheduler/manga/Totoro/utils/utils.py -text
 python/autoscheduler/manga/Totoro/version.py -text
 python/autoscheduler/manga/__init__.py -text

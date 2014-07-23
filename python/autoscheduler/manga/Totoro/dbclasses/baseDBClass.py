@@ -19,7 +19,7 @@ from __future__ import division
 from __future__ import print_function
 from ..exceptions import TotoroWarning, TotoroError
 from warnings import warn
-from .. import Session
+from .. import Session, plateDB
 session = Session()
 
 
@@ -29,8 +29,8 @@ class BaseDBClass(object):
 
     def __init__(self, inp, format='pk', autocomplete=True, **kwargs):
 
-        # if not isinstance(inp, (int, dict)) and type(inp) != 'long':
-        #     raise TypeError('inp must be and integer or a dictionary.')
+        if not isinstance(inp, (int, dict)) and type(inp) != 'long':
+            raise TypeError('inp must be and integer or a dictionary.')
 
         if format != 'dict':
             if autocomplete is False:
@@ -63,6 +63,12 @@ class BaseDBClass(object):
         if self.__DBClass__ is None:
             raise TotoroError('BaseDBClass.__DBClass__ is not set. '
                               'You need to set it up before using loadFromDB.')
+
+        if self.__DBClass__ == plateDB.Plate and format.lower() == 'plate_id':
+            with session.begin():
+                inp = session.query(plateDB.Plate.pk).filter(
+                    plateDB.Plate.plate_id == inp).scalar()
+                format = 'pk'
 
         with session.begin():
 

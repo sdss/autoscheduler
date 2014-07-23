@@ -17,7 +17,7 @@ from __future__ import print_function
 from .baseDBClass import BaseDBClass
 from ..exceptions import TotoroError
 from .. import plateDB, mangaDB, Session
-from ..utils import mlhalimit, checkExposure
+from .. import utils
 from .. import log
 import numpy as np
 from ..utils import createSite
@@ -44,7 +44,7 @@ class Exposure(BaseDBClass):
             self.loadFromMangaDB()
 
         self.ra, self.dec = self.getCoordinates()
-        self.mlhalimit = mlhalimit(self.dec)
+        self.mlhalimit = utils.mlhalimit(self.dec)
         self.site = createSite(verbose=False)
 
     def loadFromMangaDB(self):
@@ -119,7 +119,7 @@ class Exposure(BaseDBClass):
         if self._valid is not None:
             return self._valid
         else:
-            return checkExposure(self)
+            return utils.checkExposure(self)
 
     @valid.setter
     def valid(self, value):
@@ -144,12 +144,28 @@ class Exposure(BaseDBClass):
         lst0 = (ha0 + self.ra) % 360. / 15
         lst1 = (ha1 + self.ra) % 360. / 15
 
-        ut0 = '{0:%H:%M}'.format(self.site.localTime(
-            lst0, date=tStart.datetime, utc=True, returntype='datetime'))
-        ut1 = '{0:%H:%M}'.format(self.site.localTime(
-            lst1, date=tStart.datetime, utc=True, returntype='datetime'))
+        ut0 = self.site.localTime(lst0, date=tStart.datetime,
+                                  utc=True, returntype='datetime')
+        ut1 = self.site.localTime(lst1, date=tStart.datetime,
+                                  utc=True, returntype='datetime')
+
+        if format == 'str':
+            return ('{0:%H:%M}'.format(ut0), '{0:%H:%M}'.format(ut1))
+        else:
+            return (ut0, ut1)
 
         return (ut0, ut1)
+
+    def getJDObserved(self):
+
+        startTime = float(self.start_time)
+        t0 = time.Time(0, format='mjd', scale='tai')
+
+        tStart = t0 + time.TimeDelta(startTime, format='sec', scale='tai')
+        tEnd = tStart + time.TimeDelta(
+            float(self.exposure_time), format='sec', scale='tai')
+
+        return (tStart.jd, tEnd.jd)
 
     def getPlatePK(self):
 
@@ -159,7 +175,7 @@ class Exposure(BaseDBClass):
                 plateDB.Exposure).filter(
                     plateDB.Exposure.pk == self.pk).scalar()
 
-        return platePK
+        return int(platePK)
 
     def getMJD(self):
 

@@ -18,8 +18,10 @@ from .baseDBClass import BaseDBClass
 from .exposure import Exposure
 from .. import mangaDB, Session, plateDB
 from .. import log
+from .. import config
 from ..utils import checkExposure, checkSet, createSite
 import numpy as np
+from copy import copy
 
 session = Session()
 
@@ -89,6 +91,16 @@ class Set(BaseDBClass):
 
         return [exp.ditherPosition for exp in self.exposures]
 
+    def getMissingDitherPositions(self):
+        """Returns a list of missing dither positions."""
+
+        setDitherPositions = copy(config['set']['ditherPositions'])
+        for dPos in self.getDitherPositions():
+            if dPos.upper() in setDitherPositions:
+                setDitherPositions.remove(dPos.upper())
+
+        return setDitherPositions
+
     def getSN2Array(self):
         """Returns an array with the cumulated SN2 of the valid exposures in
         the set. The return format is [b1SN2, b2SN2, r1SN2, r2SN2]."""
@@ -103,6 +115,41 @@ class Set(BaseDBClass):
         else:
             return np.sum([exp.getSN2Array() for exp in validExposures],
                           axis=0)
+
+    def getSN2Range(self):
+        """Returns the SN2 range in which new exposures may be taken."""
+
+        maxSN2Factor = config['set']['maxSN2Factor']
+
+        sn2 = np.array([exp.getSN2Array() for exp in self.exposures])
+        sn2Average = np.array(
+            [(np.mean(ss[0:2]), np.mean(ss[2:4])) for ss in sn2])
+
+        minSN2Blue = np.max(sn2Average[:, 0]) / maxSN2Factor
+        maxSN2Blue = np.min(sn2Average[:, 0]) * maxSN2Factor
+        minSN2Red = np.max(sn2Average[:, 1]) / maxSN2Factor
+        maxSN2Red = np.min(sn2Average[:, 1]) * maxSN2Factor
+
+        if minSN2Red < config['SN2thresholds']['exposureRed']:
+            minSN2Red = config['SN2thresholds']['exposureRed']
+        if minSN2Blue < config['SN2thresholds']['exposureBlue']:
+            minSN2Blue = config['SN2thresholds']['exposureBlue']
+
+        return np.array([[minSN2Blue, maxSN2Blue], [minSN2Red, maxSN2Red]])
+
+    def getSeeingRange(self):
+        """Returns the seeing range in which new exposures may be taken."""
+
+        maxSeeingRange = config['set']['maxSeeingRange']
+        maxSeeing = config['exposure']['maxSeeing']
+        seeings = np.array([exp.seeing for exp in self.exposures])
+
+        seeingRangeMin = np.max(seeings) - maxSeeingRange
+        seeingRangeMax = np.min(seeings) + maxSeeingRange
+        if seeingRangeMax > maxSeeing:
+            seeingRangeMax = maxSeeing
+
+        return np.array([seeingRangeMin, seeingRangeMax])
 
     def getQuality(self):
         """Returns the quality of the set (Excellent, Good, Poor)."""
@@ -127,21 +174,22 @@ class Set(BaseDBClass):
 
         return np.mean(seeings)
 
-    def getUTVisibilityWindow(self):
+    def getUTVisibilityWindow(self, date=None, format='str'):
 
         ha0, ha1 = self.getHALimits()
 
         lst0 = (ha0 + self.ra) % 360. / 15
         lst1 = (ha1 + self.ra) % 360. / 15
 
+        ut0 = self.site.localTime(lst0, date=date, utc=True,
+                                  returntype='datetime')
+        ut1 = self.site.localTime(lst1, date=date, utc=True,
+                                  returntype='datetime')
 
-        # Needs to add date
-        ut0 = '{0:%H:%M}'.format(self.site.localTime(
-            lst0, utc=True, returntype='datetime'))
-        ut1 = '{0:%H:%M}'.format(self.site.localTime(
-            lst1, utc=True, returntype='datetime'))
-
-        return (ut0, ut1)
+        if format == 'str':
+            return ('{0:%H:%M}'.format(ut0), '{0:%H:%M}'.format(ut1))
+        else:
+            return (ut0, ut1)
 
     @property
     def complete(self):
@@ -149,189 +197,3 @@ class Set(BaseDBClass):
             return True
         else:
             return False
-
-    # def _getCompletionStatus(self):
-
-    #     snOK = False
-    #     ditherPosOK = False
-    #     HAlimitsOK = False
-    #     seeingOK = False
-
-    #     validExp = self.getValidExposures()
-
-    #     ditherPos = [exp.ditherPos for exp in validExp]
-    #     if (all([dd in DITHER_POSITIONS_NEEDED() for dd in ditherPos]) and
-    #             all([dd in ditherPos for dd in DITHER_POSITIONS_NEEDED()])):
-    #         ditherPosOK = True
-
-    #     if (self.get_HA_minmax() is not None and
-    #             Longitude(self.get_HA_minmax()[1] - self.get_HA_minmax()[0],
-    #                       unit=uu.hour)
-    #             <= Longitude('1h')):
-    #         HAlimitsOK = True
-
-    #     if validExp.nExposures >= 1:
-    #         minMaxSN = self._getMaxMinSN()
-    #         if (all(minMaxSN[1, :]/minMaxSN[0, :] <= SN2_FACTOR_SET()) and
-    #                 all(minMaxSN[3, :]/minMaxSN[2, :] <= SN2_FACTOR_SET())):
-    #             snOK = True
-
-    #     avgSeeings = [exp.avgSeeing for exp in validExp]
-    #     if np.max(avgSeeings) - np.min(avgSeeings) <= MAX_DIFF_SEEING_SET:
-    #         seeingOK = True
-
-    #     return (bool(snOK * ditherPosOK * HAlimitsOK),
-    #             (snOK, ditherPosOK, HAlimitsOK, seeingOK))
-
-    # def getFailedTests(self):
-
-    #     tests = self._getCompletionStatus()[1]
-    #     labels = ['SN2', 'ditherPositions', 'HAlimits', 'avgSeeing']
-    #     return [labels[ii] for ii in range(len(labels)) if tests[ii] is False]
-
-    # def _getMaxMinSN(self):
-    #     """Returns an array with the max and min SN in the valid exposures.
-
-    #     The array returned is of the form
-    #         [[minSN_Blue_1, minSN_Blue_2],
-    #          [maxSN_Blue_1, maxSN_Blue_2],
-    #          [minSN_Red_1, minSN_Red_2],
-    #          [maxSN_Red_1, maxSN_Red_2]]
-
-    #     """
-
-    #     validExp = self.getValidExposures()
-
-    #     if validExp.nExposures == 0:
-    #         return np.array([[0., 0.], [0., 0.], [0., 0.], [0., 0.]])
-
-    #     SN_red = np.array([exp.SN_red for exp in validExp])
-    #     SN_blue = np.array([exp.SN_blue for exp in validExp])
-    #     maxSNred = np.max(SN_red, axis=0)
-    #     minSNred = np.min(SN_red, axis=0)
-    #     maxSNblue = np.max(SN_blue, axis=0)
-    #     minSNblue = np.min(SN_blue, axis=0)
-
-    #     return np.array([minSNblue, maxSNblue, minSNred, maxSNred])
-
-    # @property
-    # def missingDither(self):
-    #     if 'ditherPositions' in self.getFailedTests():
-    #         return True
-    #     return False
-
-    # def get_HA_minmax(self, exposures=None):
-
-    #     if exposures is None:
-    #         exposures = self.getValidExposures()
-
-    #     if len(exposures) == 0:
-    #         return None
-
-    #     HAs = []
-    #     for exp in exposures:
-    #         HAs += [exp.HAstart.hour, exp.HAend.hour]
-    #     return Longitude([np.min(HAs), np.max(HAs)], unit=uu.hour)
-
-    # @property
-    # def nExposures(self):
-    #     return len(self.getValidExposures())
-
-    # @property
-    # def complete(self):
-    #     if self._complete is not None:
-    #         return self._complete
-    #     return self._getCompletionStatus()[0]
-
-    # @complete.setter
-    # def complete(self, value):
-    #     assert isinstance(value, bool) and value is not None
-    #     self._complete = value
-
-    # @property
-    # def avgSeeing(self):
-    #     if self._avgSeeing is not None:
-    #         return self._avgSeeing
-    #     return np.mean([exp.avgSeeing for exp in self.getValidExposures()])
-
-    # @avgSeeing.setter
-    # def avgSeeing(self, value):
-    #     assert isinstance(value, Real)
-    #     self._avgSeeing = value
-
-    # @property
-    # def SN_red(self):
-    #     if self._SN_red is not None:
-    #         return self._SN_red
-    #     if self.nExposures == 0:
-    #         return np.array([0.0, 0.0])
-    #     return np.sum(np.atleast_2d(
-    #         [exp.SN_red for exp in self.getValidExposures()]), axis=0)
-
-    # @SN_red.setter
-    # def SN_red(self, value):
-    #     assert isinstance(value, (np.ndarray, list, tuple))
-    #     self._SN_red = value
-
-    # @property
-    # def SN_blue(self):
-    #     if self._SN_blue is not None:
-    #         return self._SN_blue
-    #     if self.nExposures == 0:
-    #         return np.array([0.0, 0.0])
-    #     return np.sum(np.atleast_2d(
-    #         [exp.SN_blue for exp in self.getValidExposures()]), axis=0)
-
-    # @SN_blue.setter
-    # def SN_blue(self, value):
-    #     assert isinstance(value, (np.ndarray, list, tuple))
-    #     self._SN_blue = value
-
-    # @property
-    # def HAlimits(self):
-    #     if self._HAlimits is not None:
-    #         return self._HAlimits
-
-    #     HAmaxmin = self.get_HA_minmax()
-    #     if HAmaxmin is None:
-    #         return None
-
-    #     oneHour = Longitude('1h')
-    #     if Longitude(HAmaxmin[1] - HAmaxmin[0], unit=uu.hour) > oneHour:
-    #         return HAmaxmin
-
-    #     return Longitude(
-    #         [HAmaxmin[1]-oneHour, HAmaxmin[0]+oneHour], wrap_angle='180d')
-
-    # @HAlimits.setter
-    # def HAlimits(self, value):
-    #     assert isinstance(value, (np.ndarray, list, tuple))
-    #     self._HAlimits = np.array(value)
-
-    # @property
-    # def quality(self):
-    #     if self._quality is not None:
-    #         return self._quality
-
-    #     if self.complete is False:
-    #         return 'bad'
-
-    #     if self.avgSeeing > SEEING_POOR():
-    #         return 'poor'
-    #     elif self.avgSeeing <= SEEING_POOR() and \
-    #             self.avgSeeing > SEEING_EXCELLENT():
-    #         return 'good'
-    #     else:
-    #         return 'excellent'
-
-    # @quality.setter
-    # def quality(self, value):
-    #     assert isinstance(value, basestring)
-    #     value = value.lower()
-    #     self._quality = value
-    #     if value in ['good', 'excellent', 'poor']:
-    #         self.complete = True
-    #     elif value == 'bad':
-    #         self.complete = False
-    #     else:
-    #         raise ValueError('setQuality cannot have value {0}'.format(value))

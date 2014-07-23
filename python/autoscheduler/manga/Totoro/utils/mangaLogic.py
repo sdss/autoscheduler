@@ -204,11 +204,11 @@ def checkExposure(inp, flag=False, format='pk'):
                   'the maximum acceptable.'.format(exposure.manga_pk))
         status = False
 
-    minSNred = config['SNthresholds']['exposureRed']
-    minSNblue = config['SNthresholds']['exposureBlue']
+    minSN2red = config['SN2thresholds']['exposureRed']
+    minSN2blue = config['SN2thresholds']['exposureBlue']
     snArray = exposure.getSN2Array()
 
-    if np.any(snArray[0:2] < minSNblue) or np.any(snArray[2:] < minSNred):
+    if np.any(snArray[0:2] < minSN2blue) or np.any(snArray[2:] < minSN2red):
         log.debug('mangaDB exposure pk={0} has a SN2(s) lower than '
                   'the minimum acceptable.'.format(exposure.manga_pk))
         status = False
@@ -280,8 +280,8 @@ def checkSet(input, verbose=True):
     for ii in range(len(sn2)):
         for jj in range(ii, len(sn2)):
             sn2Ratio = sn2[ii] / sn2[jj]
-            if np.any(sn2Ratio > config['set']['maxSNFactor']) or \
-                    np.any(sn2Ratio < (1. / config['set']['maxSNFactor'])):
+            if np.any(sn2Ratio > config['set']['maxSN2Factor']) or \
+                    np.any(sn2Ratio < (1. / config['set']['maxSN2Factor'])):
                 if verbose:
                     log.debug('set pk%d is invalid because ' % set.pk +
                               'it fails the SN2 uniformity criteria')

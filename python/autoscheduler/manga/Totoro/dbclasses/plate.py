@@ -47,8 +47,8 @@ class Plates(list):
                                        'not yet implemented.')
 
     @staticmethod
-    def getPlates(onlyPlugged=False, onlyAtAPO=True,
-                  onlyIncomplete=True, **kwargs):
+    def getPlates(onlyPlugged=False, onlyAtAPO=False,
+                  onlyIncomplete=False, **kwargs):
 
         if onlyPlugged:
             with session.begin():
@@ -79,7 +79,7 @@ class Plates(list):
         if onlyIncomplete:
             incompletePlates = []
             for plate in plates:
-                if not isPlateComplete(plate.pk, inputType='plate_pk'):
+                if not isPlateComplete(plate.pk, format='plate_pk'):
                     incompletePlates.append(plate)
             plates = incompletePlates
 
@@ -232,8 +232,8 @@ class Plate(BaseDBClass):
             elif pluggingStatus in ['Incomplete', 'Overriden Incomplete']:
                 return (False, totalSN)
 
-        if np.all(totalSN[0:2] >= config['SNthresholds']['plateBlue']) and \
-                np.all(totalSN[2:] >= config['SNthresholds']['plateRed']):
+        if np.all(totalSN[0:2] >= config['SN2thresholds']['plateBlue']) and \
+                np.all(totalSN[2:] >= config['SN2thresholds']['plateRed']):
             return (True, totalSN)
 
         return (False, totalSN)
@@ -288,7 +288,7 @@ class Plate(BaseDBClass):
 
         return validExposures
 
-    def getUTVisibilityWindow(self):
+    def getUTVisibilityWindow(self, format='str'):
 
         ha0 = -self.mlhalimit
         ha1 = self.mlhalimit
@@ -296,9 +296,10 @@ class Plate(BaseDBClass):
         lst0 = (ha0 + self.coords[0]) % 360. / 15
         lst1 = (ha1 + self.coords[0]) % 360. / 15
 
-        ut0 = '{0:%H:%M}'.format(self.site.localTime(
-            lst0, utc=True, returntype='datetime'))
-        ut1 = '{0:%H:%M}'.format(self.site.localTime(
-            lst1, utc=True, returntype='datetime'))
+        ut0 = self.site.localTime(lst0, utc=True, returntype='datetime')
+        ut1 = self.site.localTime(lst1, utc=True, returntype='datetime')
 
-        return (ut0, ut1)
+        if format == 'str':
+            return ('{0:%H:%M}'.format(ut0), '{0:%H:%M}'.format(ut1))
+        else:
+            return (ut0, ut1)
