@@ -21,6 +21,9 @@ def schedule_eboss(schedule, errors, plan=False, loud=True):
 
     # Get all plate information from the database
     ebo = get_plates(plan=plan, loud=loud)
+    if len(ebo) == 0:
+		errors.append('eBOSS PLATE ERROR: No eBOSS plates found. Aborting.')
+		return []
     
     # If we are not planning, just return the plates read in along with cart numbers
     if not plan:
