@@ -48,7 +48,7 @@ class apgplate(object):
 # DESCRIPTION: Reads in APOGEE-II plate information from platedb
 # INPUT: none
 # OUTPUT: apg -- list of objects with all APOGEE-II plate information
-def get_plates(plan=False, loud=True):
+def get_plates(errors, plan=False, loud=True):
 	# Create database connection
 	if (os.path.dirname(os.path.realpath(__file__))).find('utah.edu') >= 0: 
 		from sdss.internal.database.connections.UtahLocalConnection import db
@@ -68,7 +68,8 @@ def get_plates(plan=False, loud=True):
 				"INNER JOIN platedb.plate_location AS ploc ON (ploc.pk=plt.plate_location_pk)) "+
 				"INNER JOIN platedb.plate_to_plate_status AS p2ps ON (p2ps.plate_pk=plt.pk))"+
 				"INNER JOIN platedb.plate_status AS plts ON (plts.pk=p2ps.plate_status_pk))"+
-			"WHERE p2s.survey_pk=37 AND plts.label = 'Accepted' AND ploc.label = 'APO' "+
+			#"WHERE p2s.survey_pk=37 AND plts.label = 'Accepted' AND ploc.label = 'APO' "+
+			"WHERE p2s.survey_pk=1 AND plts.label = 'Accepted' AND ploc.label = 'APO' "+
 			"ORDER BY plt.plate_id").fetchall()
 	else:
 		stage1 = session.execute("SET SCHEMA 'platedb'; "+
@@ -80,26 +81,32 @@ def get_plates(plan=False, loud=True):
 				"LEFT JOIN platedb.plate_to_survey AS p2s ON (p2s.plate_pk=plt.pk)) "+
 				"LEFT JOIN platedb.plate_pointing as pltg ON (pltg.plate_pk=plt.pk)) "+
 				"LEFT JOIN platedb.pointing AS ptg ON (pltg.pointing_pk=ptg.pk)) "+
-			"WHERE p2s.survey_pk=37 ORDER BY crt.number").fetchall()
+			#"WHERE p2s.survey_pk=37 ORDER BY crt.number").fetchall()
+			"WHERE p2s.survey_pk=1 ORDER BY crt.number").fetchall()
 	
 	# Setup APOGEE-II data structure
 	apg = []
 	
 	# Save data to structure
+	missing = []
 	for i in range(len(stage1)):
-		apg.append(apgplate())
-		apg[i].locationid = stage1[i][0]
-		apg[i].ra = float(stage1[i][1])
-		apg[i].dec = float(stage1[i][2])
-		apg[i].plateid = stage1[i][3]
-		apg[i].ha = float(stage1[i][4])
-		apg[i].manual_priority = stage1[i][5]
-		designid = int(stage1[i][6])
-		apg[i].name = stage1[i][7]
-		apg[i].maxha = float(stage1[i][8]) + 7.5
-		apg[i].minha = float(stage1[i][9]) - 7.5
-		apg[i].platepk = stage1[i][10]
-		apg[i].plugged = 0
+		try:
+			apg.append(apgplate())
+			apg[i].locationid = stage1[i][0]
+			apg[i].ra = float(stage1[i][1])
+			apg[i].dec = float(stage1[i][2])
+			apg[i].plateid = stage1[i][3]
+			apg[i].ha = float(stage1[i][4])
+			apg[i].manual_priority = stage1[i][5]
+			designid = int(stage1[i][6])
+			apg[i].name = stage1[i][7]
+			apg[i].maxha = float(stage1[i][8]) + 7.5
+			apg[i].minha = float(stage1[i][9]) - 7.5
+			apg[i].platepk = stage1[i][10]
+			apg[i].plugged = 0
+		except:
+			missing.append(stage1[i][3])
+			continue
 		
 		# Get APOGEE version number and vplan for this plate
 		dvdata = session.execute("SELECT array_to_string(array_agg(dv.value),',') FROM platedb.design_value as dv WHERE (dv.design_field_pk=342 OR dv.design_field_pk=343 OR dv.design_field_pk=344 OR dv.design_field_pk=351) AND dv.design_pk=%d" % (designid)).fetchall()
@@ -111,6 +118,10 @@ def get_plates(plan=False, loud=True):
 			apg[i].apgver = 999
 	stage1_end = time()
 	if loud: print("[SQL] Read in APOGEE-II plates (%.3f sec)" % ((stage1_end - stage1_start)))
+	
+	# Let everyone know there are bad database entries, if necessary
+	if len(missing) > 0:
+		errors.append("APOGEE-II DB ERROR: missing information in DB on plates: %s" % (', '.join([str(x) for x in missing])))
 	
 	# Read in previous APOGEE observations
 	stage2_start = time()
@@ -165,7 +176,8 @@ def get_plates(plan=False, loud=True):
 			"LEFT JOIN platedb.plate AS plt ON (plg.plate_pk=plt.pk)) "+
 			"LEFT JOIN platedb.plate_to_survey AS p2s ON (p2s.plate_pk=plt.pk)) "+
 			"LEFT JOIN platedb.plate_pointing as pltg ON (pltg.plate_pk=plt.pk)) "+
-		"WHERE p2s.survey_pk=37 ORDER BY crt.number").fetchall()
+		#"WHERE p2s.survey_pk=37 ORDER BY crt.number").fetchall()
+		"WHERE p2s.survey_pk=1 ORDER BY crt.number").fetchall()
 	stage3_end = time()
 	if loud: print("[SQL] Read in currently plugged APOGEE plates (%.3f sec)" % ((stage3_end - stage3_start)))
 	

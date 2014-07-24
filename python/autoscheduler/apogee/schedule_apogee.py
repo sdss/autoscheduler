@@ -38,7 +38,7 @@ def schedule_apogee(schedule, errors, plan=False, loud=True):
 			lengths.append(nightlength - sum(lengths))
 
 	# Get all plate information from the database
-	apg = get_plates(plan=plan, loud=loud)
+	apg = get_plates(errors, plan=plan, loud=loud)
 	if len(apg) == 0:
 		errors.append('APOGEE-II PLATE ERROR: No APOGEE-II plates found. Aborting.')
 		return []
