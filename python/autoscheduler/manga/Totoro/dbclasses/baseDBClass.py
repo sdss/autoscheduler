@@ -20,6 +20,8 @@ from __future__ import print_function
 from ..exceptions import TotoroWarning, TotoroError
 from warnings import warn
 from .. import Session, plateDB
+from numbers import Integral
+
 session = Session()
 
 
@@ -29,7 +31,7 @@ class BaseDBClass(object):
 
     def __init__(self, inp, format='pk', autocomplete=True, **kwargs):
 
-        if not isinstance(inp, (int, dict)) and type(inp) != 'long':
+        if not isinstance(inp, (Integral, dict)):
             raise TypeError('inp must be and integer or a dictionary.')
 
         if format != 'dict':
