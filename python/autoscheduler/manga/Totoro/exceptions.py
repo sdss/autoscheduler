@@ -22,6 +22,9 @@ class TotoroUserWarning(UserWarning, TotoroWarning):
     """The primary warning class."""
     pass
 
+class DustMapWarning(UserWarning, TotoroWarning):
+    """A warning for when no dust map is present."""
+    pass
 
 class FieldWarning(TotoroWarning):
     """A warning for Field."""

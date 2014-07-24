@@ -33,8 +33,14 @@ from .core.logger import initLog
 log = initLog()
 log.info('Logging starts now.')
 
-from sdss.manga import DustMap
-dustMap = DustMap()
+try:
+    from sdss.manga import DustMap
+    dustMap = DustMap()
+except (ImportError, ValueError):
+    from .exceptions import DustMapWarning
+    warnings.warn('no dust map found. No Galactic extinction '
+                  'will be applied', DustMapWarning)
+    dustMap = None
 
 log.info('Creating connection with DB.')
 from .APOplateDB import Session, Base, db, engine

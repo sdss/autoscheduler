@@ -24,6 +24,7 @@ from .. import log, config
 from ..utils import rearrageExposures
 import numpy as np
 from ..utils import createSite
+from .. import dustMap
 
 session = Session()
 
@@ -118,8 +119,10 @@ class Plate(BaseDBClass):
         if 'dust' in kwargs:
             self.dust = kwargs['dust']
         else:
-            from .. import dustMap
-            self.dust = dustMap(self.coords[0], self.coords[1])
+            if dustMap is None:
+                self.dust = None
+            else:
+                self.dust = dustMap(self.coords[0], self.coords[1])
 
         self.mlhalimit = mlhalimit(self.coords[1])
 
