@@ -7,7 +7,7 @@ from __future__ import print_function, division
 from autoscheduler import night_schedule, assign_carts
 import autoscheduler.apogee as apg
 import autoscheduler.eboss as ebo
-import autoscheduler.manga.Totoro.scheduler as man
+import autoscheduler.manga as man
 from time import time
 import os
 
@@ -29,8 +29,7 @@ def run_scheduler(plan=False, mjd=-1, surveys=['apogee','eboss','manga'], loud=T
 		apogee_choices = apg.schedule_apogee(schedule, errors, plan=plan, loud=loud)
 	# Schedule MaNGA
 	if schedule['manga'] > 0:
-		manga_schedule = man.Nightly()
-		manga_choices = manga_schedule.getOutput()
+		manga_choices = man.schedule_manga(schedule, errors, plan=plan, loud=loud)
 	# Schedule eBOSS
 	if schedule['eboss'] > 0:
 		eboss_choices = ebo.schedule_eboss(schedule, errors, plan=plan, loud=loud)
