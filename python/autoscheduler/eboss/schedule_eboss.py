@@ -22,8 +22,8 @@ def schedule_eboss(schedule, errors, plan=False, loud=True):
     # Get all plate information from the database
     ebo = get_plates(plan=plan, loud=loud)
     if len(ebo) == 0:
-		errors.append('eBOSS PLATE ERROR: No eBOSS plates found. Aborting.')
-		return []
+        errors.append('eBOSS PLATE ERROR: No eBOSS plates found. Aborting.')
+        return []
     
     # If we are not planning, just return the plates read in along with cart numbers
     if not plan:
@@ -38,8 +38,8 @@ def schedule_eboss(schedule, errors, plan=False, loud=True):
     if loud:
         of = open("eboss.txt", 'w')
         for p in range(len(ebo)):
-    	    obsstr = ''
-    	    for i in obs[p,:]: obsstr += "%3d " % (i)
+            obsstr = ''
+            for i in obs[p,:]: obsstr += "%3d " % (i)
             print("%5d %9.5f %9.5f %3d %6.2f %6.2f    %s " % (ebo[p].plateid, ebo[p].ra, ebo[p].dec, ebo[p].manual_priority, (ebo[p].ra+ebo[p].minha)/15, (ebo[p].ra+ebo[p].maxha)/15, obsstr), file=of)
         of.close()
     

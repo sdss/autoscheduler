@@ -36,17 +36,17 @@ def observability(ebo, par, times, loud=True):
                 usedminlst += 24
                 usedmaxlst += 24
             if maxlst > 24 and beglst[t] < 12 and endlst[t] < 12:
-            	usedminlst -= 24
-            	usedmaxlst -= 24
+                usedminlst -= 24
+                usedmaxlst -= 24
             if beglst[t] > endlst[t]:
-            	if minlst < 12: usedminlst += 24
-            	if maxlst > 12: usedmaxlst -= 24
-            	
+                if minlst < 12: usedminlst += 24
+                if maxlst > 12: usedmaxlst -= 24
+                
             # Adjust LSTs for Gaussian with 24 hour wrapping
             if beglst[t] > endlst[t]:
-            	lstsum = beglst[t]+endlst[t]-24
-            	if platelst > 12: usedplatelst = platelst - 24
-            	else: usedplatelst = platelst
+                lstsum = beglst[t]+endlst[t]-24
+                if platelst > 12: usedplatelst = platelst - 24
+                else: usedplatelst = platelst
             else:
                 lstsum = beglst[t]+endlst[t]
                 if beglst[t] > 18 and platelst < 4: usedplatelst = platelst + 24
