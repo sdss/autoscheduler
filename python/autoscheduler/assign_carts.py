@@ -47,7 +47,7 @@ def assign_carts(apogee_choices, manga_choices, eboss_choices, errors, loud=True
 		
 	# Save MaNGA choices to cartridges (since they are the most dependent)
 	# TO-DO
-	manpicks = []
+	manpicks = manga_choices
 	
 	# Save APOGEE-II choices to cartridges
 	apgsaved = np.zeros(len(apogee_choices))
