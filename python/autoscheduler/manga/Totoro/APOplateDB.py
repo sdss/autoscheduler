@@ -24,7 +24,6 @@ try:
     from sdss.internal.database.DatabaseConnection import DatabaseConnection
 except ImportError as e:
     print('Couldn\'t find DatabaseConnection:', e)
-    print('Did you setup hooloovookit before running?')
     sys.exit(1)
 
 # The database connection string depends on the version of SQLAlchemy.
@@ -42,7 +41,3 @@ Base = db.Base
 
 from sdss.internal.database.apo.platedb import ModelClasses as plateDB
 from sdss.internal.database.apo.mangadb import ModelClasses as mangaDB
-
-# from platedb import ModelClasses as plateDB
-# from mangadb import ModelClasses as mangaDB
-# from mangadb import SampleModelClasses as mangaSampleDB
