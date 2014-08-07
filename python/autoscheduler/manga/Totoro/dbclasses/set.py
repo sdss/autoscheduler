@@ -21,7 +21,7 @@ from .. import log
 from .. import config
 from ..exceptions import TotoroError
 from ..logic import checkSet
-from ..utils import createSite
+from ..utils import createSite, getMinMaxIntervalSequence
 import numpy as np
 from copy import copy
 
@@ -117,14 +117,13 @@ class Set(BaseDBClass):
         expHARanges = np.array([exposure.getHARange()
                                 for exposure in self.exposures
                                 if exposure.valid])
-
-        return np.array([np.min(expHARanges), np.max(expHARanges)])
+        return getMinMaxIntervalSequence(expHARanges)
 
     def getHALimits(self):
         """Returns the HA limits to add more exposures to the set."""
 
         haRange = self.getHARange()
-        return np.array([np.max(haRange) - 15., np.min(haRange) + 15.])
+        return np.array([np.max(haRange) - 15., np.min(haRange) + 15.]) % 360.
 
     def getDitherPositions(self):
         """Returns a list of dither positions in the set."""

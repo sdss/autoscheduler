@@ -17,10 +17,10 @@ from __future__ import print_function
 from .baseDBClass import BaseDBClass
 from ..exceptions import TotoroError
 from .. import plateDB, mangaDB, Session
-from .. import utils
+from .. import logic
 from .. import log, config
 import numpy as np
-from ..utils import createSite, computeAirmass
+from .. import utils
 from astropy import time
 from .. import dustMap
 
@@ -56,7 +56,7 @@ class Exposure(BaseDBClass):
             self.ra, self.dec = kwargs['ra'], kwargs['dec']
 
         self.mlhalimit = utils.mlhalimit(self.dec)
-        self.site = createSite(verbose=False)
+        self.site = utils.createSite(verbose=False)
 
     def loadFromMangaDB(self):
 
@@ -128,8 +128,8 @@ class Exposure(BaseDBClass):
         self._dust = dustMap(self.ra, self.dec)
 
         haRange = self.getHARange()
-        ha = np.mean(haRange)
-        self._airmass = computeAirmass(self.dec, ha)
+        ha = utils.calculateMean(haRange)
+        self._airmass = utils.computeAirmass(self.dec, ha)
 
         sn2Red = config['simulation']['redSN2'] / self._airmass ** \
             config['simulation']['alphaRed'] / self._dust['iIncrease'][0]
@@ -138,7 +138,7 @@ class Exposure(BaseDBClass):
 
         self._sn2Array = np.array([sn2Blue, sn2Blue, sn2Red, sn2Red])
 
-        self.valid = True
+        self._valid = True
         self.status = 'Good'
 
     def getCoordinates(self):
@@ -164,11 +164,9 @@ class Exposure(BaseDBClass):
         tStart = t0 + time.TimeDelta(startTime, format='sec', scale='tai')
 
         lst = self.site.localSiderialTime(tStart.jd)
-        ha = (lst * 15. - self.ra)
-        if ha > 180:
-            ha -= 360.
+        ha = (lst * 15. - self.ra) % 360.
 
-        return np.array([ha, ha + expTime / 3600. * 15])
+        return np.array([ha, ha + expTime / 3600. * 15]) % 360.
 
     def getSN2Array(self):
         """Returns an array with the SN2 of the exposure. The return
@@ -190,7 +188,7 @@ class Exposure(BaseDBClass):
         if self._valid is not None:
             return self._valid
         else:
-            return utils.checkExposure(self)
+            return logic.checkExposure(self)
 
     @valid.setter
     def valid(self, value):

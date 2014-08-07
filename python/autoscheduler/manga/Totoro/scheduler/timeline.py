@@ -20,6 +20,7 @@ import warnings
 from ..exceptions import TotoroUserWarning
 from ..utils import JDdiff, createSite
 from ..logic import getOptimalPlate
+import numpy as np
 
 
 class Timelines(list):
@@ -32,12 +33,12 @@ class Timelines(list):
 
         list.__init__(self, initList)
 
-    def schedule(self, **kwargs):
+    def schedule(self, mode='planner', **kwargs):
 
         plates = self[0]._plates
         for timeline in self:
             timeline._plates = plates
-            timeline.schedule(**kwargs)
+            timeline.schedule(mode=mode, **kwargs)
             plates = timeline._plates
 
 
@@ -55,21 +56,24 @@ class Timeline(object):
 
         self.site = createSite()
 
-    def schedule(self, **kwargs):
+    def schedule(self, mode='planner', **kwargs):
 
-        log.info('Scheduling timeline with JD0={0:.4f}'.format(self.startTime))
-
+        log.info('Scheduling timeline with JD0={0:.4f}, JD1={1:.4f}'
+                 .format(self.startTime, self.endTime))
         currentTime = self.startTime
         remainingTime = JDdiff(currentTime, self.endTime)
 
-        while remainingTime > config['exposure']['exposureTime']:
+        expTime = (config['exposure']['exposureTime'] /
+                   config[mode]['efficiency'])
+        maxLeftoverTime = config[mode]['maxLeftoverTime']
+
+        while remainingTime >= maxLeftoverTime:
 
             optimalPlate = getOptimalPlate(
-                self._plates, currentTime, self.endTime, **kwargs)
+                self._plates, currentTime, self.endTime, expTime=expTime,
+                **kwargs)
 
-            nNewExposures = self._getNNewExposures(optimalPlate)
-
-            if optimalPlate is None or nNewExposures == 0:
+            if optimalPlate is None:
                 warnings.warn('no valid plates found at JD={0:.4f} '
                               '(timeline ends at JD={1:.4f})'.format(
                                   currentTime, self.endTime),
@@ -77,9 +81,9 @@ class Timeline(object):
                 currentTime += config['exposure']['exposureTime'] / 86400.
 
             else:
-
                 self._replaceWithOptimal(optimalPlate)
-                currentTime = optimalPlate.getExposureRange()[1]
+                newTime = optimalPlate.getLastExposure().getJDObserved()[1]
+                currentTime = newTime
 
             remainingTime = JDdiff(currentTime, self.endTime)
 
@@ -96,7 +100,7 @@ class Timeline(object):
 
         for ii in range(len(self._plates)):
             if self._plates[ii].location_id == optimalPlate.location_id:
-                self._plates[ii] = optimalPlate
+                self._plates[ii] = optimalPlate.copy()
 
     def _observePlate(self, plate, startTime=None, endTime=None,
                       calibrations=True, **kwargs):
@@ -105,3 +109,28 @@ class Timeline(object):
         endTime = self.endTime if endTime is None else endTime
 
         return
+
+    def getExposures(self):
+
+        exposures = []
+        for plate in self._plates:
+            exposures += plate.getValidExposures()
+
+        timelineExposures = []
+        for exp in exposures:
+            expJD0, expJD1 = exp.getJDObserved()
+            if expJD0 >= self.startTime and expJD1 <= self.endTime:
+                timelineExposures.append(exp)
+
+        return timelineExposures
+
+    def printExposures(self):
+
+        exposures = self.getExposures()
+
+        jdArray = np.array([exp.getJDObserved() for exp in exposures],
+                           dtype=[('JD0', float), ('JD1', float)])
+
+        jdArray.sort(order='JD0')
+
+        print(jdArray)

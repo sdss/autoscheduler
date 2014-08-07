@@ -32,6 +32,7 @@ if os.path.exists(__TOTORO_CONFIG_PATH__):
 from .core.logger import initLog
 log = initLog()
 log.debug('Logging starts now.')
+log.debug('Configuration file has been loaded.')
 
 try:
     from sdss.manga import DustMap

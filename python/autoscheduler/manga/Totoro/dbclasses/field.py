@@ -19,6 +19,7 @@ from ..dbclasses import Plate, Plates
 from ..exceptions import TotoroError
 import os
 from astropy import table
+import numpy as np
 
 
 session = Session()
@@ -57,12 +58,23 @@ class Fields(Plates):
 
         if rejectMode.lower() == 'locationid':
             allPlates = self.getAllMaNGAPlates(onlyLeading=True)
-            locIDs = [plate.location_id+1000 for plate in allPlates]
+            locIDs = [plate.location_id for plate in allPlates]
 
         validIdx = [idx for idx in range(len(self._tiles))
                     if self._tiles[idx]['ID'] not in locIDs]
 
         self._tiles = self._tiles[validIdx]
+
+    def removeField(self, locationID):
+
+        locIDs = np.array([field.location_id for field in self])
+        idx = np.where(locIDs == locationID)[0]
+
+        if idx.size != 1:
+            raise TotoroError('locationID={0} does not exist and cannot '
+                              'be removed'.format(locationID))
+
+        self.pop(idx[0])
 
     @staticmethod
     def getAllMaNGAPlates(onlyLeading=True):

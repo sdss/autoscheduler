@@ -46,7 +46,10 @@ def computeAirmass(dec, ha, lat=config['observatory']['latitude'],
                    correct=[75., 10.]):
 
     dec = np.atleast_1d(dec)
-    ha = np.atleast_1d(ha)
+    ha = np.atleast_1d(ha) % 360.
+
+    if ha > 180:
+        ha -= 360
 
     airmass = (np.sin(lat * np.pi / 180.) * np.sin(dec * np.pi / 180.) +
                np.cos(lat * np.pi / 180.) * np.cos(dec * np.pi / 180.) *
@@ -90,9 +93,9 @@ def getAPOcomplete(inp, format='plate_id'):
     for ii in inp:
 
         if format in ['plate_pk', 'pk']:
-            plate = Plate(ii, format='pk', rearrageExposures=True)
+            plate = Plate(ii, format='pk', rearrangeExposures=True)
         elif format in ['plate_id', 'id']:
-            plate = Plate.fromPlateID(ii, rearrageExposures=True)
+            plate = Plate.fromPlateID(ii, rearrangeExposures=True)
 
         APOcomplete[plate.plate_id] = []
 

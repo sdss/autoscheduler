@@ -28,8 +28,11 @@ dustMap:
     maps: [SFD_dust_4096_ngp.fits, SFD_dust_4096_sgp.fits]
     grid: +data/IGincrease.fits
 
+planner:
+    efficiency: 0.85
+    maxLeftoverTime: 300.
+
 simulation:
-    efficiency: 0.8
     blueSN2: 3.6
     alphaBlue: 1.0
     redSN2: 7.5

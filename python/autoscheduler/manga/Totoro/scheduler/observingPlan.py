@@ -129,10 +129,12 @@ class ObservingPlan(object):
         if endDate < validDates['JD1'][-1]:
             validDates['JD1'][-1] = endDate
 
-        totalTime = np.sum([row['JD1'] - row['JD0'] for row in validDates])
+        totalTime = np.sum([row['JD1'] -
+                            row['JD0'] for row in validDates]) * 24
+
         log.info(('{0} blocks (days) selected, '
-                  'making a total of {1:.1f} days').format(len(validDates),
-                                                           totalTime))
+                  'making a total of {1:.2f} hours').format(len(validDates),
+                                                            totalTime))
 
         return validDates
 

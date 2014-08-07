@@ -29,7 +29,7 @@ from ..utils import mlhalimit, isIntervalInsideOther
 session = Session()
 
 
-def rearrageExposures(plate, force=False, checkExposures=True):
+def rearrangeExposures(plate, force=False, checkExposures=True):
     """Assigns a set to each exposure for a given plate."""
 
     from ..dbclasses.set import Set, Exposure
@@ -259,23 +259,28 @@ def checkSet(input, verbose=True):
     dec = set.exposures[0].dec
     haLimit = mlhalimit(dec)
     maxHA = np.max(set.getHARange())
+    if maxHA > 180:
+        maxHA -= 360
     if np.abs(maxHA) > np.abs(haLimit):
         if verbose:
-            log.debug('set pk=%d is invalid because is ' % set.pk +
+            log.debug('set pk={0} is invalid because is '.format(set.pk) +
                       'outside the visibility window')
         return 'Bad'
 
     haRange = set.getHARange()
-    if np.abs(haRange[1] - haRange[0]) > config['set']['maxHARange']:
+    haRangeLength = (haRange[1] - haRange[0]) % 360
+    if haRangeLength > config['set']['maxHARange']:
         if verbose:
-            log.debug('set pk%d is invalid because the HA range is ' % set.pk +
-                      'larger than %d deg.' % config['set']['maxHARange'])
+            log.debug('set pk={0} is invalid because the HA range is '
+                      'larger than {1} deg.'.format(
+                          set.pk, config['set']['maxHARange']))
+
         return 'Bad'
 
     seeing = np.array([exp.manga_seeing for exp in set.exposures])
     if np.max(seeing) - np.min(seeing) > config['set']['maxSeeingRange']:
         if verbose:
-            log.debug('set pk%d is invalid because it ' % set.pk +
+            log.debug('set pk={0} is invalid because it '.format(set.pk) +
                       'fails the seeing uniformity criteria')
         return 'Bad'
 
@@ -286,7 +291,7 @@ def checkSet(input, verbose=True):
             if np.any(sn2Ratio > config['set']['maxSN2Factor']) or \
                     np.any(sn2Ratio < (1. / config['set']['maxSN2Factor'])):
                 if verbose:
-                    log.debug('set pk%d is invalid because ' % set.pk +
+                    log.debug('set pk={0} is invalid because '.format(set.pk) +
                               'it fails the SN2 uniformity criteria')
                 return 'Bad'
 
@@ -295,14 +300,15 @@ def checkSet(input, verbose=True):
 
     if len(setDitherPositions) < len(ditherPositions):
         if verbose:
-            log.debug('set pk=%d is incomplete.' % set.pk)
+            log.debug('set pk={0} is incomplete.'.format(set.pk))
         return 'Incomplete'
 
     for pos in ditherPositions:
         if pos not in setDitherPositions:
             if verbose:
-                log.debug('set pk=%d is invalid because ' % set.pk +
-                          'does not have a dither in position %s' % pos)
+                log.debug('set pk={0} is invalid because ' +
+                          'does not have a dither in position {1}'.format(
+                              set.pk, pos))
             return 'Bad'
 
     if np.mean(seeing) > config['set']['poorSeeing']:

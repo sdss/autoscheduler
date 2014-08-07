@@ -22,7 +22,7 @@ from ..utils import mlhalimit, isPlateComplete
 import sqlalchemy
 from ..exceptions import TotoroNotImplemented, TotoroError
 from .. import log, config
-from ..logic import rearrageExposures
+from ..logic import rearrangeExposures
 import numpy as np
 from ..utils import createSite, getIntervalIntersectionLength
 from .. import dustMap
@@ -101,7 +101,7 @@ class Plates(list):
 class Plate(BaseDBClass):
 
     def __init__(self, inp, format='pk', autocomplete=True,
-                 pluggings=True, sets=True, rearrageExposures=False,
+                 pluggings=True, sets=True, rearrangeExposures=False,
                  verbose=True, mock=False, **kwargs):
 
         self.pluggings = []
@@ -114,7 +114,7 @@ class Plate(BaseDBClass):
 
         if not self.isMock:
 
-            self._rearrageExposures = rearrageExposures
+            self._rearrangeExposures = rearrangeExposures
 
             self.__DBClass__ = plateDB.Plate
             super(Plate, self).__init__(inp, format=format,
@@ -229,8 +229,8 @@ class Plate(BaseDBClass):
 
         self.sets = []
 
-        if self._rearrageExposures:
-            status = rearrageExposures(self, force=True)
+        if self._rearrangeExposures:
+            status = rearrangeExposures(self, force=True)
 
             if status is False:
                 raise TotoroError('failed while reorganising exposures.')
@@ -259,9 +259,9 @@ class Plate(BaseDBClass):
     def copy(self):
         return deepcopy(self)
 
-    def getPlateCompletion(self):
+    def getPlateCompletion(self, includeIncompleteSets=False):
 
-        totalSN = self.getCumulatedSN2()
+        totalSN = self.getCumulatedSN2(includeIncomplete=includeIncompleteSets)
 
         for plugging in self.pluggings:
             pluggingStatus = plugging.getPluggingStatus()
@@ -278,7 +278,7 @@ class Plate(BaseDBClass):
 
     def getCumulatedSN2(self, includeIncomplete=False):
 
-        validStatuses = ['Good', 'Excellent']
+        validStatuses = ['Good', 'Excellent', 'Bad']
         if includeIncomplete:
             validStatuses.append('Incomplete')
 
@@ -314,12 +314,12 @@ class Plate(BaseDBClass):
 
         return validSets
 
-    def getValidExposures(self, includeIncompleteSets=False):
-
-        validSets = self.getValidSets(includeIncomplete=includeIncompleteSets)
+    def getValidExposures(self):
+        """Returns all valid exposures, even if they belong to an incomplete
+        or bad set."""
 
         validExposures = []
-        for set in validSets:
+        for set in self.sets:
             for exp in set.exposures:
                 if exp.valid is True:
                     validExposures.append(exp)
@@ -403,22 +403,16 @@ class Plate(BaseDBClass):
 
         return None
 
-    def getExposureRange(self):
-        """Returns the JDs of the beginning of the first exposure and
-        the end of the last one."""
+    def getLastExposure(self):
+        """Returns the last exposure taken."""
 
-        validExps = self.getValidExposures()
+        exposures = []
+        for set in self.sets:
+            for exp in set.exposures:
+                if exp.valid:
+                    exposures.append(exp)
 
-        if len(validExps) == 0:
-            return None
+        startTime = [exp.start_time for exp in exposures]
+        order = np.argsort(startTime)
 
-        minJD, maxJD = validExps[0].getJDObserved()
-
-        for exp in validExps:
-            jd0, jd1 = exp.getJDObserved()
-            if jd0 < minJD:
-                minJD = jd0
-            if jd1 > maxJD:
-                maxJD = jd1
-
-        return np.array([minJD, maxJD])
+        return exposures[order[-1]]

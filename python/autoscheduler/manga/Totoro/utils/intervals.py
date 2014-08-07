@@ -15,6 +15,7 @@ Revision history:
 from __future__ import division
 from __future__ import print_function
 import numpy as np
+from ..exceptions import TotoroError
 
 
 def getIntervalIntersectionLength(aa, bb, wrapAt=360):
@@ -66,3 +67,50 @@ def isIntervalInsideOther(aa, bb, wrapAt=360, onlyOne=False):
         return True
 
     return False
+
+
+def intervalLength(aa, wrapAt=360.):
+    return (aa[1] - aa[0]) % wrapAt
+
+
+def getMinMaxIntervalSequence(intervals, wrapAt=360):
+
+    if intervals.shape[0] < 1:
+        raise TotoroError('input needs to be an Nx2 array with N>=1.')
+    elif intervals.shape[0] == 1:
+        return np.array(intervals[0])
+
+    firstTwo = intervals[0:2, :]
+    rest = intervals[2:, :]
+
+    interval1 = firstTwo[0, :]
+    length1 = intervalLength(interval1, wrapAt=wrapAt)
+
+    interval2 = firstTwo[1, :]
+    length2 = intervalLength(interval2, wrapAt=wrapAt)
+
+    if (isIntervalInsideOther(interval1, interval2) or
+            isIntervalInsideOther(interval2, interval1)):
+        newInterval = interval1 if length1 > length2 else interval2
+    else:
+        tmpInt1 = [interval1[0], interval2[1]]
+        tmpLength1 = intervalLength(tmpInt1, wrapAt=wrapAt)
+        tmpInt2 = [interval2[0], interval1[1]]
+        tmpLength2 = intervalLength(tmpInt2, wrapAt=wrapAt)
+
+        if (isPointInInterval(interval1[0], interval2) or
+                isPointInInterval(interval1[1], interval2)):
+            newInterval = tmpInt1 if tmpLength1 > tmpLength2 else tmpInt2
+        else:
+            newInterval = tmpInt1 if tmpLength1 < tmpLength2 else tmpInt2
+
+    if rest.shape[0] == 0:
+        return newInterval
+    else:
+        return getMinMaxIntervalSequence(
+            np.append([newInterval], rest, axis=0))
+
+
+def calculateMean(interval, wrapAt=360.):
+
+    return (interval[0] + ((interval[1] - interval[0]) % wrapAt) / 2.) % wrapAt
