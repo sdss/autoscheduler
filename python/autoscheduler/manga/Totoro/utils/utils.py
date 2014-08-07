@@ -143,7 +143,4 @@ def createSite(longitude=None, latitude=None, altitude=None,
 def JDdiff(JD0, JD1):
     """Returns the number of seconds between two Julian dates."""
 
-    JD0 = Time(JD0, format='jd', scale='utc')
-    JD1 = Time(JD1, format='jd', scale='utc')
-
-    return (JD1-JD0).sec
+    return (JD1 - JD0) * 86400
