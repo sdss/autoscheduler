@@ -81,8 +81,6 @@ python/autoscheduler/manga/Totoro/tests/testOutput.pckl -text
 python/autoscheduler/manga/Totoro/tests/testOutput.py -text
 python/autoscheduler/manga/Totoro/tests/testPlanner.py -text
 python/autoscheduler/manga/Totoro/utils/__init__.py -text
-python/autoscheduler/manga/Totoro/utils/coordUtils.py -text
-python/autoscheduler/manga/Totoro/utils/coordinates.py -text
 python/autoscheduler/manga/Totoro/utils/mangaLogic.py -text
 python/autoscheduler/manga/Totoro/utils/utils.py -text
 python/autoscheduler/manga/Totoro/version.py -text

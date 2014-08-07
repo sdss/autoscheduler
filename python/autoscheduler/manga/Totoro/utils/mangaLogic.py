@@ -253,6 +253,9 @@ def checkSet(input, verbose=True):
     else:
         set = Set(input, verbose=False)
 
+    if len(set.exposures) == 0:
+        return 'Incomplete'
+
     dec = set.exposures[0].dec
     haLimit = mlhalimit(dec)
     maxHA = np.max(set.getHARange())
