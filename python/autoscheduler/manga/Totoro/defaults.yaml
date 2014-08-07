@@ -1,6 +1,6 @@
 ---
 logging:
-    logLevel: WARNING
+    logLevel: INFO
     logFileLevel: DEBUG
     logFilePath: '~/.totoro/totoro.log'
 
@@ -14,6 +14,8 @@ dbConnection:
 observingPlan:
     schedule: +data/Sch_base.6yrs.txt.frm.dat
 
+tilingCatalogue: +data/finalTilingCatalogue_v0.5.fits
+
 observatory:
     longitude: 254.179722   # In East degrees
     latitude: 32.766666667
@@ -26,13 +28,21 @@ dustMap:
     maps: [SFD_dust_4096_ngp.fits, SFD_dust_4096_sgp.fits]
     grid: +data/IGincrease.fits
 
+simulation:
+    efficiency: 0.8
+    blueSN2: 3.6
+    alphaBlue: 1.0
+    redSN2: 7.5
+    alphaRed: 1.25
+
 SN2thresholds:
-    plateRed: 70
-    plateBlue: 30
+    plateRed: 60
+    plateBlue: 27
     exposureRed: 3.5
     exposureBlue: 1.
 
 exposure:
+    exposureTime: 900
     minExpTime: 899
     maxSeeing: 2.5
 

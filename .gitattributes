@@ -48,6 +48,7 @@ python/autoscheduler/manga/Totoro/core/configuration.py -text
 python/autoscheduler/manga/Totoro/core/logger.py -text
 python/autoscheduler/manga/Totoro/core/setupTools.py -text
 python/autoscheduler/manga/Totoro/data/Sch_base.6yrs.txt.frm.dat -text
+python/autoscheduler/manga/Totoro/data/finalTilingCatalogue_v0.5.fits -text svneol=unset#unset
 python/autoscheduler/manga/Totoro/data/nightly.D.txt -text
 python/autoscheduler/manga/Totoro/data/nightly.D_UTC.txt -text
 python/autoscheduler/manga/Totoro/dbclasses/__init__.py -text
@@ -72,6 +73,7 @@ python/autoscheduler/manga/Totoro/readPath.py -text
 python/autoscheduler/manga/Totoro/scheduler/__init__.py -text
 python/autoscheduler/manga/Totoro/scheduler/observingPlan.py -text
 python/autoscheduler/manga/Totoro/scheduler/scheduler.py -text
+python/autoscheduler/manga/Totoro/scheduler/timeline.py -text
 python/autoscheduler/manga/Totoro/tests/__init__.py -text
 python/autoscheduler/manga/Totoro/tests/testAPOcomplete.py -text
 python/autoscheduler/manga/Totoro/tests/testDB.py -text
@@ -82,6 +84,7 @@ python/autoscheduler/manga/Totoro/tests/testOutput.py -text
 python/autoscheduler/manga/Totoro/tests/testPlanner.py -text
 python/autoscheduler/manga/Totoro/utils/__init__.py -text
 python/autoscheduler/manga/Totoro/utils/mangaLogic.py -text
+python/autoscheduler/manga/Totoro/utils/mangaLogicTimeline.py -text
 python/autoscheduler/manga/Totoro/utils/utils.py -text
 python/autoscheduler/manga/Totoro/version.py -text
 python/autoscheduler/manga/__init__.py -text

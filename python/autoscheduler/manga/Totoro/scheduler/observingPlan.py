@@ -101,38 +101,25 @@ class ObservingPlan(object):
         endTime = validDates[-1]['JD1']
         return endTime
 
-    # def getClosest(self, dd, survey=SURVEY()):
+    def getClosest(self, dd):
 
-    #     tt = self.data[self.data[self.survey + '_1'] >= dd.jd]
+        tt = self.plan[(self.plan['JD0'] < dd) & (self.plan['JD1'] > dd)]
 
-    #     idxStart = (np.abs(tt[self.survey + '_0'] - dd.jd)).argmin()
-    #     idxEnd = (np.abs(tt[self.survey + '_1'] - dd.jd)).argmin()
+        if len(tt) == 1:
+            return tt
 
-    #     return (tt[idxStart][self.survey + '_0'],
-    #             tt[idxEnd][self.survey + '_1'])
+        tt = self.plan[self.plan['JD'] <= dd]
 
-    def getMaNGAStart(self, startDate):
-        """Returns the JD of the start of the MaNGA observation for a given
-        start date."""
-
-        day = self[self['JD'] == int(startDate)]
-        return day['JD0'][0]
-
-    def getMaNGAEnd(self, startDate):
-        """Returns the JD of the end of the MaNGA observation for a given
-        start date."""
-
-        day = self[self['JD'] == int(startDate)]
-        return day['JD1'][0]
+        return tt[-1]
 
     def getObservingBlocks(self, startDate, endDate):
         """Returns an astropy table with the observation dates
         for each night between startDate and endDate."""
 
-        log.info('Getting observing block.')
+        log.info('Getting observing blocks.')
 
-        validDates = self.plan[(self.plan['JD1'] >= int(startDate)) &
-                               (self.plan['JD0'] <= int(endDate)) &
+        validDates = self.plan[(self.plan['JD1'] >= startDate) &
+                               (self.plan['JD0'] <= endDate) &
                                (self.plan['JD0'] > 0.0) &
                                (self.plan['JD1'] > 0.0)]
 

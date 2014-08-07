@@ -19,6 +19,7 @@ from .exposure import Exposure
 from .. import mangaDB, Session, plateDB
 from .. import log
 from .. import config
+from ..exceptions import TotoroError
 from ..utils import checkExposure, checkSet, createSite
 import numpy as np
 from copy import copy
@@ -29,24 +30,27 @@ session = Session()
 class Set(BaseDBClass):
 
     def __init__(self, inp, format='pk', autocomplete=True,
-                 exposures=True, verbose=True, **kwargs):
+                 exposures=True, verbose=True, mock=False, **kwargs):
 
         self.exposures = []
+        self.isMock = mock
         self.verbose = verbose
 
         self.site = createSite()
 
-        self.__DBClass__ = mangaDB.Set
-        super(Set, self).__init__(inp, format=format,
-                                  autocomplete=autocomplete)
+        if not self.isMock:
 
-        self.ra, self.dec = self.getCoordinates()
+            self.__DBClass__ = mangaDB.Set
+            super(Set, self).__init__(inp, format=format,
+                                      autocomplete=autocomplete)
 
-        if verbose:
-            log.debug('Loaded set with pk={0}'.format(self.pk))
+            self.ra, self.dec = self.getCoordinates()
 
-        if exposures:
-            self.loadExposuresFromDB()
+            if verbose:
+                log.debug('Loaded set with pk={0}'.format(self.pk))
+
+            if exposures:
+                self.loadExposuresFromDB()
 
     def loadExposuresFromDB(self):
 
@@ -60,7 +64,42 @@ class Set(BaseDBClass):
                                            extendFromMaNGA=True,
                                            verbose=self.verbose))
 
+    @classmethod
+    def createMockSet(cls, ra=None, dec=None, verbose=False, **kwargs):
+
+        newSet = Set.__new__(cls)
+
+        if ra is None or dec is None:
+            raise TotoroError('ra and dec must be specified')
+
+        newSet.ra = ra
+        newSet.dec = dec
+
+        newSet.isMock = True
+        newSet.pk = None if 'pk' not in kwargs else kwargs['pk']
+
+        newSet.exposures = []
+
+        if verbose:
+            log.debug('Created mock with pk={0}'.format(newSet.pk))
+
+        return newSet
+
+    def addMockExposure(self, **kwargs):
+
+        if self.complete is True:
+            raise TotoroError('set is complete; not exposures can be added.')
+
+        if 'ditherPosition' not in kwargs or kwargs['ditherPosition'] is None:
+            kwargs['ditherPosition'] = self.getMissingDitherPositions()[0]
+
+        newExposure = Exposure.createMockExposure(**kwargs)
+        self.exposures.append(newExposure)
+
     def getCoordinates(self):
+
+        if hasattr(self, 'ra') and hasattr(self, 'dec'):
+            return np.array([self.ra, self.dec])
 
         with session.begin():
             pointing = session.query(plateDB.Pointing).join(
@@ -107,7 +146,7 @@ class Set(BaseDBClass):
 
         validExposures = []
         for exposure in self.exposures:
-            if checkExposure(exposure):
+            if exposure.valid:
                 validExposures.append(exposure)
 
         if len(validExposures) == 0:
@@ -174,12 +213,18 @@ class Set(BaseDBClass):
 
         return np.mean(seeings)
 
-    def getUTVisibilityWindow(self, date=None, format='str'):
+    def getLSTRange(self):
 
         ha0, ha1 = self.getHALimits()
 
         lst0 = (ha0 + self.ra) % 360. / 15
         lst1 = (ha1 + self.ra) % 360. / 15
+
+        return np.array([lst0, lst1])
+
+    def getUTVisibilityWindow(self, date=None, format='str'):
+
+        lst0, lst1 = self.getLSTRange()
 
         ut0 = self.site.localTime(lst0, date=date, utc=True,
                                   returntype='datetime')

@@ -15,11 +15,11 @@ Revision history:
 from __future__ import division
 from __future__ import print_function
 from astropysics import obstools
-# from ..exceptions import TotoroError
 from .observingPlan import ObservingPlan
-# from ..dbclasses import Fields
+from ..dbclasses import Fields
 from ..dbclasses import Plates
 from ..utils import createSite
+from .timeline import Timelines
 from .. import log
 
 
@@ -33,19 +33,24 @@ class BaseScheduler(object):
 
     def __init__(self, startDate=None, endDate=None, **kwargs):
 
-        self.observingPlan = ObservingPlan(**kwargs)
+        self._observingPlan = ObservingPlan(**kwargs)
         self.site = createSite(**kwargs)
-        self.setStartEndDate(startDate, endDate, **kwargs)
+        self._setStartEndDate(startDate, endDate, **kwargs)
 
-    def setStartEndDate(self, startDate, endDate, scope='planner', **kwargs):
+        self.observingBlocks = self._observingPlan.getObservingBlocks(
+            self.startDate, self.endDate)
+
+    def _setStartEndDate(self, startDate, endDate, scope='planner', **kwargs):
         """Sets the start and end date if they haven't been defined."""
 
-        if startDate < self.observingPlan.getSurveyStart():
-            startDate = self.observingPlan.getSurveyStart()
-
         if scope == 'planner':
-            startDate = int(startDate)
-            endDate = int(endDate) + 1
+            if startDate is None:
+                startDate = obstools.calendar_to_jd(None)
+            if endDate is None:
+                endDate = self._observingPlan.getSurveyEnd()
+
+            startDate = self._observingPlan.getClosest(startDate)['JD0']
+            endDate = self._observingPlan.getClosest(endDate)['JD1']
 
         elif scope == 'nightly':
             if startDate is None:
@@ -61,12 +66,6 @@ class BaseScheduler(object):
         log.info('Adjusted start date: {0}'.format(self.startDate))
         log.info('Adjusted end date: {0}'.format(self.endDate))
 
-    def getObservingBlocks(self):
-        """Return a table with the observing blocks."""
-
-        return self.observingPlan.getObservingBlocks(
-            self.startDate, self.endDate)
-
 
 class Planner(BaseScheduler):
 
@@ -78,13 +77,23 @@ class Planner(BaseScheduler):
                                       endDate=endDate, scope='planner',
                                       **kwargs)
 
-        self.getFields()
+        self.fields = self.getFields()
 
-    def getFields(self, **kwargs):
+    def getFields(self, rejectDrilled=True, **kwargs):
         """Gets a table with the fields that can be scheduled."""
 
-        log.info('Beginning to load fields from DB.')
-        self.fields = Fields(rejectCompleted=True, **kwargs)
+        log.info('Finding fields with rejectDrilled={0}'.format(rejectDrilled))
+        fields = Fields(rejectDrilled=rejectDrilled, **kwargs)
+
+        log.info('Found {0} fields'.format(len(fields)))
+
+        return fields
+
+    def scheduleTimelines(self):
+        """Creates siumulated timelines for the observing blocks."""
+
+        self.timelines = Timelines(self.observingBlocks, plates=self.fields)
+        self.timelines.schedule()
 
 
 class Nightly(BaseScheduler):

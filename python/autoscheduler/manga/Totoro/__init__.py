@@ -31,7 +31,7 @@ if os.path.exists(__TOTORO_CONFIG_PATH__):
 # Creates the custom logging system
 from .core.logger import initLog
 log = initLog()
-log.info('Logging starts now.')
+log.debug('Logging starts now.')
 
 try:
     from sdss.manga import DustMap
@@ -42,6 +42,6 @@ except (ImportError, ValueError):
                   'will be applied', DustMapWarning)
     dustMap = None
 
-log.info('Creating connection with DB.')
+log.debug('Creating connection with DB.')
 from .APOplateDB import Session, Base, db, engine
 from .APOplateDB import plateDB, mangaDB

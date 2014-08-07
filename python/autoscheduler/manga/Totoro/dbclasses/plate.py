@@ -16,6 +16,7 @@ from __future__ import division
 from __future__ import print_function
 from .plugging import Plugging
 from .baseDBClass import BaseDBClass
+from .set import Set
 from .. import Session, plateDB, mangaDB
 from ..utils import mlhalimit, isPlateComplete
 import sqlalchemy
@@ -23,8 +24,10 @@ from ..exceptions import TotoroNotImplemented, TotoroError
 from .. import log, config
 from ..utils import rearrageExposures
 import numpy as np
-from ..utils import createSite
+from ..utils import createSite, getIntervalIntersectionLength
 from .. import dustMap
+from copy import deepcopy
+
 
 session = Session()
 
@@ -47,8 +50,16 @@ class Plates(list):
             raise TotoroNotImplemented('creating Plate instances from pk '
                                        'not yet implemented.')
 
+    @classmethod
+    def fromList(cls, plateList, **kwargs):
+
+        newPlates = Plates.__new__(cls)
+        list.__init__(newPlates, plateList)
+
+        return newPlates
+
     @staticmethod
-    def getPlates(onlyPlugged=False, onlyAtAPO=False,
+    def getPlates(onlyPlugged=False, onlyAtAPO=True,
                   onlyIncomplete=False, **kwargs):
 
         if onlyPlugged:
@@ -91,30 +102,34 @@ class Plate(BaseDBClass):
 
     def __init__(self, inp, format='pk', autocomplete=True,
                  pluggings=True, sets=True, rearrageExposures=False,
-                 verbose=True, **kwargs):
+                 verbose=True, mock=False, **kwargs):
 
-        self.pluggings = None
-        self.sets = None
+        self.pluggings = []
+        self.sets = []
         self._complete = None
-
-        self._rearrageExposures = rearrageExposures
 
         self.site = createSite()
 
-        self.__DBClass__ = plateDB.Plate
-        super(Plate, self).__init__(inp, format=format,
-                                    autocomplete=autocomplete)
+        self.isMock = mock
 
-        self.checkPlate()
+        if not self.isMock:
+
+            self._rearrageExposures = rearrageExposures
+
+            self.__DBClass__ = plateDB.Plate
+            super(Plate, self).__init__(inp, format=format,
+                                        autocomplete=autocomplete)
+
+            self.checkPlate()
+
+            if verbose:
+                log.debug('Loaded plate with pk={0}, plateid={1}'.format(
+                    self.pk, self.plate_id))
 
         if 'coords' in kwargs:
             self.coords = kwargs['coords']
         else:
             self.coords = self.getCoords()
-
-        if verbose:
-            log.debug('Loaded plate with pk={0}, plateid={1}'.format(
-                self.pk, self.plate_id))
 
         if 'dust' in kwargs:
             self.dust = kwargs['dust']
@@ -126,10 +141,10 @@ class Plate(BaseDBClass):
 
         self.mlhalimit = mlhalimit(self.coords[1])
 
-        if pluggings:
+        if pluggings and not self.isMock:
             self.loadPluggingsFromDB()
 
-        if sets:
+        if sets and not self.isMock:
             self.loadSetsFromDB()
 
     @classmethod
@@ -140,6 +155,23 @@ class Plate(BaseDBClass):
                 plateDB.Plate).filter(plateDB.Plate.plate_id == plateid).one()
 
         return cls(plate.pk, **kwargs)
+
+    @classmethod
+    def createMockPlate(cls, pk=None, location_id=None,
+                        ra=None, dec=None, verbose=False):
+
+        mockPlate = cls(None, mock=True, coords=(ra, dec))
+
+        mockPlate.isMock = True
+        mockPlate.pk = pk
+        mockPlate.location_id = location_id
+
+        if verbose:
+            log.debug(
+                'Created mock plate with ra={0:.3f} and dec={0:.3f}'.format(
+                    mockPlate.coords[0], mockPlate.coords[1]))
+
+        return mockPlate
 
     def checkPlate(self):
 
@@ -224,6 +256,9 @@ class Plate(BaseDBClass):
     def isComplete(self, value):
         self._complete = value
 
+    def copy(self):
+        return deepcopy(self)
+
     def getPlateCompletion(self):
 
         totalSN = self.getCumulatedSN2()
@@ -291,13 +326,19 @@ class Plate(BaseDBClass):
 
         return validExposures
 
-    def getUTVisibilityWindow(self, format='str'):
+    def getLSTRange(self):
 
         ha0 = -self.mlhalimit
         ha1 = self.mlhalimit
 
         lst0 = (ha0 + self.coords[0]) % 360. / 15
         lst1 = (ha1 + self.coords[0]) % 360. / 15
+
+        return (lst0, lst1)
+
+    def getUTVisibilityWindow(self, format='str'):
+
+        lst0, lst1 = self.getLSTRange()
 
         ut0 = self.site.localTime(lst0, utc=True, returntype='datetime')
         ut1 = self.site.localTime(lst1, utc=True, returntype='datetime')
@@ -306,3 +347,78 @@ class Plate(BaseDBClass):
             return ('{0:%H:%M}'.format(ut0), '{0:%H:%M}'.format(ut1))
         else:
             return (ut0, ut1)
+
+    def isVisible(self, LST0, LST1, minLength=None):
+        """Returns True if the plate is visible in a range of LST."""
+
+        if minLength is None:
+            minLength = config['exposure']['exposureTime']
+
+        lstIntersectionLength = getIntervalIntersectionLength(
+            self.getLSTRange(), (LST0, LST1), wrapAt=24.)
+
+        secIntersectionLength = lstIntersectionLength * 3600.
+
+        return True if secIntersectionLength >= minLength else False
+
+    def addMockExposure(self, startTime=None, set=None,
+                        expTime=None, **kwargs):
+        """Creates a mock expusure in the indicated set. If set=None,
+        a new set will be created."""
+
+        ra, dec = self.coords
+
+        if set is None:
+            set = self.getIncompleteSet(startTime, expTime)
+
+        if set is None:
+            set = Set.createMockSet(ra=ra, dec=dec, **kwargs)
+            self.sets.append(set)
+
+        set.addMockExposure(startTime=startTime, expTime=expTime,
+                            ra=ra, dec=dec, **kwargs)
+
+        return None
+
+    def getIncompleteSet(self, startTime, expTime):
+        """Returns incomplete sets that are valid for an exposure starting at
+        JD=startTime."""
+
+        LST0 = self.site.localSiderialTime(startTime)
+        LST1 = (LST0 + expTime / 60.) % 24.
+
+        incompleteSets = [set for set in self.sets if not set.complete]
+
+        if len(incompleteSets) == 0:
+            return None
+
+        for set in incompleteSets:
+
+            lstRange = set.getLSTRange()
+            intersectionLength = getIntervalIntersectionLength(
+                (LST0, LST1), lstRange)
+
+            if intersectionLength * 3600 > expTime:
+                return set
+
+        return None
+
+    def getExposureRange(self):
+        """Returns the JDs of the beginning of the first exposure and
+        the end of the last one."""
+
+        validExps = self.getValidExposures()
+
+        if len(validExps) == 0:
+            return None
+
+        minJD, maxJD = validExps[0].getJDObserved()
+
+        for exp in validExps:
+            jd0, jd1 = exp.getJDObserved()
+            if jd0 < minJD:
+                minJD = jd0
+            if jd1 > maxJD:
+                maxJD = jd1
+
+        return np.array([minJD, maxJD])

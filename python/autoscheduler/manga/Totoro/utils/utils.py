@@ -17,6 +17,7 @@ from __future__ import print_function
 import numpy as np
 from .. import config
 from astropysics import obstools
+from astropy.time import Time
 from .. import log
 
 
@@ -139,6 +140,57 @@ def createSite(longitude=None, latitude=None, altitude=None,
     return site
 
 
+def getIntervalIntersectionLength(aa, bb, wrapAt=360):
+    """Returns the length of the instersection between two intervals aa and bb.
+    """
+
+    # if (bb[1] - bb[0]) % wrapAt > (aa[1] - aa[0]) % wrapAt:
+    #     aa, bb = bb, aa
+
+    # if isPointInInterval(bb[0], aa) and isPointInInterval(bb[1], aa):
+    #     return (bb[1] - bb[0]) % wrapAt
+
+    # if not isPointInInterval(bb[0], aa) and not isPointInInterval(bb[1], aa):
+    #     return 0.0
+
+    # if isPointInInterval(bb[0], aa):
+    #     return (aa[1] - bb[0]) % wrapAt
+
+    # if isPointInInterval(bb[1], aa):
+    #     return (bb[1] - aa[0]) % wrapAt
+
+    intersection = getIntervalIntersection(aa, bb, wrapAt=wrapAt)
+
+    if intersection is False:
+        return 0.0
+    else:
+        return (intersection[1] - intersection[0]) % wrapAt
+
+
+def getIntervalIntersection(aa, bb, wrapAt=360):
+    """Returns the intersection between two intervals."""
+
+    if (bb[1] - bb[0]) % wrapAt > (aa[1] - aa[0]) % wrapAt:
+        aa, bb = bb, aa
+
+    if isPointInInterval(bb[0], aa) and isPointInInterval(bb[1], aa):
+        return np.array([bb[0], bb[1]])
+
+    if not isPointInInterval(bb[0], aa) and not isPointInInterval(bb[1], aa):
+        return False
+
+    if isPointInInterval(bb[0], aa):
+        return np.array([bb[0], aa[1]])
+
+    if isPointInInterval(bb[1], aa):
+        return np.array([aa[0], bb[1]])
+
+def isPointInInterval(point, ival, wrapAt=360):
+    """Returns True if point in interval."""
+
+    return (point - ival[0]) % wrapAt < (ival[1] - ival[0]) % wrapAt
+
+
 def isIntervalInsideOther(aa, bb, wrapAt=360, onlyOne=False):
     """Checks if the interval aa (a numpy.ndarray of length 2) is inside bb."""
 
@@ -151,3 +203,12 @@ def isIntervalInsideOther(aa, bb, wrapAt=360, onlyOne=False):
         return True
 
     return False
+
+
+def JDdiff(JD0, JD1):
+    """Returns the number of seconds between two Julian dates."""
+
+    JD0 = Time(JD0, format='jd', scale='utc')
+    JD1 = Time(JD1, format='jd', scale='utc')
+
+    return (JD1-JD0).sec
