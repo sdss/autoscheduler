@@ -22,7 +22,7 @@ from ..utils import mlhalimit, isPlateComplete
 import sqlalchemy
 from ..exceptions import TotoroNotImplemented, TotoroError
 from .. import log, config
-from ..utils import rearrageExposures
+from ..logic import rearrageExposures
 import numpy as np
 from ..utils import createSite, getIntervalIntersectionLength
 from .. import dustMap

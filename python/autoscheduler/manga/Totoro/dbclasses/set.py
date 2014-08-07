@@ -20,7 +20,8 @@ from .. import mangaDB, Session, plateDB
 from .. import log
 from .. import config
 from ..exceptions import TotoroError
-from ..utils import checkExposure, checkSet, createSite
+from ..logic import checkSet
+from ..utils import createSite
 import numpy as np
 from copy import copy
 

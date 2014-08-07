@@ -66,6 +66,7 @@ python/autoscheduler/manga/Totoro/helpers/addTiles.py.bak -text
 python/autoscheduler/manga/Totoro/helpers/createWorkableDB.py -text
 python/autoscheduler/manga/Totoro/helpers/loadMockData.py -text
 python/autoscheduler/manga/Totoro/helpers/tilecenters_180_SGC.fits -text
+python/autoscheduler/manga/Totoro/logic/__init__.py -text
 python/autoscheduler/manga/Totoro/logic/mangaLogic.py -text
 python/autoscheduler/manga/Totoro/logic/mangaLogicTimeline.py -text
 python/autoscheduler/manga/Totoro/output/__init__.py -text

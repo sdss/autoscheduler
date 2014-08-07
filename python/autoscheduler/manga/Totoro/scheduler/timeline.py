@@ -18,7 +18,8 @@ from ..dbclasses.plate import Plates
 from .. import config, log
 import warnings
 from ..exceptions import TotoroUserWarning
-from ..utils import JDdiff, getOptimalPlate, createSite
+from ..utils import JDdiff, createSite
+from ..logic import getOptimalPlate
 
 
 class Timelines(list):
