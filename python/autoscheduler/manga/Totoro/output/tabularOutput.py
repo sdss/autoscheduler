@@ -41,6 +41,24 @@ def printTabularOutput(plates, **kwargs):
     return
 
 
+def getTabularOutput(plates, **kwargs):
+    """Returns a series of tables with information about the schedule."""
+
+    observedOutPuts = [ObservedPlateOutput(plate) for plate in plates]
+    cartOrder = np.argsort([plate.getCartridgeNumber() for plate in plates])
+
+    text = ''
+
+    for idx in cartOrder:
+        text += '\n'
+        pText = observedOutPuts[idx].pprint()
+        for line in pText:
+            text += line
+            text += '\n'
+
+    return text
+
+
 class ObservedPlateOutput(dict):
 
     def __init__(self, plate, **kwargs):

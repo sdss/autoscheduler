@@ -131,6 +131,12 @@ class Nightly(BaseScheduler):
 
         output.printTabularOutput(self.plates)
 
+    def getTabularOutput(self):
+
+        from .. import output
+
+        return output.getTabularOutput(self.plates)
+
     def getOutput(self, format='dict'):
         """Returns the nightly output in the selected format."""
 
