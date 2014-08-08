@@ -44,6 +44,12 @@ def mlhalimit(dec):
 
 def computeAirmass(dec, ha, lat=config['observatory']['latitude'],
                    correct=[75., 10.]):
+    """Calculates the airmass for a given declination and HA (in degrees).
+
+    By default, assumes that the latitude of the observation is the one set
+    in the configuration file. If correct is defined, abs(HA) anggles greater
+    than correct[0] are given a flat value correct[1].
+    """
 
     dec = np.atleast_1d(dec)
     ha = np.atleast_1d(ha) % 360.
