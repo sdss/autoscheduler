@@ -1,6 +1,7 @@
 from __future__ import print_function, division
 from time import time
 import os
+from sdss.apogee.plate_completion import completion
 
 # APGPLATE OBJECT DENITION
 # DESCRIPTION: APOGEE Plate Object
@@ -43,6 +44,10 @@ class apgplate(object):
 		if len(obsstr) == 0 or obsstr[0] == '': return float(0.0)
 		obshist = [float(x) for x in obsstr if x != '']
 		return min(obshist)
+		
+	# Determine plate completion percentage (from algorithm in the SDSS python module)
+	def pct(self):
+		return completion(self.vplan, self.vdone, self.sn, self.cadence)
 
 # GET_PLATES
 # DESCRIPTION: Reads in APOGEE-II plate information from platedb

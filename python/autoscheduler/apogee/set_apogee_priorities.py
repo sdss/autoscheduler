@@ -22,11 +22,8 @@ def set_priorities(apg, par, schedule, loud=True):
 		# Ecliptic
 		# TO-DO
 		
-		# Completion
-		# 'Regular' completion rules: all visits and S/N
-		if apg[p].stack == 0 and apg[p].vdone >= apg[p].vplan and apg[p].sn >= par['sn_target'] * apg[p].vplan: apg[p].priority = -2
-		# 'Stack' competion rules: only S/N
-		elif apg[p].stack == 1 and apg[i].sn >= par['sn_target'] * apg[p].vplan: apg[p].priority = -2
+		# Completion (using algorithm in SDSS python module)
+		if apg[p].pct >= 1: apg[p].priority = -2
 		
 		# Cadence
 		# Regular cadence rules
