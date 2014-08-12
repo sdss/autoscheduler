@@ -100,6 +100,7 @@ python/web/color_print.py -text
 python/web/config.py -text
 python/web/configuration_files/dev-utah.sdss.edu.cfg -text
 python/web/configuration_files/localhost.cfg -text
+python/web/configuration_files/sdss-db4.dev.cfg -text
 python/web/configuration_files/sdss-db4.local.cfg -text
 python/web/controllers/__init__.py -text
 python/web/controllers/index.py -text
