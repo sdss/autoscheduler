@@ -95,6 +95,7 @@ python/autoscheduler/night_schedule.py -text
 python/autoscheduler/s4as.py -text
 python/run_autoscheduler_api.py -text
 python/uwsgi_conf_files/uwsgi_sdssdb4_dev.ini -text
+python/uwsgi_conf_files/uwsgi_sdssdb4_pro.ini -text
 python/web/__init__.py -text
 python/web/color_print.py -text
 python/web/config.py -text
