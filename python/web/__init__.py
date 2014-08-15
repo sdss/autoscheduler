@@ -28,6 +28,16 @@ def create_app(debug=False):
     app.jinja_env.filters.update(custom_filters)
 
     if app.debug == False:
+        # ----------------------------------------------------------
+        # Set up getsentry.com logging - only use when in production
+        # ----------------------------------------------------------
+        from raven.contrib.flask import Sentry
+        
+        dsn = 'https://c45a595d8722445ab233f5a31fa870cf:47356cef57e548a692c8fe4e00d02c7b@app.getsentry.com/28911'
+        app.config['SENTRY_DSN'] = dsn
+        sentry = Sentry(app)
+        # ----------------------------------------------------------
+
         # --------------------------------------
         # Configuration when running under uWSGI
         # --------------------------------------
