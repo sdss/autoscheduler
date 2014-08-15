@@ -73,8 +73,7 @@ def get_plates(errors, plan=False, loud=True):
 				"INNER JOIN platedb.plate_location AS ploc ON (ploc.pk=plt.plate_location_pk)) "+
 				"INNER JOIN platedb.plate_to_plate_status AS p2ps ON (p2ps.plate_pk=plt.pk))"+
 				"INNER JOIN platedb.plate_status AS plts ON (plts.pk=p2ps.plate_status_pk))"+
-			#"WHERE p2s.survey_pk=37 AND plts.label = 'Accepted' AND ploc.label = 'APO' "+
-			"WHERE p2s.survey_pk=1 AND plts.label = 'Accepted' AND ploc.label = 'APO' "+
+			"WHERE p2s.survey_pk=37 AND plts.label = 'Accepted' AND ploc.label = 'APO' "+
 			"ORDER BY plt.plate_id").fetchall()
 	else:
 		stage1 = session.execute("SET SCHEMA 'platedb'; "+
@@ -86,8 +85,7 @@ def get_plates(errors, plan=False, loud=True):
 				"LEFT JOIN platedb.plate_to_survey AS p2s ON (p2s.plate_pk=plt.pk)) "+
 				"LEFT JOIN platedb.plate_pointing as pltg ON (pltg.plate_pk=plt.pk)) "+
 				"LEFT JOIN platedb.pointing AS ptg ON (pltg.pointing_pk=ptg.pk)) "+
-			#"WHERE p2s.survey_pk=37 ORDER BY crt.number").fetchall()
-			"WHERE p2s.survey_pk=1 ORDER BY crt.number").fetchall()
+			"WHERE p2s.survey_pk=37 ORDER BY crt.number").fetchall()
 	
 	# Setup APOGEE-II data structure
 	apg = []
@@ -181,8 +179,7 @@ def get_plates(errors, plan=False, loud=True):
 			"LEFT JOIN platedb.plate AS plt ON (plg.plate_pk=plt.pk)) "+
 			"LEFT JOIN platedb.plate_to_survey AS p2s ON (p2s.plate_pk=plt.pk)) "+
 			"LEFT JOIN platedb.plate_pointing as pltg ON (pltg.plate_pk=plt.pk)) "+
-		#"WHERE p2s.survey_pk=37 ORDER BY crt.number").fetchall()
-		"WHERE p2s.survey_pk=1 ORDER BY crt.number").fetchall()
+		"WHERE p2s.survey_pk=37 ORDER BY crt.number").fetchall()
 	stage3_end = time()
 	if loud: print("[SQL] Read in currently plugged APOGEE plates (%.3f sec)" % ((stage3_end - stage3_start)))
 	
