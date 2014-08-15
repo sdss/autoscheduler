@@ -23,7 +23,7 @@ def set_priorities(apg, par, schedule, loud=True):
 		# TO-DO
 		
 		# Completion (using algorithm in SDSS python module)
-		if apg[p].pct >= 1: apg[p].priority = -2
+		if apg[p].pct() >= 1: apg[p].priority = -2
 		
 		# Cadence
 		# Regular cadence rules
