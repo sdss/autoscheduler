@@ -32,6 +32,13 @@ planner:
     efficiency: 0.85
     maxLeftoverTime: 300.
 
+plugger:
+    nCarts: 2
+    efficiency: 0.75
+    maxLeftoverTime: 900.
+    pluggedPlatePriority: 10
+    defaultPlatePriority: 5
+
 simulation:
     blueSN2: 3.6
     alphaBlue: 1.0

@@ -9,7 +9,7 @@ class TotoroError(Exception):
     pass
 
 
-class TotoroNotImplemented():
+class TotoroNotImplemented(Exception):
     """A class for exceptions about functionalities not yet implemented."""
     pass
 

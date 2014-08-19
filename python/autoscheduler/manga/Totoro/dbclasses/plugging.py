@@ -19,6 +19,7 @@ from .baseDBClass import BaseDBClass
 from .set import Set
 from .. import log
 
+
 session = Session()
 
 
@@ -28,6 +29,7 @@ class Plugging(BaseDBClass):
                  sets=False, **kwargs):
 
         self.sets = []
+        self._isActive = None
 
         self.__DBClass__ = plateDB.Plugging
         super(Plugging, self).__init__(inp, format=format,
@@ -66,3 +68,21 @@ class Plugging(BaseDBClass):
             plStatus = session.query(plateDB.PluggingStatus).join(
                 plateDB.Plugging).filter(plateDB.Plugging.pk == self.pk).one()
             return plStatus.label
+
+    @property
+    def isActive(self):
+        if self._isActive is not None:
+            return self._isActive
+
+        with session.begin():
+            activePluggins = zip(*session.query(
+                plateDB.ActivePlugging.plugging_pk).all())[0]
+
+        if self.pk in activePluggins:
+            return True
+        return False
+
+    @isActive.setter
+    def isActive(self, value):
+        self._isActive = value
+

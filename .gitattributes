@@ -85,6 +85,7 @@ python/autoscheduler/manga/Totoro/tests/testNightly.py -text
 python/autoscheduler/manga/Totoro/tests/testOutput.pckl -text
 python/autoscheduler/manga/Totoro/tests/testOutput.py -text
 python/autoscheduler/manga/Totoro/tests/testPlanner.py -text
+python/autoscheduler/manga/Totoro/tests/testPlugger.py -text
 python/autoscheduler/manga/Totoro/utils/__init__.py -text
 python/autoscheduler/manga/Totoro/utils/intervals.py -text
 python/autoscheduler/manga/Totoro/utils/utils.py -text

@@ -112,6 +112,17 @@ class ObservingPlan(object):
 
         return tt[-1]
 
+    def getJD(self, jd):
+
+        jd = int(jd)
+
+        if jd not in self.plan['JD']:
+            raise TotoroError('JD={0} not found'.format(jd))
+
+        night = self.plan[self.plan['JD'] == jd]
+
+        return (night['JD0'][0], night['JD1'][0])
+
     def getObservingBlocks(self, startDate, endDate):
         """Returns an astropy table with the observation dates
         for each night between startDate and endDate."""

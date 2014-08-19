@@ -29,11 +29,11 @@ def testOutput():
 
     nightly = Nightly(startDate=startDate, plates=plates)
 
-    output = nightly.getOutput(format='dict')
+    output = nightly.printTabularOutput()
 
-    blob = open('testOutput.pckl', 'w')
-    cPickle.dump(output, blob)
-    blob.close()
+    # blob = open('testOutput.pckl', 'w')
+    # cPickle.dump(output, blob)
+    # blob.close()
 
     return
 

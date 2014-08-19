@@ -16,6 +16,7 @@ from __future__ import division
 from __future__ import print_function
 from ..dbclasses.plate import Plates
 from .. import config, log
+from ..APOplateDB import Session, plateDB
 import warnings
 from ..exceptions import TotoroUserWarning
 from ..utils import JDdiff, createSite
@@ -23,9 +24,14 @@ from ..logic import getOptimalPlate
 import numpy as np
 
 
+session = Session
+
+
 class Timelines(list):
 
-    def __init__(self, observingBlocks, plates=None, **kwargs):
+    def __init__(self, observingBlocks, plates=None, mode='planner', **kwargs):
+
+        self.mode = mode
 
         initList = []
         for row in observingBlocks:
@@ -33,9 +39,13 @@ class Timelines(list):
 
         list.__init__(self, initList)
 
-    def schedule(self, mode='planner', **kwargs):
+    def schedule(self, mode=None, **kwargs):
+
+        if mode is None:
+            mode = self.mode
 
         plates = self[0]._plates
+
         for timeline in self:
             timeline._plates = plates
             timeline.schedule(mode=mode, **kwargs)
@@ -60,18 +70,23 @@ class Timeline(object):
 
         log.info('Scheduling timeline with JD0={0:.4f}, JD1={1:.4f}'
                  .format(self.startTime, self.endTime))
+
         currentTime = self.startTime
         remainingTime = JDdiff(currentTime, self.endTime)
 
         expTime = (config['exposure']['exposureTime'] /
                    config[mode]['efficiency'])
-        maxLeftoverTime = config[mode]['maxLeftoverTime']
+        maxLeftoverTime = (config[mode]['maxLeftoverTime'] /
+                           config[mode]['efficiency'])
 
-        while remainingTime >= maxLeftoverTime:
+        nCarts = 1
+        maxNCarts = config[mode]['nCarts']
+
+        while remainingTime >= maxLeftoverTime and nCarts <= maxNCarts :
 
             optimalPlate = getOptimalPlate(
                 self._plates, currentTime, self.endTime, expTime=expTime,
-                **kwargs)
+                mode=mode, **kwargs)
 
             if optimalPlate is None:
                 warnings.warn('no valid plates found at JD={0:.4f} '
@@ -82,12 +97,30 @@ class Timeline(object):
 
             else:
                 self._replaceWithOptimal(optimalPlate)
+                print(optimalPlate.plate_id, optimalPlate.getLSTRange())
+                nCarts += 1
                 newTime = optimalPlate.getLastExposure().getJDObserved()[1]
                 currentTime = newTime
 
             remainingTime = JDdiff(currentTime, self.endTime)
 
+        print(remainingTime)
         return
+
+    def getPluggedPlates(self):
+
+        with session.begin():
+
+            activePluggings = session.query(plateDB.Plate).join(
+                plateDB.Plugging, plateDB.ActivePlugging)
+
+            subActPl = activePluggings.subquery()
+            mangaPlugged = session.query(plateDB.Plate).outerjoin(
+                    subActPl, plateDB.Plate.pk == subActPl.c.pk).join(
+                plateDB.PlateToSurvey).join(plateDB.Survey).filter(
+                    plateDB.Survey.label == 'MaNGA')
+
+        return mangaPlugged.all()
 
     def _getNNewExposures(self, optimalPlate):
 

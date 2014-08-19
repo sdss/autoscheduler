@@ -298,9 +298,12 @@ class Plate(BaseDBClass):
             cart = session.query(plateDB.Cartridge).join(
                 plateDB.Plugging).join(plateDB.ActivePlugging).join(
                     plateDB.Plate).filter(
-                        plateDB.Plate.pk == self.pk).one()
+                        plateDB.Plate.pk == self.pk)
 
-        return cart.number
+        try:
+            return cart.one().number
+        except:
+            return 0
 
     def getValidSets(self, includeIncomplete=False):
 
@@ -416,3 +419,20 @@ class Plate(BaseDBClass):
         order = np.argsort(startTime)
 
         return exposures[order[-1]]
+
+    def getPriority(self):
+
+        with session.begin():
+            platePointing = session.query(plateDB.PlatePointing).join(
+                plateDB.Plate).filter(plateDB.Plate.pk == self.pk).one()
+
+        return platePointing.priority
+
+    @property
+    def isPlugged(self):
+
+        for plugging in self.pluggings:
+            if plugging.isActive:
+                return True
+
+        return False

@@ -20,6 +20,7 @@ from ..dbclasses import Fields
 from ..dbclasses import Plates
 from ..utils import createSite
 from .timeline import Timelines
+from ..exceptions import TotoroNotImplemented
 from .. import log
 
 
@@ -53,11 +54,17 @@ class BaseScheduler(object):
             endDate = self._observingPlan.getClosest(endDate)['JD1']
 
         elif scope == 'nightly':
-            if startDate is None:
-                startDate = self.observingPlan.getMaNGAStart(
-                    obstools.calendar_to_jd(None))
-            if endDate is None:
-                endDate = self.observingPlan.getMaNGAEnd(startDate)
+            # if startDate is None:
+            startDate = 2456889
+            startDate = self._observingPlan.getJD(startDate)[0]
+            # if endDate is None:
+            endDate = 2456889
+            endDate = self._observingPlan.getJD(endDate)[1]
+
+        elif scope == 'plugger':
+            startDate, endDate = self._observingPlan.getJD(
+                startDate)
+            endDate = self._observingPlan.getJD(startDate+5)[1]
 
         self.startDate = startDate
         self.endDate = endDate
@@ -90,9 +97,44 @@ class Planner(BaseScheduler):
         return fields
 
     def scheduleTimelines(self):
-        """Creates siumulated timelines for the observing blocks."""
+        """Creates simulated timelines for the observing blocks."""
 
-        self.timelines = Timelines(self.observingBlocks, plates=self.fields)
+        self.timelines = Timelines(
+            self.observingBlocks, plates=self.fields, mode='planner')
+        self.timelines.schedule()
+
+
+class Plugger(BaseScheduler):
+
+    def __init__(self, date=None, **kwargs):
+
+        if date is None:
+            raise TotoroNotImplemented('a date must be specified. In the '
+                                       'future, Plugger will identify the '
+                                       'next observable date')
+
+        super(Plugger, self).__init__(startDate=date, endDate=None,
+                                      scope='plugger', **kwargs)
+
+        self.plates = self.getPlatesAtAPO()
+
+    def getPlatesAtAPO(self, rejectComplete=True):
+
+        log.info('Getting plates at APO with rejectComplete={0}'.format(
+                 rejectComplete))
+
+        plates = Plates(onlyPlugged=False, onlyAtAPO=True,
+                        onlyIncomplete=rejectComplete)
+
+        log.info('Plates found: {0}'.format(len(plates)))
+
+        return plates
+
+    def getOutput(self):
+
+        self.timelines = Timelines(
+            self.observingBlocks, plates=self.plates, mode='plugger')
+
         self.timelines.schedule()
 
 
@@ -115,7 +157,7 @@ class Nightly(BaseScheduler):
         """Gets the plugged plates."""
 
         log.info('Finding plugged plates.')
-        plates = Plates(onlyPlugged=True, onlyAtAPO=True,
+        plates = Plates(onlyPlugged=False, onlyAtAPO=True,
                         onlyIncomplete=False, rearrageExposure=True,
                         **kwargs)
 

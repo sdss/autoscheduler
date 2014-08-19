@@ -102,8 +102,7 @@ class ObservedPlateOutput(dict):
 
         self['plate'].addColumn(
             ObservedField(
-                [len(self.plate.getValidExposures(
-                    includeIncompleteSets=True))], '# exps', int))
+                [len(self.plate.getValidExposures())], '# exps', int))
 
         utRange = self.plate.getUTVisibilityWindow()
         self['plate'].addColumn(
@@ -243,7 +242,7 @@ class ObservedExposureOutput(object):
             ObservedField([exp.manga_seeing for exp in self.exposures],
                           'seeing', float))
 
-        utRange = [exp.getUTObserved() for exp in self.exposures]
+        utRange = [exp.getUTObserved(format='str') for exp in self.exposures]
         self.expTable.addColumn(
             ObservedField(zip(*utRange)[0], 'minUT', 'S10'))
         self.expTable.addColumn(

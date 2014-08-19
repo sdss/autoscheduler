@@ -24,7 +24,7 @@ from astropy import table
 site = createSite()
 
 
-def getOptimalPlate(plates, JD0, JD1, **kwargs):
+def getOptimalPlate(plates, JD0, JD1, mode='planner', **kwargs):
 
     LST0 = site.localSiderialTime(JD0)
     LST1 = site.localSiderialTime(JD1)
@@ -44,37 +44,58 @@ def getOptimalPlate(plates, JD0, JD1, **kwargs):
 
     completionTable = completionTable[completionTable['nNewExp'] > 0]
 
+    if mode == 'planner':
+        priorities = [5] * len(completionTable)
+
+    elif mode == 'plugger':
+        priorities = []
+        for plate in completionTable['plate']:
+            platePriority = plate.getPriority()
+            if plate.isPlugged:
+                priorities.append(config[mode]['pluggedPlatePriority'])
+            else:
+                if platePriority < 5:
+                    platePriority = 5
+                priorities.append(platePriority)
+
+    completionTable.add_column(
+        table.Column(priorities, 'priority'))
+
     if len(completionTable) == 0:
         return None
-    completionTable.sort('completion')
-    return completionTable['plate'][-1]
-    # if len(completionTable[completionTable['completion'] >= 1.]) > 0:
 
-    #     idx = np.where(completionTable['completion'] >= 1.)
-    #     selectedStatus = completionTable[idx]
-    #     selectedStatus.sort('nSets')
+    completionTable = completionTable[completionTable['priority'] > 1]
 
-    #     if len(selectedStatus[selectedStatus['nSets'] ==
-    #            selectedStatus['nSets'][0]]) > 0:
+    if len(completionTable[completionTable['priority'] == 10]):
+        completionTable = completionTable[completionTable['priority'] == 10]
 
-    #         idx = np.where(selectedStatus[selectedStatus['nSets'] ==
-    #                        selectedStatus['nSets'][0]])
+    if len(completionTable[completionTable['completion'] >= 1.]) > 0:
 
-    #         selectedStatus = selectedStatus[idx]
+        idx = np.where(completionTable['completion'] >= 1.)
+        selectedStatus = completionTable[idx]
+        selectedStatus.sort('nSets')
 
-    #         selectedStatus.sort('completion')
-    #         selectedStatus.reverse()
+        if len(selectedStatus[selectedStatus['nSets'] ==
+               selectedStatus['nSets'][0]]) > 0:
 
-    #         return selectedStatus['plate'][0]
+            idx = np.where(selectedStatus[selectedStatus['nSets'] ==
+                           selectedStatus['nSets'][0]])
 
-    #     else:
+            selectedStatus = selectedStatus[idx]
 
-    #         return selectedStatus['plate'][0]
+            selectedStatus.sort('completion')
+            selectedStatus.reverse()
 
-    # else:
+            return selectedStatus['plate'][0]
 
-    #     completionTable.sort('completion')
-    #     return completionTable['plate'][-1]
+        else:
+
+            return selectedStatus['plate'][0]
+
+    else:
+
+        completionTable.sort('completion')
+        return completionTable['plate'][-1]
 
 
 def getVisiblePlates(plates, LST0, LST1, **kwargs):
@@ -172,7 +193,7 @@ def simulateExposures(plate, JD0, JD1, LST0=None, LST1=None, expTime=None,
 
     nNewExposures = 0
 
-    while remainingTime >= 0:
+    while remainingTime >= maxLeftoverTime:
 
         if cPlate.getPlateCompletion(includeIncompleteSets=True)[0]:
             break

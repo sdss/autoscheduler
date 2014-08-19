@@ -218,7 +218,7 @@ class Exposure(BaseDBClass):
 
         return np.array([lst0, lst1])
 
-    def getUTObserved(self):
+    def getUTObserved(self, format=None):
 
         startTime = float(self.start_time)
         t0 = time.Time(0, format='mjd', scale='tai')
