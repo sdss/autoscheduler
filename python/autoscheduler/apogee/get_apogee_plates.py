@@ -114,9 +114,9 @@ def get_plates(errors, plan=False, loud=True):
 		# Get APOGEE version number and vplan for this plate
 		dvdata = session.execute("SELECT array_to_string(array_agg(dv.value),',') FROM platedb.design_value as dv WHERE (dv.design_field_pk=342 OR dv.design_field_pk=343 OR dv.design_field_pk=344 OR dv.design_field_pk=351 OR dv.design_field_pk=423 OR dv.design_field_pk=424) AND dv.design_pk=%d" % (designid)).fetchall()
 		if dvdata[0][0]:
-			tmp = [int(x) for x in dvdata[0][0].split(',')]
-			apg[i].apgver = 100*tmp[0] + 10*tmp[1] + tmp[2]
-			if len(tmp) > 3: apg[i].vplan = tmp[3]
+			tmp = dvdata[0][0].split(',')
+			apg[i].apgver = 100*int(tmp[0]) + 10*int(tmp[1]) + int(tmp[2])
+			if len(tmp) > 3: apg[i].vplan = int(tmp[3])
 			if len(tmp) > 4: apg[i].cadence = tmp[4]
 		else:
 			apg[i].apgver = 999
