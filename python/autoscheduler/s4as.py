@@ -28,8 +28,8 @@ def run_scheduler(plan=False, mjd=-1, surveys=['apogee','eboss','manga'], loud=T
 	if schedule['bright_start'] > 0:
 		apogee_choices = apg.schedule_apogee(schedule, errors, plan=plan, loud=loud)
 	# Schedule MaNGA
-	if schedule['manga'] > 0:
-		manga_choices = man.schedule_manga(schedule, errors, plan=plan, loud=loud)
+#	if schedule['manga'] > 0:
+#		manga_choices = man.schedule_manga(schedule, errors, plan=plan, loud=loud)
 	# Schedule eBOSS
 	if schedule['eboss'] > 0:
 		eboss_choices = ebo.schedule_eboss(schedule, errors, plan=plan, loud=loud)
