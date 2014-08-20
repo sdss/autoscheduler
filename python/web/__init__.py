@@ -33,7 +33,7 @@ def create_app(debug=False):
         # ----------------------------------------------------------
         from raven.contrib.flask import Sentry
         
-        dsn = 'https://c45a595d8722445ab233f5a31fa870cf:47356cef57e548a692c8fe4e00d02c7b@app.getsentry.com/28911'
+        dsn = 'https://8b2c5489560e4ea0a170064f475afa13:bfa37568734c40279dcc73dfe1e68708@app.getsentry.com/29096'
         app.config['SENTRY_DSN'] = dsn
         sentry = Sentry(app)
         # ----------------------------------------------------------
