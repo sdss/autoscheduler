@@ -63,7 +63,7 @@ class Plates(list):
                   onlyIncomplete=False, **kwargs):
 
         if onlyPlugged:
-            with session.begin():
+            with session.begin(subtransactions=True):
                 activePluggings = session.query(
                     plateDB.ActivePlugging).join(plateDB.Plugging).join(
                         plateDB.Plate).join(plateDB.PlateToSurvey).join(
@@ -75,7 +75,7 @@ class Plates(list):
                           for actPlug in activePluggings]
 
         elif onlyPlugged is False and onlyAtAPO:
-            with session.begin():
+            with session.begin(subtransactions=True):
                 plates = session.query(
                     plateDB.Plate).join(plateDB.PlateLocation).filter(
                         plateDB.PlateLocation.label == 'APO').join(
@@ -83,7 +83,7 @@ class Plates(list):
                                 plateDB.Survey.label == 'MaNGA').all()
 
         else:
-            with session.begin():
+            with session.begin(subtransactions=True):
                 plates = session.query(plateDB.Plate).join(
                     plateDB.PlateToSurvey).join(plateDB.Survey).filter(
                         plateDB.Survey.label == 'MaNGA').all()
@@ -150,7 +150,7 @@ class Plate(BaseDBClass):
     @classmethod
     def fromPlateID(cls, plateid, **kwargs):
 
-        with session.begin():
+        with session.begin(subtransactions=True):
             plate = session.query(
                 plateDB.Plate).filter(plateDB.Plate.plate_id == plateid).one()
 
@@ -184,7 +184,7 @@ class Plate(BaseDBClass):
     @property
     def isMaNGA(self):
 
-        with session.begin():
+        with session.begin(subtransactions=True):
             surveyCount = session.query(plateDB.Survey).join(
                 plateDB.PlateToSurvey).join(plateDB.Plate).filter(
                     plateDB.Plate.pk == self.pk,
@@ -197,7 +197,7 @@ class Plate(BaseDBClass):
 
     def getCoords(self):
 
-        with session.begin():
+        with session.begin(subtransactions=True):
             try:
                 platePointing = session.query(plateDB.Pointing).join(
                     plateDB.PlatePointing).filter(
@@ -215,7 +215,7 @@ class Plate(BaseDBClass):
 
         self.pluggings = []
 
-        with session.begin():
+        with session.begin(subtransactions=True):
             pluggings = session.query(plateDB.Plugging).filter(
                 plateDB.Plugging.plate_pk == self.pk)
 
@@ -235,7 +235,7 @@ class Plate(BaseDBClass):
             if status is False:
                 raise TotoroError('failed while reorganising exposures.')
 
-        with session.begin():
+        with session.begin(subtransactions=True):
             sets = session.query(mangaDB.Set).join(mangaDB.Exposure).join(
                 plateDB.Exposure).join(plateDB.Observation).join(
                     plateDB.PlatePointing).join(plateDB.Plate).filter(
@@ -294,7 +294,7 @@ class Plate(BaseDBClass):
 
     def getCartridgeNumber(self):
 
-        with session.begin():
+        with session.begin(subtransactions=True):
             cart = session.query(plateDB.Cartridge).join(
                 plateDB.Plugging).join(plateDB.ActivePlugging).join(
                     plateDB.Plate).filter(
@@ -422,7 +422,7 @@ class Plate(BaseDBClass):
 
     def getPriority(self):
 
-        with session.begin():
+        with session.begin(subtransactions=True):
             platePointing = session.query(plateDB.PlatePointing).join(
                 plateDB.Plate).filter(plateDB.Plate.pk == self.pk).one()
 

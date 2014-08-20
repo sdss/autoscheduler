@@ -5,8 +5,8 @@ logging:
     logFilePath: '~/.totoro/totoro.log'
 
 dbConnection:
-    user: sdss3_admin
-    password: '4-surveys'
+    user: Brian
+    password: ''
     host: localhost
     port: 5432
     database: apo_platedb

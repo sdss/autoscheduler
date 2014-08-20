@@ -109,7 +109,7 @@ class Timeline(object):
 
     def getPluggedPlates(self):
 
-        with session.begin():
+        with session.begin(subtransactions=True):
 
             activePluggings = session.query(plateDB.Plate).join(
                 plateDB.Plugging, plateDB.ActivePlugging)

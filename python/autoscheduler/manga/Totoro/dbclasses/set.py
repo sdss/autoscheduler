@@ -55,7 +55,7 @@ class Set(BaseDBClass):
 
     def loadExposuresFromDB(self):
 
-        with session.begin():
+        with session.begin(subtransactions=True):
             mangaSet = session.query(mangaDB.Set).get(self.pk)
 
         for mangaExposure in mangaSet.exposures:
@@ -102,7 +102,7 @@ class Set(BaseDBClass):
         if hasattr(self, 'ra') and hasattr(self, 'dec'):
             return np.array([self.ra, self.dec])
 
-        with session.begin():
+        with session.begin(subtransactions=True):
             pointing = session.query(plateDB.Pointing).join(
                 plateDB.PlatePointing).join(plateDB.Observation).join(
                     plateDB.Exposure).join(mangaDB.Exposure).join(

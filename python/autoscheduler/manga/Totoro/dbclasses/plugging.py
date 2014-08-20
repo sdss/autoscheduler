@@ -45,7 +45,7 @@ class Plugging(BaseDBClass):
 
     def loadSetsFromDB(self):
 
-        with session.begin():
+        with session.begin(subtransactions=True):
             sets = session.query(mangaDB.Set).join(mangaDB.Exposure).join(
                 plateDB.Exposure).join(plateDB.Observation).filter(
                 plateDB.Observation.plugging_pk == self.pk).all()
@@ -56,7 +56,7 @@ class Plugging(BaseDBClass):
 
     def _getPlateID(self):
 
-        with session.begin():
+        with session.begin(subtransactions=True):
             return session.query(plateDB.Plate).join(
                 plateDB.Plugging).filter(
                 plateDB.Plugging.pk == self.pk).one().plate_id
@@ -64,7 +64,7 @@ class Plugging(BaseDBClass):
     def getPluggingStatus(self):
         """Returns the status of the plugging."""
 
-        with session.begin():
+        with session.begin(subtransactions=True):
             plStatus = session.query(plateDB.PluggingStatus).join(
                 plateDB.Plugging).filter(plateDB.Plugging.pk == self.pk).one()
             return plStatus.label
@@ -74,7 +74,7 @@ class Plugging(BaseDBClass):
         if self._isActive is not None:
             return self._isActive
 
-        with session.begin():
+        with session.begin(subtransactions=True):
             activePluggins = zip(*session.query(
                 plateDB.ActivePlugging.plugging_pk).all())[0]
 

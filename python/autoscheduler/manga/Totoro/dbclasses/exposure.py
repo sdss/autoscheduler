@@ -60,7 +60,7 @@ class Exposure(BaseDBClass):
 
     def loadFromMangaDB(self):
 
-        with session.begin():
+        with session.begin(subtransactions=True):
 
             try:
                 mangaExposure = session.query(mangaDB.Exposure).filter(
@@ -146,7 +146,7 @@ class Exposure(BaseDBClass):
         if hasattr(self, 'ra') and hasattr(self, 'dec'):
             return np.array([self.ra, self.dec])
 
-        with session.begin():
+        with session.begin(subtransactions=True):
             pointing = session.query(plateDB.Pointing).join(
                 plateDB.PlatePointing).join(plateDB.Observation).join(
                     plateDB.Exposure).join(mangaDB.Exposure).filter(
@@ -175,7 +175,7 @@ class Exposure(BaseDBClass):
         if self._sn2Array is not None:
             return self._sn2Array
 
-        with session.begin():
+        with session.begin(subtransactions=True):
             SN2Values = session.query(mangaDB.SN2Values).join(
                 mangaDB.Exposure).filter(
                     mangaDB.Exposure.pk == self.manga_pk).one()
@@ -251,7 +251,7 @@ class Exposure(BaseDBClass):
 
     def getPlatePK(self):
 
-        with session.begin():
+        with session.begin(subtransactions=True):
             platePK = session.query(plateDB.Plate.pk).join(
                 plateDB.PlatePointing, plateDB.Observation,
                 plateDB.Exposure).filter(
@@ -261,7 +261,7 @@ class Exposure(BaseDBClass):
 
     def getMJD(self):
 
-        with session.begin():
+        with session.begin(subtransactions=True):
             mjd = session.query(plateDB.Observation.mjd).join(
                 plateDB.Exposure).filter(
                     plateDB.Exposure.pk == self.pk).scalar()

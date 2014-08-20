@@ -32,7 +32,7 @@ def addFields(catalogue):
 
     """
 
-    with session.begin():
+    with session.begin(subtransactions=True):
         session.query(sampleMangaDB.Field).delete()
 
     tiles = table.Table.read(catalogue)
@@ -46,5 +46,5 @@ def addFields(catalogue):
              'center_dec': tile['DEC'],
              'expected_no_visits': 1})
 
-    with session.begin():
+    with session.begin(subtransactions=True):
         engine.execute(sampleMangaDB.Field.__table__.insert(), fieldData)

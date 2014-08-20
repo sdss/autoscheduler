@@ -264,7 +264,7 @@ def main(args):
 	session=None
 	try:
 		session=db.Session()
-		session.begin()
+		session.begin(subtransactions=True)
 		if opts.delete == False:
 			log.info('loading mock data')
 			loadMockData(session, opts, log)

@@ -4,7 +4,7 @@ a = DatabaseConnection.DatabaseConnection(user='albireo', name='apo_platedb')
 from mangadb import SampleModelClasses as sModel
 
 session = a.Session()
-session.begin()
+session.begin(subtransactions=True)
 
 # nn = session.query(sModel.Parameter).get(1)
 # nn.parameter = 'gender'

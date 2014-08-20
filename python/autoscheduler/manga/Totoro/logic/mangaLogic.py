@@ -43,7 +43,7 @@ def rearrangeExposures(plate, force=False, checkExposures=True):
 
     log.debug('Reorganising exposures for plate_id=%d' % plate.plate_id)
 
-    with session.begin():
+    with session.begin(subtransactions=True):
         exposures = session.query(plateDB.Exposure).join(
             plateDB.ExposureFlavor, plateDB.ExposureStatus,
             plateDB.Observation, plateDB.PlatePointing, plateDB.Plate).filter(
@@ -64,7 +64,7 @@ def rearrangeExposures(plate, force=False, checkExposures=True):
             # This should remove the set_pk of all the exposures in the set
             # we are deleting.
             removeSet(exposure.mangadbExposure[0].set_pk)
-            with session.begin():
+            with session.begin(subtransactions=True):
                 exposure.mangadbExposure[0].set_pk = None
             expsToSet.append(exposure)
         else:
@@ -74,7 +74,7 @@ def rearrangeExposures(plate, force=False, checkExposures=True):
     if force:
         sets = []
     else:
-        with session.begin():
+        with session.begin(subtransactions=True):
             setsDB = session.query(mangaDB.Set).join(
                 mangaDB.Exposure, plateDB.Exposure, plateDB.Observation,
                 plateDB.PlatePointing, plateDB.Plate).filter(
@@ -103,7 +103,7 @@ def rearrangeExposures(plate, force=False, checkExposures=True):
             set.exposures.append(exp)
 
             if set.getQuality() != 'Bad':
-                with session.begin():
+                with session.begin(subtransactions=True):
                     expDB = session.query(
                         mangaDB.Exposure).get(exp.manga_pk)
                     expDB.set_pk = set.pk
@@ -115,7 +115,7 @@ def rearrangeExposures(plate, force=False, checkExposures=True):
         # If the exposure has not been assigned to a set,
         # creates a new one.
         if createNewSet:
-            with session.begin():
+            with session.begin(subtransactions=True):
                 newSet = mangaDB.Set()
                 session.add(newSet)
                 session.flush()
@@ -132,7 +132,7 @@ def removeSet(set_pk):
     if set_pk is None:
         return True
 
-    with session.begin():
+    with session.begin(subtransactions=True):
         set = session.query(mangaDB.Set).get(set_pk)
         if set is None:
             log.debug('removing set pk=%d failed because the set does not' +
@@ -155,7 +155,7 @@ def checkExposure(inp, flag=False, format='pk'):
     if isinstance(inp, Exposure):
         exposure = inp
     else:
-        with session.begin():
+        with session.begin(subtransactions=True):
             if format == 'pk':
                 exposureDB = session.query(plateDB.Exposure).get(inp)
             elif format == 'manga_pk':
@@ -222,7 +222,7 @@ def checkExposure(inp, flag=False, format='pk'):
 def setExposureStatus(inp, status, format='pk'):
     """Sets the status of an exposure."""
 
-    with session.begin():
+    with session.begin(subtransactions=True):
         if format == 'pk':
             exposure = session.query(mangaDB.Exposure).join(
                 plateDB.Exposure).filter(plateDB.Exposure.pk == inp.pk).one()
@@ -231,7 +231,7 @@ def setExposureStatus(inp, status, format='pk'):
         else:
             raise ValueError('format must be pk or manga_pk.')
 
-    with session.begin():
+    with session.begin(subtransactions=True):
         statusPK = session.query(mangaDB.ExposureStatus.pk).filter(
             mangaDB.ExposureStatus.label == status).scalar()
 

@@ -79,7 +79,7 @@ class Fields(Plates):
     @staticmethod
     def getAllMaNGAPlates(onlyLeading=True):
 
-        with session.begin():
+        with session.begin(subtransactions=True):
             mangaPlates = session.query(plateDB.Plate).join(
                 plateDB.PlateToSurvey).join(plateDB.Survey).filter(
                     plateDB.Survey.label == 'MaNGA')

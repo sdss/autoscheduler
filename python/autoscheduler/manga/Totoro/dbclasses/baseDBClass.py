@@ -67,12 +67,12 @@ class BaseDBClass(object):
                               'You need to set it up before using loadFromDB.')
 
         if self.__DBClass__ == plateDB.Plate and format.lower() == 'plate_id':
-            with session.begin():
+            with session.begin(subtransactions=True):
                 inp = session.query(plateDB.Plate.pk).filter(
                     plateDB.Plate.plate_id == inp).scalar()
                 format = 'pk'
 
-        with session.begin():
+        with session.begin(subtransactions=True):
 
             if format == 'pk':
                 qResult = session.query(self.__DBClass__).get(inp)
