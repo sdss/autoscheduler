@@ -78,8 +78,8 @@ for i=0L, n_elements(timelines)-1 do begin
 		schedule[i].brtend = minutes[where_brighttime_end[nbrighttime_end-1]]
 	
 	endif else begin    													; ------------------- Engineering Time
-		schedule[i].drkstrt = minutes[where_brighttime_start[0]]
-		schedule[i].drkend = minutes[where_brighttime_end[nbrighttime_end-1]]
+		schedule[i].brtstrt = minutes[where_brighttime_start[0]]
+		schedule[i].brtend = minutes[where_brighttime_end[nbrighttime_end-1]]
 	endelse
 	
 	; Find dark-time survey times tonight
