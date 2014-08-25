@@ -103,7 +103,9 @@ def get_plates(plan=False, loud=True):
         "WHERE p2s.survey_pk=2 ORDER BY crt.number").fetchall()
     # Save currently plugged plates to data
     for c,p in stage3:
-        wplate = [x for x in range(len(ebo)) if ebo[x].plateid == p][0]
+        wplate = [x for x in range(len(ebo)) if ebo[x].plateid == p]
+        if len(wplate) == 0: continue
+        wplate = wplate[0]
         ebo[wplate].plugged = c
     stage3_end = time()
     if loud: print("[SQL] Read in currently plugged eBOSS plates (%.3f sec)" % ((stage3_end - stage3_start)))
