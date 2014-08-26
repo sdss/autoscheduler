@@ -20,7 +20,6 @@ from ..dbclasses import Fields
 from ..dbclasses import Plates
 from ..utils import createSite
 from .timeline import Timelines
-from ..exceptions import TotoroNotImplemented
 from .. import log
 
 
@@ -54,16 +53,13 @@ class BaseScheduler(object):
             endDate = self._observingPlan.getClosest(endDate)['JD1']
 
         elif scope == 'nightly':
-            # if startDate is None:
-            startDate = 2456889
-            startDate = self._observingPlan.getJD(startDate)[0]
-            # if endDate is None:
-            endDate = 2456889
-            endDate = self._observingPlan.getJD(endDate)[1]
+            if startDate is None:
+                startDate = self._observingPlan.getJD(startDate)[0]
+            if endDate is None:
+                endDate = self._observingPlan.getJD(endDate)[1]
 
         elif scope == 'plugger':
             startDate, endDate = self._observingPlan.getJD(startDate)
-            # endDate = self._observingPlan.getJD(startDate)[1]
 
         self.startDate = startDate
         self.endDate = endDate
@@ -151,7 +147,7 @@ class Nightly(BaseScheduler):
         """Gets the plugged plates."""
 
         log.info('Finding plugged plates.')
-        plates = Plates(onlyPlugged=False, onlyAtAPO=True,
+        plates = Plates(onlyPlugged=True, onlyAtAPO=True,
                         onlyIncomplete=False, rearrageExposure=True,
                         **kwargs)
 
@@ -167,15 +163,12 @@ class Nightly(BaseScheduler):
 
         output.printTabularOutput(self.plates)
 
-    def getTabularOutput(self):
-
-        from .. import output
-
-        return output.getTabularOutput(self.plates)
-
     def getOutput(self, format='dict'):
         """Returns the nightly output in the selected format."""
 
         from .. import output
 
-        return output.getNightlyOutput(self, format=format)
+        if format == 'table':
+            return output.getTabularOutput(self.plates)
+        else:
+            return output.getNightlyOutput(self, format=format)

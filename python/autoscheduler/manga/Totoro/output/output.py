@@ -17,12 +17,18 @@ from __future__ import print_function
 from collections import OrderedDict
 from ..exceptions import TotoroError
 from ..scheduler import scheduler
-from .. import dbclasses as dbC
 import numpy as np
 import yaml
 
 
 __ALL__ = ['getNightlyOutput']
+
+
+def formatValue(value):
+
+    if isinstance(value, np.ndarray):
+        return value.tolist()
+    return value
 
 
 def getNightlyOutput(input=None, format='dict', **kwargs):
@@ -40,8 +46,6 @@ def getNightlyOutput(input=None, format='dict', **kwargs):
     output['mangaEnd'] = float(nightly.endDate)
     output['currentTime'] = float(nightly.currentDate)
 
-    # output['mangaPlugged'] = dbC.Plates.getPlates(onlyPlugged=True)
-
     # For future implementation
     output['schedule'] = None
 
@@ -52,11 +56,13 @@ def getNightlyOutput(input=None, format='dict', **kwargs):
         output['plates'][plate.plate_id] = OrderedDict()
         thisPlate = output['plates'][plate.plate_id]
 
+        thisPlate['cartridge'] = plate.getCartridgeNumber()
         thisPlate['complete'] = plate.isComplete
-        thisPlate['HARange'] = np.array([-1., 1.]) * plate.mlhalimit
-        thisPlate['UTVisibilityWindow'] = plate.getUTVisibilityWindow(
-            format='datetime')
-        thisPlate['SN2'] = plate.getCumulatedSN2()
+        thisPlate['HARange'] = formatValue(
+            np.array([-1., 1.]) * plate.mlhalimit)
+        thisPlate['UTVisibilityWindow'] = formatValue(
+            plate.getUTVisibilityWindow(format='datetime'))
+        thisPlate['SN2'] = formatValue(plate.getCumulatedSN2())
 
         thisPlate['sets'] = OrderedDict()
 
@@ -67,14 +73,15 @@ def getNightlyOutput(input=None, format='dict', **kwargs):
 
             thisSet['complete'] = set.complete
 
-            thisSet['averageSeeing'] = set.getAverageSeeing()
-            thisSet['SN2'] = set.getSN2Array()
+            thisSet['averageSeeing'] = formatValue(set.getAverageSeeing())
+            thisSet['SN2'] = formatValue(set.getSN2Array())
 
-            thisSet['SN2Range'] = set.getSN2Range()
-            thisSet['seeingRange'] = set.getSeeingRange()
+            thisSet['SN2Range'] = formatValue(set.getSN2Range())
+            thisSet['seeingRange'] = formatValue(set.getSeeingRange())
             thisSet['UTRange'] = set.getUTVisibilityWindow(format='datetime')
-            thisSet['HARange'] = set.getHALimits()
-            thisSet['missingDithers'] = set.getMissingDitherPositions()
+            thisSet['HARange'] = formatValue(set.getHALimits())
+            thisSet['missingDithers'] = formatValue(
+                set.getMissingDitherPositions())
 
             thisSet['exposures'] = OrderedDict()
 
@@ -85,11 +92,12 @@ def getNightlyOutput(input=None, format='dict', **kwargs):
 
                 thisExposure['valid'] = exposure.valid
                 thisExposure['ditherPosition'] = exposure.ditherPosition
-                thisExposure['obsHARange'] = exposure.getHARange()
-                thisExposure['obsJDRange'] = exposure.getJDObserved()
+                thisExposure['obsHARange'] = formatValue(exposure.getHARange())
+                thisExposure['obsJDRange'] = formatValue(
+                    exposure.getJDObserved())
 
                 thisExposure['seeing'] = exposure.seeing
-                thisExposure['SN2'] = exposure.getSN2Array()
+                thisExposure['SN2'] = formatValue(exposure.getSN2Array())
 
         if thisPlate['complete']:
             thisPlate['incompleteSets'] = []

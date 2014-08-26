@@ -297,8 +297,8 @@ class Plate(BaseDBClass):
         with session.begin(subtransactions=True):
             cart = session.query(plateDB.Cartridge).join(
                 plateDB.Plugging).join(plateDB.ActivePlugging).join(
-                    plateDB.Plate).filter(
-                        plateDB.Plate.pk == self.pk)
+                plateDB.Plate).filter(
+                plateDB.Plate.pk == self.pk)
 
         try:
             return cart.one().number
