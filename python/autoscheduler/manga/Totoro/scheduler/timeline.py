@@ -82,7 +82,9 @@ class Timeline(object):
         nCarts = 1
         maxNCarts = config[mode]['nCarts']
 
-        while remainingTime >= maxLeftoverTime and nCarts <= maxNCarts :
+        while remainingTime >= maxLeftoverTime and nCarts <= maxNCarts:
+
+            log.info('Simulating plates for {0:.5f}'.format(currentTime))
 
             optimalPlate = getOptimalPlate(
                 self._plates, currentTime, self.endTime, expTime=expTime,
@@ -116,9 +118,9 @@ class Timeline(object):
 
             subActPl = activePluggings.subquery()
             mangaPlugged = session.query(plateDB.Plate).outerjoin(
-                    subActPl, plateDB.Plate.pk == subActPl.c.pk).join(
-                plateDB.PlateToSurvey).join(plateDB.Survey).filter(
-                    plateDB.Survey.label == 'MaNGA')
+                subActPl, plateDB.Plate.pk == subActPl.c.pk).join(
+                    plateDB.PlateToSurvey).join(plateDB.Survey).filter(
+                        plateDB.Survey.label == 'MaNGA')
 
         return mangaPlugged.all()
 

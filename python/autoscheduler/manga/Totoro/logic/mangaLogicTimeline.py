@@ -51,12 +51,7 @@ def getOptimalPlate(plates, JD0, JD1, mode='planner', **kwargs):
         priorities = []
         for plate in completionTable['plate']:
             platePriority = plate.getPriority()
-            if plate.isPlugged:
-                priorities.append(config[mode]['pluggedPlatePriority'])
-            else:
-                if platePriority < 5:
-                    platePriority = 5
-                priorities.append(platePriority)
+            priorities.append(platePriority)
 
     completionTable.add_column(
         table.Column(priorities, 'priority'))

@@ -62,9 +62,8 @@ class BaseScheduler(object):
             endDate = self._observingPlan.getJD(endDate)[1]
 
         elif scope == 'plugger':
-            startDate, endDate = self._observingPlan.getJD(
-                startDate)
-            endDate = self._observingPlan.getJD(startDate+5)[1]
+            startDate, endDate = self._observingPlan.getJD(startDate)
+            # endDate = self._observingPlan.getJD(startDate)[1]
 
         self.startDate = startDate
         self.endDate = endDate
@@ -107,11 +106,6 @@ class Planner(BaseScheduler):
 class Plugger(BaseScheduler):
 
     def __init__(self, date=None, **kwargs):
-
-        if date is None:
-            raise TotoroNotImplemented('a date must be specified. In the '
-                                       'future, Plugger will identify the '
-                                       'next observable date')
 
         super(Plugger, self).__init__(startDate=date, endDate=None,
                                       scope='plugger', **kwargs)

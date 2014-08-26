@@ -19,7 +19,7 @@ from Totoro.scheduler import Plugger
 
 def testPlugger():
 
-    pl = Plugger(date=2456889.0)
+    pl = Plugger(date=2456893.0)
     pl.getOutput()
 
 

@@ -99,9 +99,9 @@ def getAPOcomplete(inp, format='plate_id'):
     for ii in inp:
 
         if format in ['plate_pk', 'pk']:
-            plate = Plate(ii, format='pk', rearrangeExposures=True)
+            plate = Plate(ii, format='pk', rearrangeExposures=False)
         elif format in ['plate_id', 'id']:
-            plate = Plate.fromPlateID(ii, rearrangeExposures=True)
+            plate = Plate.fromPlateID(ii, rearrangeExposures=False)
 
         APOcomplete[plate.plate_id] = []
 

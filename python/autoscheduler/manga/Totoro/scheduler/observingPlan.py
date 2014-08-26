@@ -11,7 +11,7 @@ Licensed under a 3-clause BSD license.
 
 from __future__ import division
 from __future__ import print_function
-from astropy import table
+from astropy import table, time
 from ..exceptions import TotoroError
 from .. import config, log
 import numpy as np
@@ -112,7 +112,10 @@ class ObservingPlan(object):
 
         return tt[-1]
 
-    def getJD(self, jd):
+    def getJD(self, jd=None):
+
+        if jd is None:
+            jd = time.Time.now().jd
 
         jd = int(jd)
 
