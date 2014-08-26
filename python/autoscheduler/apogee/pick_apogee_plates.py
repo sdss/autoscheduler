@@ -21,11 +21,16 @@ def pick_plates(apg, obs, par, times, lengths, schedule, loud=True):
 			if loud: print("[WARN] No good APG-II plates for block %1d. Max priority = %4.1f" % (cslot, max(obs[:,cslot])))
 			chosen[cslot,0] = -1
 		else: chosen[cslot,0] = priorder[-1]
-		# Pick backup plates, or abort if no good plates
-		if obs[priorder[-2],cslot] <= 0:
-			chosen[cslot,1], chosen[cslot,2] = -1, -1
-			continue
-		chosen[cslot,1], chosen[cslot,2] = priorder[-2], priorder[-3]
+		# Pick first backup plate, or abort if no good plates
+		if len(priorder) > 1:
+			if obs[priorder[-2],cslot] <= 0: chosen[cslot,1] = -1
+			else: chosen[cslot,1] = priorder[-2]
+		else: chosen[cslot,1] = -1
+		# Pick second backup plate, or abort if no good plates
+		if len(priorder) > 2:
+			if obs[priorder[-3],cslot] <= 0: chosen[cslot,2] = -1
+			else: chosen[cslot,2] = priorder[-3]
+		else: chosen[cslot,2] = -1
 		
 		# Find all plates on the same field, and similar designs (location ID + apogee version) to the chosen plate
 		chosen_field = [x for x in range(len(apg)) if apg[x].locationid == apg[chosen[cslot,0]].locationid]
