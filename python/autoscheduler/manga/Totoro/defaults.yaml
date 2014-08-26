@@ -5,11 +5,11 @@ logging:
     logFilePath: '~/.totoro/totoro.log'
 
 dbConnection:
-    user: Brian
-    password: ''
+    user: sdssdb_admin
+    password: 4-photometry
     host: localhost
     port: 5432
-    database: apo_platedb
+    database: apodb
 
 observingPlan:
     schedule: +data/Sch_base.6yrs.txt.frm.dat
