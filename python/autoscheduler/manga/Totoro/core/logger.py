@@ -110,9 +110,9 @@ class TotoroLogger(Logger):
         if record.levelno < logging.DEBUG:
             print(record.levelname, end='')
         elif(record.levelno < logging.INFO):
-            colourPrint(record.levelname, 'magenta', end='')
-        elif(record.levelno < logging.WARN):
             colourPrint(record.levelname, 'green', end='')
+        elif(record.levelno < logging.WARN):
+            colourPrint(record.levelname, 'magenta', end='')
         elif(record.levelno < logging.ERROR):
             colourPrint(record.levelname, 'brown', end='')
         else:
