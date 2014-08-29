@@ -39,7 +39,7 @@ class Plates(list):
         if inp is None:
 
             plates = self.getPlates(**kwargs)
-
+            print(kwargs)
             list.__init__(
                 self, [Plate(plate.pk, format='pk',
                              autocomplete=True, **kwargs)

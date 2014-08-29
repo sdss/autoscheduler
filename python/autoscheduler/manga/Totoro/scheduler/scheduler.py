@@ -65,8 +65,8 @@ class BaseScheduler(object):
         self.endDate = endDate
         self.currentDate = obstools.calendar_to_jd(None)
 
-        log.info('Adjusted start date: {0}'.format(self.startDate))
-        log.info('Adjusted end date: {0}'.format(self.endDate))
+        log.info('Start date: {0}'.format(self.startDate))
+        log.info('End date: {0}'.format(self.endDate))
 
 
 class Planner(BaseScheduler):
@@ -148,7 +148,7 @@ class Nightly(BaseScheduler):
 
         log.info('Finding plugged plates.')
         plates = Plates(onlyPlugged=True, onlyAtAPO=True,
-                        onlyIncomplete=False, rearrageExposure=True,
+                        onlyIncomplete=False, rearrangeExposures=True,
                         **kwargs)
 
         if len(plates) == 0:
