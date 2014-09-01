@@ -32,6 +32,9 @@ def pick_plates(apg, obs, par, times, lengths, schedule, loud=True):
 			else: chosen[cslot,2] = priorder[-3]
 		else: chosen[cslot,2] = -1
 		
+		# Abort if there is no chosen plate right now
+		if chosen[cslot,0] == -1: continue
+		
 		# Find all plates on the same field, and similar designs (location ID + apogee version) to the chosen plate
 		chosen_field = [x for x in range(len(apg)) if apg[x].locationid == apg[chosen[cslot,0]].locationid]
 		chosen_designs = [x for x in chosen_field if apg[x].apgver == apg[chosen[cslot,0]].apgver]
