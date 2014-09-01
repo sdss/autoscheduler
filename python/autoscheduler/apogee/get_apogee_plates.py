@@ -107,8 +107,8 @@ def get_plates(errors, plan=False, loud=True):
 			apg[i].minha = float(stage1[i][9]) - 7.5
 			apg[i].platepk = stage1[i][10]
 			apg[i].plugged = 0
-		except:
-			missing.append(stage1[i][3])
+		except Exception as e:
+			missing.append("%d (%s)" % (stage1[i][3], e))
 			continue
 		
 		# Get APOGEE version number and vplan for this plate
