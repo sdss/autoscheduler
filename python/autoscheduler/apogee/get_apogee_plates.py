@@ -66,26 +66,28 @@ def get_plates(errors, plan=False, loud=True):
 	if plan:
 		stage1 = session.execute("SET SCHEMA 'platedb'; "+
 			"SELECT plt.location_id, ptg.center_ra, ptg.center_dec, plt.plate_id, pltg.hour_angle, pltg.priority, plt.design_pk, plt.name, pltg.ha_observable_max, pltg.ha_observable_min, plt.pk "+
-			"FROM ((((((platedb.plate AS plt "+
+			"FROM (((((((platedb.plate AS plt "+
 				"INNER JOIN platedb.plate_to_survey AS p2s ON (p2s.plate_pk = plt.pk)) "+
+				"INNER JOIN platedb.survey AS surv ON (p2s.survey_pk = surv.pk)) "+
 				"INNER JOIN platedb.plate_pointing AS pltg ON (pltg.plate_pk=plt.pk)) "+
 				"INNER JOIN platedb.pointing AS ptg ON (pltg.pointing_pk=ptg.pk)) "+
 				"INNER JOIN platedb.plate_location AS ploc ON (ploc.pk=plt.plate_location_pk)) "+
-				"INNER JOIN platedb.plate_to_plate_status AS p2ps ON (p2ps.plate_pk=plt.pk))"+
-				"INNER JOIN platedb.plate_status AS plts ON (plts.pk=p2ps.plate_status_pk))"+
-			"WHERE p2s.survey_pk=37 AND plts.label = 'Accepted' AND ploc.label = 'APO' "+
+				"INNER JOIN platedb.plate_to_plate_status AS p2ps ON (p2ps.plate_pk=plt.pk)) "+
+				"INNER JOIN platedb.plate_status AS plts ON (plts.pk=p2ps.plate_status_pk)) "+
+			"WHERE surv.label='APOGEE-2' AND plts.label = 'Accepted' AND ploc.label = 'APO' "+
 			"ORDER BY plt.plate_id").fetchall()
 	else:
 		stage1 = session.execute("SET SCHEMA 'platedb'; "+
 			"SELECT plt.location_id, ptg.center_ra, ptg.center_dec, plt.plate_id, pltg.hour_angle, pltg.priority, plt.design_pk, plt.name, pltg.ha_observable_max, pltg.ha_observable_min, plt.pk "+
-			"FROM ((((((platedb.active_plugging AS ac "+
+			"FROM (((((((platedb.active_plugging AS ac "+
 				"JOIN platedb.plugging AS plg ON (ac.plugging_pk=plg.pk)) "+
 				"LEFT JOIN platedb.cartridge AS crt ON (plg.cartridge_pk=crt.pk)) "+
 				"LEFT JOIN platedb.plate AS plt ON (plg.plate_pk=plt.pk)) "+
 				"LEFT JOIN platedb.plate_to_survey AS p2s ON (p2s.plate_pk=plt.pk)) "+
+				"LEFT JOIN platedb.survey AS surv ON (p2s.survey_pk = surv.pk)) "+
 				"LEFT JOIN platedb.plate_pointing as pltg ON (pltg.plate_pk=plt.pk)) "+
 				"LEFT JOIN platedb.pointing AS ptg ON (pltg.pointing_pk=ptg.pk)) "+
-			"WHERE p2s.survey_pk=37 ORDER BY crt.number").fetchall()
+			"WHERE surv.label='APOGEE-2' ORDER BY crt.number").fetchall()
 	
 	# Setup APOGEE-II data structure
 	apg = []
@@ -134,14 +136,16 @@ def get_plates(errors, plan=False, loud=True):
 	try:
 		stage2 = session.execute("SET SCHEMA 'platedb'; "+
 			"SELECT plt.plate_id, obs.mjd, sum(qr.snr_standard^2.0), count(qr.snr_standard), sum(apr.snr^2.0), count(apr.snr) "+
-			"FROM ((((((platedb.exposure AS exp "+
+			"FROM (((((((platedb.exposure AS exp "+
+				"INNER JOIN platedb.survey as surv ON (exp.survey_pk = surv.pk))"+
 				"JOIN apogeeqldb.quickred AS qr ON (exp.pk=qr.exposure_pk)) "+
 				"LEFT JOIN apogeeqldb.reduction AS apr ON (exp.pk=apr.exposure_pk)) "+
 				"LEFT JOIN platedb.exposure_flavor AS expf ON (expf.pk=exp.exposure_flavor_pk)) "+
 				"LEFT JOIN platedb.observation AS obs ON (exp.observation_pk=obs.pk)) "+
 				"LEFT JOIN platedb.plate_pointing AS pltg ON (obs.plate_pointing_pk=pltg.pk)) "+
 				"RIGHT JOIN platedb.plate AS plt ON (pltg.plate_pk=plt.pk)) "+
-			"WHERE (exp.survey_pk=37 OR exp.survey_pk=1) AND expf.label='Object' AND qr.snr_standard!='NaN' AND (qr.snr_standard >= 10.0 OR apr.snr >= 10.0) "+
+			"WHERE (surv.label='APOGEE-2' OR surv.label='APOGEE') AND expf.label='Object' "+
+				"AND qr.snr_standard!='NaN' AND (qr.snr_standard >= 10.0 OR apr.snr >= 10.0) "+
 			"GROUP BY plt.plate_id, obs.mjd ORDER BY plt.plate_id").fetchall()
 	except: pass
 	stage2_end = time()
@@ -175,13 +179,14 @@ def get_plates(errors, plan=False, loud=True):
 	stage3_start = time()
 	stage3 = session.execute("SET SCHEMA 'platedb'; "+
 		"SELECT crt.number, plt.plate_id "+
-		"FROM (((((platedb.active_plugging AS ac "+
+		"FROM ((((((platedb.active_plugging AS ac "+
 			"JOIN platedb.plugging AS plg ON (ac.plugging_pk=plg.pk)) "+
 			"LEFT JOIN platedb.cartridge AS crt ON (plg.cartridge_pk=crt.pk)) "+
 			"LEFT JOIN platedb.plate AS plt ON (plg.plate_pk=plt.pk)) "+
 			"LEFT JOIN platedb.plate_to_survey AS p2s ON (p2s.plate_pk=plt.pk)) "+
+			"LEFT JOIN platedb.survey as surv ON (p2s.survey_pk = surv.pk)) "+
 			"LEFT JOIN platedb.plate_pointing as pltg ON (pltg.plate_pk=plt.pk)) "+
-		"WHERE p2s.survey_pk=37 ORDER BY crt.number").fetchall()
+		"WHERE surv.label = 'APOGEE-2' ORDER BY crt.number").fetchall()
 	stage3_end = time()
 	if loud: print("[SQL] Read in currently plugged APOGEE plates (%.3f sec)" % ((stage3_end - stage3_start)))
 	
