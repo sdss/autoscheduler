@@ -119,6 +119,7 @@ def get_plates(errors, plan=False, loud=True):
 			if len(tmp) > 3: apg[i].vplan = int(tmp[3])
 			if len(tmp) > 4: apg[i].cadence = tmp[4]
 		else:
+			apg[i].vplan = 3
 			apg[i].apgver = 999
 	stage1_end = time()
 	if loud: print("[SQL] Read in APOGEE-II plates (%.3f sec)" % ((stage1_end - stage1_start)))
@@ -140,7 +141,7 @@ def get_plates(errors, plan=False, loud=True):
 				"LEFT JOIN platedb.observation AS obs ON (exp.observation_pk=obs.pk)) "+
 				"LEFT JOIN platedb.plate_pointing AS pltg ON (obs.plate_pointing_pk=pltg.pk)) "+
 				"RIGHT JOIN platedb.plate AS plt ON (pltg.plate_pk=plt.pk)) "+
-			"WHERE exp.survey_pk=37 AND expf.label='Object' AND qr.snr_standard!='NaN' AND (qr.snr_standard >= 10.0 OR apr.snr >= 10.0) "+
+			"WHERE (exp.survey_pk=37 OR exp.survey_pk=1) AND expf.label='Object' AND qr.snr_standard!='NaN' AND (qr.snr_standard >= 10.0 OR apr.snr >= 10.0) "+
 			"GROUP BY plt.plate_id, obs.mjd ORDER BY plt.plate_id").fetchall()
 	except: pass
 	stage2_end = time()

@@ -26,8 +26,7 @@ def set_priorities(apg, par, schedule, loud=True):
 		if apg[p].pct() >= 1: apg[p].priority = -2
 		
 		# Cadence
-		# Regular cadence rules
-		if apg[p].cadence == 0:
+		if schedule['jd'] != apg[p].maxhist():
 			# 3-visit cadence rules: 3 days between adjacent obs, 26 between first and last
 			if apg[p].vplan == 3:
 				if schedule['jd'] - apg[p].maxhist() < 3: apg[p].priority = -1
@@ -35,8 +34,8 @@ def set_priorities(apg, par, schedule, loud=True):
 			# 4+ visit cadence rules: 3 days between adjacent obs
 			elif apg[p].vplan > 3:
 				if schedule['jd'] - apg[p].maxhist() < 3: apg[p].priority = -1
-		# Alternative cadence rules
-		# TO-DO
+			# Alternative cadence rules
+			# TO-DO
 			
 		# In-Order Completion
 		wfield = [x for x in range(len(apg)) if apg[x].locationid == apg[p].locationid]
