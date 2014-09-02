@@ -18,7 +18,7 @@ def run_scheduler(plan=False, mjd=-1, surveys=['apogee','eboss','manga'], loud=T
 	# Read in schedule file
 	pwd = os.path.dirname(os.path.realpath(__file__))
 	schedule_start_time = time()
-	schedule = night_schedule.read_schedule(pwd, errors, mjd=mjd, surveys=surveys, loud=loud)
+	schedule = night_schedule.read_schedule(pwd, errors, mjd=mjd, surveys=surveys, loud=loud, plan=plan)
 	schedule_end_time = time()
 	if loud: print("[PY] Schedule read in complete (%.3f sec)" % (schedule_end_time - schedule_start_time))
 	

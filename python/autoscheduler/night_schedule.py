@@ -1,3 +1,4 @@
+from __future__ import print_function, division
 import datetime
 import numpy as np
 
@@ -8,7 +9,7 @@ def get_juldate():
 	julian += ((dt.hour/24.0) + (dt.minute/(24.0*60.0)) + (dt.second/86400.) + (dt.microsecond/(86400.*1e6)) - 0.5)	
 	return julian
 
-def read_schedule(pwd, errors, mjd=-1, surveys=['apogee','eboss','manga'], loud=True):
+def read_schedule(pwd, errors, mjd=-1, surveys=['apogee','eboss','manga'], loud=True, plan=False):
 	'''
 	read_schedule: reads in scheduler formatted nightly schedule
 	
@@ -42,7 +43,16 @@ def read_schedule(pwd, errors, mjd=-1, surveys=['apogee','eboss','manga'], loud=
 						 
 	# Determine what line in the schedule to use for tonight
 	if mjd < 0:
-		tonight = int(get_juldate() - 0.07)
+		jd_now = get_juldate()
+		utc_hr = (((jd_now - int(jd_now))+0.5)*24+19) % 24
+		print(jd_now, utc_hr)
+		# For plugging, we want the next day after 9PM
+		if plan:
+			if utc_hr > 21: tonight = int(jd_now)+1
+			else: tonight = int(jd_now)
+		# For observing, we want the current date until 9AM
+		else:
+			tonight = int(jd_now-0.1)
 	else:
 		tonight = 2400000 + int(mjd)
 	if loud:
