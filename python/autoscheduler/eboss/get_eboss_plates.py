@@ -55,7 +55,7 @@ def get_plates(plan=False, loud=True):
                 "INNER JOIN platedb.plate_location AS ploc ON (ploc.pk=plt.plate_location_pk)) "+
                 "INNER JOIN platedb.plate_to_plate_status AS p2ps ON (p2ps.plate_pk=plt.pk))"+
                 "INNER JOIN platedb.plate_status AS plts ON (plts.pk=p2ps.plate_status_pk))"+
-            "WHERE (surv.label='BOSS' OR suv.label='eBOSS') AND plt.plate_id >= 4800 "+
+            "WHERE (surv.label='BOSS' OR surv.label='eBOSS') AND plt.plate_id >= 4800 "+
             	"AND (plts.label = 'Accepted' OR plts.label = 'Special') AND ploc.label = 'APO' "+
             "ORDER BY plt.plate_id").fetchall()
     else:
