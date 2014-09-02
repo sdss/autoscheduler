@@ -47,29 +47,29 @@ def get_plates(plan=False, loud=True):
     if plan:
         stage1 = session.execute("SET SCHEMA 'platedb'; "+
             "SELECT ptg.center_ra, ptg.center_dec, plt.plate_id, pltg.hour_angle, pltg.priority, pltg.ha_observable_max, pltg.ha_observable_min, plt.pk "+
-            "FROM ((((((platedb.plate AS plt "+
+            "FROM (((((((platedb.plate AS plt "+
                 "INNER JOIN platedb.plate_to_survey AS p2s ON (p2s.plate_pk = plt.pk)) "+
+                "INNER JOIN platedb.survey AS surv ON (p2s.survey_pk = surv.pk)) "+
                 "INNER JOIN platedb.plate_pointing AS pltg ON (pltg.plate_pk=plt.pk)) "+
                 "INNER JOIN platedb.pointing AS ptg ON (pltg.pointing_pk=ptg.pk)) "+
                 "INNER JOIN platedb.plate_location AS ploc ON (ploc.pk=plt.plate_location_pk)) "+
                 "INNER JOIN platedb.plate_to_plate_status AS p2ps ON (p2ps.plate_pk=plt.pk))"+
                 "INNER JOIN platedb.plate_status AS plts ON (plts.pk=p2ps.plate_status_pk))"+
-            "WHERE p2s.survey_pk=36 AND plt.plate_id >= 4800 AND (plts.label = 'Accepted' OR plts.label = 'Special') AND ploc.label = 'APO' "+
-            #"WHERE p2s.survey_pk=2 AND plt.plate_id >= 4800 AND (plts.label = 'Accepted' OR plts.label = 'Special') AND ploc.label = 'APO' "+
+            "WHERE (surv.label='BOSS' OR suv.label='eBOSS') AND plt.plate_id >= 4800 "+
+            	"AND (plts.label = 'Accepted' OR plts.label = 'Special') AND ploc.label = 'APO' "+
             "ORDER BY plt.plate_id").fetchall()
     else:
         stage1 = session.execute("SET SCHEMA 'platedb'; "+
             "SELECT ptg.center_ra, ptg.center_dec, plt.plate_id, pltg.hour_angle, pltg.priority, pltg.ha_observable_max, pltg.ha_observable_min, plt.pk "+
-            "FROM ((((((platedb.active_plugging AS ac "+
+            "FROM (((((((platedb.active_plugging AS ac "+
                 "JOIN platedb.plugging AS plg ON (ac.plugging_pk=plg.pk)) "+
                 "LEFT JOIN platedb.cartridge AS crt ON (plg.cartridge_pk=crt.pk)) "+
                 "LEFT JOIN platedb.plate AS plt ON (plg.plate_pk=plt.pk)) "+
                 "LEFT JOIN platedb.plate_to_survey AS p2s ON (p2s.plate_pk=plt.pk)) "+
+                "LEFT JOIN platedb.survey AS surv ON (p2s.survey_pk = surv.pk)) "+
                 "LEFT JOIN platedb.plate_pointing as pltg ON (pltg.plate_pk=plt.pk)) "+
                 "LEFT JOIN platedb.pointing AS ptg ON (pltg.pointing_pk=ptg.pk)) "+
-            # GACK hardcoded survey pk; 36=eBOSS 2=BOSS
-            "WHERE p2s.survey_pk=36 ORDER BY crt.number").fetchall() 
-            #"WHERE p2s.survey_pk=2 ORDER BY crt.number").fetchall() 
+            "WHERE surv.label='BOSS' OR surv.label='eBOSS' ORDER BY crt.number").fetchall() 
     # Setup eBOSS data structure
     ebo = []
     for i in range(len(stage1)):
@@ -93,14 +93,14 @@ def get_plates(plan=False, loud=True):
     stage3_start = time()
     stage3 = session.execute("SET SCHEMA 'platedb'; "+
         "SELECT crt.number, plt.plate_id "+
-        "FROM (((((platedb.active_plugging AS ac "+
+        "FROM ((((((platedb.active_plugging AS ac "+
             "JOIN platedb.plugging AS plg ON (ac.plugging_pk=plg.pk)) "+
             "LEFT JOIN platedb.cartridge AS crt ON (plg.cartridge_pk=crt.pk)) "+
             "LEFT JOIN platedb.plate AS plt ON (plg.plate_pk=plt.pk)) "+
             "LEFT JOIN platedb.plate_to_survey AS p2s ON (p2s.plate_pk=plt.pk)) "+
+            "LEFT JOIN platedb.survey AS surv ON (p2s.survey_pk = surv.pk)) "+
             "LEFT JOIN platedb.plate_pointing as pltg ON (pltg.plate_pk=plt.pk)) "+
-        #"WHERE p2s.survey_pk=36 ORDER BY crt.number").fetchall()
-        "WHERE p2s.survey_pk=2 ORDER BY crt.number").fetchall()
+        "WHERE surv.label='BOSS' OR surv.label='eBOSS' ORDER BY crt.number").fetchall() 
     # Save currently plugged plates to data
     for c,p in stage3:
         wplate = [x for x in range(len(ebo)) if ebo[x].plateid == p]
