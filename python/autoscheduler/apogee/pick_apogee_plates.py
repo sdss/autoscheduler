@@ -77,7 +77,7 @@ def pick_plates(apg, obs, par, times, lengths, schedule, loud=True):
 	picks = []
 	for c in range(len(chosen[:,0])):
 		# Strip overhead time from exposure length, if this is a full block
-		if lengths[c] >= par['exposure']/60: thislength = lengths[c] - par['overhead']/60
+		if lengths[c] > par['exposure']/60: thislength = lengths[c] - par['overhead']/60
 		else: thislength = lengths[c]
 		# Determine where block actually starts
 		if schedule['dark_start'] == 0: thistime = times[c]

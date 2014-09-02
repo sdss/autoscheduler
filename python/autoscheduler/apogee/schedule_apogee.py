@@ -16,19 +16,19 @@ def schedule_apogee(schedule, errors, plan=False, loud=True):
 
 	# Define APOGEE-II blocks for tonight
 	nightlength = (schedule['bright_end'] - schedule['bright_start']) * 24
-	nslots = min([int(nightlength / ((par['exposure'] + par['overhead']) / 60)), par['ncarts']])
+	nslots = min([int(round(nightlength / ((par['exposure'] + par['overhead']) / 60))), par['ncarts']])
 	if nslots == 0: return []
 	times = [schedule['bright_start'] + (par['exposure'] + par['overhead']) / 60 / 24 * x for x in range(nslots)]
 	lengths = [(par['exposure'] + par['overhead']) / 60 for x in range(nslots)]
 	
 	# If APOGEE-II starts the split night
 	if schedule['bright_start'] < schedule['dark_start']:
-		# Determine whether we should add another exposure (leftover time > 30min)
-		if len(times) < par['ncarts'] and nightlength - sum(lengths) > 0.5:
+		# Determine whether we should add another exposure (leftover time > 15min)
+		if len(times) < par['ncarts'] and nightlength - sum(lengths) > (15/60):
 			times.append(schedule['bright_start'] + len(times) * (par['exposure'] + par['overhead']) / 60 / 24)
-			lengths.append(par['exposure'] / 60)
+			lengths.append(nightlength - sum(lengths))
 		# Because APOGEE-II is first, the last exposure will not have overhead
-		lengths[-1] = par['exposure'] / 60
+		else: lengths[-1] = par['exposure'] / 60
 	
 	# APOGEE-II ends the night
 	else:
