@@ -48,7 +48,7 @@ def read_schedule(pwd, errors, mjd=-1, surveys=['apogee','eboss','manga'], loud=
 		print(jd_now, utc_hr)
 		# For plugging, we want the next day after 9PM
 		if plan:
-			if utc_hr > 21: tonight = int(jd_now)+1
+			if utc_hr > 21 or utc_hr <= 7: tonight = int(jd_now)+1
 			else: tonight = int(jd_now)
 		# For observing, we want the current date until 9AM
 		else:
