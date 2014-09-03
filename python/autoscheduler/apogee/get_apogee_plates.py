@@ -65,7 +65,7 @@ def get_plates(errors, plan=False, loud=True):
 	stage1_start = time()
 	if plan:
 		stage1 = session.execute("SET SCHEMA 'platedb'; "+
-			"SELECT plt.location_id, ptg.center_ra, ptg.center_dec, plt.plate_id, pltg.hour_angle, pltg.priority, plt.design_pk, plt.name, pltg.ha_observable_max, pltg.ha_observable_min, plt.pk "+
+			"SELECT plt.location_id, ptg.center_ra, ptg.center_dec, plt.plate_id, pltg.hour_angle, pltg.priority, plt.design_pk, plt.name, pltg.ha_observable_max, pltg.ha_observable_min, plt.pk, plt.current_survey_mode_pk "+
 			"FROM (((((((platedb.plate AS plt "+
 				"INNER JOIN platedb.plate_to_survey AS p2s ON (p2s.plate_pk = plt.pk)) "+
 				"INNER JOIN platedb.survey AS surv ON (p2s.survey_pk = surv.pk)) "+
@@ -78,7 +78,7 @@ def get_plates(errors, plan=False, loud=True):
 			"ORDER BY plt.plate_id").fetchall()
 	else:
 		stage1 = session.execute("SET SCHEMA 'platedb'; "+
-			"SELECT plt.location_id, ptg.center_ra, ptg.center_dec, plt.plate_id, pltg.hour_angle, pltg.priority, plt.design_pk, plt.name, pltg.ha_observable_max, pltg.ha_observable_min, plt.pk "+
+			"SELECT plt.location_id, ptg.center_ra, ptg.center_dec, plt.plate_id, pltg.hour_angle, pltg.priority, plt.design_pk, plt.name, pltg.ha_observable_max, pltg.ha_observable_min, plt.pk, plt.current_survey_mode_pk "+
 			"FROM (((((((platedb.active_plugging AS ac "+
 				"JOIN platedb.plugging AS plg ON (ac.plugging_pk=plg.pk)) "+
 				"LEFT JOIN platedb.cartridge AS crt ON (plg.cartridge_pk=crt.pk)) "+
@@ -94,22 +94,26 @@ def get_plates(errors, plan=False, loud=True):
 	
 	# Save data to structure
 	missing = []
+	print(stage1)
 	for i in range(len(stage1)):
 		try:
+			# Check to see whether this is a MaNGA-led plate
+			if stage1[i][11] is not None: continue
 			apg.append(apgplate())
-			apg[i].locationid = stage1[i][0]
-			apg[i].ra = float(stage1[i][1])
-			apg[i].dec = float(stage1[i][2])
-			apg[i].plateid = stage1[i][3]
-			apg[i].ha = float(stage1[i][4])
-			apg[i].manual_priority = stage1[i][5]
+			apg[-1].locationid = stage1[i][0]
+			apg[-1].ra = float(stage1[i][1])
+			apg[-1].dec = float(stage1[i][2])
+			apg[-1].plateid = stage1[i][3]
+			apg[-1].ha = float(stage1[i][4])
+			apg[-1].manual_priority = stage1[i][5]
 			designid = int(stage1[i][6])
-			apg[i].name = stage1[i][7]
-			apg[i].maxha = float(stage1[i][8]) + 7.5
-			apg[i].minha = float(stage1[i][9]) - 7.5
-			apg[i].platepk = stage1[i][10]
-			apg[i].plugged = 0
+			apg[-1].name = stage1[i][7]
+			apg[-1].maxha = float(stage1[i][8]) + 7.5
+			apg[-1].minha = float(stage1[i][9]) - 7.5
+			apg[-1].platepk = stage1[i][10]
+			apg[-1].plugged = 0
 		except Exception as e:
+			print(e)
 			missing.append("%d (%s)" % (stage1[i][3], e))
 			continue
 		
@@ -117,12 +121,12 @@ def get_plates(errors, plan=False, loud=True):
 		dvdata = session.execute("SELECT array_to_string(array_agg(dv.value),',') FROM platedb.design_value as dv WHERE (dv.design_field_pk=342 OR dv.design_field_pk=343 OR dv.design_field_pk=344 OR dv.design_field_pk=351 OR dv.design_field_pk=423 OR dv.design_field_pk=424) AND dv.design_pk=%d" % (designid)).fetchall()
 		if dvdata[0][0]:
 			tmp = dvdata[0][0].split(',')
-			apg[i].apgver = 100*int(tmp[0]) + 10*int(tmp[1]) + int(tmp[2])
-			if len(tmp) > 3: apg[i].vplan = int(tmp[3])
-			if len(tmp) > 4: apg[i].cadence = tmp[4]
+			apg[-1].apgver = 100*int(tmp[0]) + 10*int(tmp[1]) + int(tmp[2])
+			if len(tmp) > 3: apg[-1].vplan = int(tmp[3])
+			if len(tmp) > 4: apg[-1].cadence = tmp[4]
 		else:
-			apg[i].vplan = 3
-			apg[i].apgver = 999
+			apg[-1].vplan = 3
+			apg[-1].apgver = 999
 	stage1_end = time()
 	if loud: print("[SQL] Read in APOGEE-II plates (%.3f sec)" % ((stage1_end - stage1_start)))
 	
