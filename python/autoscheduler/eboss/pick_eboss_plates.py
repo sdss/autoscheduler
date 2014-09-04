@@ -28,7 +28,8 @@ def pick_plates(ebo, par, times, obs, loud=True):
         
         # Determine whether any adjustments are necessary due to alread-plugged plates
         if chosen[startslot] >= 0: startslot += 1
-        if chosen[startslot+nleft] >= 0: startslot -1
+        if startslot+nleft < len(chosen):
+            if chosen[startslot+nleft] >= 0: startslot += -1
         
         # Mark slots as chosen
         for i in range(nleft):
