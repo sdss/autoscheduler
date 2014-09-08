@@ -12,7 +12,8 @@ Licensed under a 3-clause BSD license.
 from __future__ import division
 from __future__ import print_function
 from astropy import table, time
-from ..exceptions import TotoroError
+from ..exceptions import TotoroError, TotoroUserWarning
+import warnings
 from .. import config, log
 import numpy as np
 import os
@@ -60,7 +61,8 @@ class ObservingPlan(object):
         self.plan.rename_column('col11', 'JD0')
         self.plan.rename_column('col12', 'JD1')
 
-        log.info('Observing plan {0} loaded.'.format(schedule))
+        log.info('Observing plan {0} loaded.'.format(
+            os.path.realpath(schedule)))
 
         self.addRunDayCol()
         self.plan = self.plan[(self.plan['JD0'] > 0) & (self.plan['JD1'] > 0)]
@@ -120,7 +122,9 @@ class ObservingPlan(object):
         jd = int(jd)
 
         if jd not in self.plan['JD']:
-            raise TotoroError('JD={0} not found'.format(jd))
+            warnings.warn('JD={0} not found in schedule'.format(jd),
+                          TotoroUserWarning)
+            return (None, None)
 
         night = self.plan[self.plan['JD'] == jd]
 
@@ -130,12 +134,14 @@ class ObservingPlan(object):
         """Returns an astropy table with the observation dates
         for each night between startDate and endDate."""
 
-        log.info('Getting observing blocks.')
-
         validDates = self.plan[(self.plan['JD1'] >= startDate) &
                                (self.plan['JD0'] <= endDate) &
                                (self.plan['JD0'] > 0.0) &
                                (self.plan['JD1'] > 0.0)]
+
+        if startDate is None and endDate is None:
+            log.info('no observing blocks selected.')
+            return validDates
 
         if startDate > validDates['JD0'][0]:
             validDates['JD0'][0] = startDate

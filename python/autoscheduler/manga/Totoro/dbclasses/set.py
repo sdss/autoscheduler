@@ -14,75 +14,117 @@ Revision history:
 
 from __future__ import division
 from __future__ import print_function
-from .baseDBClass import BaseDBClass
 from .exposure import Exposure
-from .. import mangaDB, Session, plateDB
-from .. import log
-from .. import config
-from ..exceptions import TotoroError
-from ..logic import checkSet
-from ..utils import createSite, getMinMaxIntervalSequence
+from ..apoDB import TotoroDBConnection
+from .. import log, config, site
+from ..exceptions import TotoroError, EmptySet
+from ..logic.mangaLogic import checkSet
+from ..utils import getMinMaxIntervalSequence
 import numpy as np
 from copy import copy
 
-session = Session()
+
+totoroDB = TotoroDBConnection()
+plateDB = totoroDB.plateDB
+mangaDB = totoroDB.mangaDB
+session = totoroDB.Session()
 
 
-class Set(BaseDBClass):
+def getPlateSets(inp, format='plate_id', **kwargs):
 
-    def __init__(self, inp, format='pk', autocomplete=True,
-                 exposures=True, verbose=True, mock=False, **kwargs):
+    with session.begin(subtransactions=True):
+        sets = session.query(mangaDB.Set).join(
+            mangaDB.Exposure,
+            plateDB.Exposure,
+            plateDB.Observation,
+            plateDB.PlatePointing,
+            plateDB.Plate).filter(
+                eval('plateDB.Plate.{0} == {1}'.format(format, inp))).all()
 
-        self.exposures = []
+    return [Set(set.pk, **kwargs) for set in sets]
+
+
+class Set(mangaDB.Set):
+
+    def __new__(cls, input=None, format='pk', *args, **kwargs):
+
+        if input is None:
+            return mangaDB.Set.__new__(cls)
+
+        base = cls.__bases__[0]
+
+        with session.begin():
+            instance = session.query(base).filter(
+                eval('{0}.{1} == {2}'.format(base.__name__, format, input))
+                ).one()
+
+        instance.__class__ = cls
+
+        return instance
+
+    def __init__(self, inp=None, format='pk', mock=False,
+                 silent=False, *args, **kwargs):
+
         self.isMock = mock
-        self.verbose = verbose
+        if inp is None:
+            self.isMock = True
 
-        self.site = createSite()
+        self.kwargs = kwargs
 
         if not self.isMock:
+            self.totoroExposures = self.loadExposures(silent=silent)
+        else:
+            self.totoroExposures = []
 
-            self.__DBClass__ = mangaDB.Set
-            super(Set, self).__init__(inp, format=format,
-                                      autocomplete=autocomplete)
+        # Checks that the set has exposures.
+        if not self.isMock:
+            self._checkHasExposures()
 
-            self.ra, self.dec = self.getCoordinates()
+        if not silent and not self.isMock:
+            log.debug('Loaded set pk={0} (plate_id={1})'.format(
+                      self.pk, self.plate.plate_id))
 
-            if verbose:
-                log.debug('Loaded set with pk={0}'.format(self.pk))
+    def update(self, **kwargs):
+        """Reloads the set."""
 
-            if exposures:
-                self.loadExposuresFromDB()
+        newSelf = Set(self.pk, fromat='pk', silent=True, mock=self.isMock,
+                      **self.kwargs)
+        self = newSelf
 
-    def loadExposuresFromDB(self):
+        log.debug('Set pk={0} has been reloaded'.format(
+                  self.pk))
 
-        with session.begin(subtransactions=True):
-            mangaSet = session.query(mangaDB.Set).get(self.pk)
+    @staticmethod
+    def fromExposures(exposures, **kwargs):
+        """Creates a mock set for a list of Totoro.Exposures."""
 
-        for mangaExposure in mangaSet.exposures:
-            self.exposures.append(Exposure(mangaExposure.platedbExposure.pk,
-                                           autocomplete=True,
-                                           format='pk',
-                                           extendFromMaNGA=True,
-                                           verbose=self.verbose))
+        newSet = Set(mock=True, **kwargs)
+        newSet.totoroExposures = list(exposures)
+
+        return newSet
+
+    def loadExposures(self, silent=False):
+
+        from .exposure import Exposure
+
+        return [Exposure(mangaExp.pk, format='pk', parent='mangaDB',
+                         silent=silent)
+                for mangaExp in self.exposures]
+
+    def _checkHasExposures(self):
+        if len(self.totoroExposures) == 0:
+            raise EmptySet('set pk={0} has no exposures.'.format(self.pk))
 
     @classmethod
-    def createMockSet(cls, ra=None, dec=None, verbose=False, **kwargs):
-
-        newSet = Set.__new__(cls)
+    def createMockSet(cls, ra=None, dec=None, silent=False, **kwargs):
 
         if ra is None or dec is None:
             raise TotoroError('ra and dec must be specified')
 
-        newSet.ra = ra
-        newSet.dec = dec
+        newSet = Set(mock=True, silent=silent, ra=ra, dec=dec, **kwargs)
 
-        newSet.isMock = True
-        newSet.pk = None if 'pk' not in kwargs else kwargs['pk']
-
-        newSet.exposures = []
-
-        if verbose:
-            log.debug('Created mock with pk={0}'.format(newSet.pk))
+        if not silent:
+            log.debug('Created mock set.'.format(newSet.pk))
 
         return newSet
 
@@ -95,40 +137,57 @@ class Set(BaseDBClass):
             kwargs['ditherPosition'] = self.getMissingDitherPositions()[0]
 
         newExposure = Exposure.createMockExposure(**kwargs)
-        self.exposures.append(newExposure)
+        self.totoroExposures.append(newExposure)
+
+    @property
+    def plate(self):
+        """Returns the plateDB.Plate object for this set."""
+
+        self._checkHasExposures()
+        return (self.exposures[0].platedbExposure.observation.
+                plate_pointing.plate)
+
+    @property
+    def ra(self):
+        return self.getCoordinates()[0]
+
+    @property
+    def dec(self):
+        return self.getCoordinates()[1]
 
     def getCoordinates(self):
 
-        if hasattr(self, 'ra') and hasattr(self, 'dec'):
-            return np.array([self.ra, self.dec])
+        if 'ra' in self.kwargs and 'dec' in self.kwargs:
+            if (self.kwargs['ra'] is not None and
+                    self.kwargs['dec'] is not None):
+                return np.array(
+                    [self.kwargs['ra'], self.kwargs['ra']], np.float)
+        else:
+            self._checkHasExposures()
+            return self.totoroExposures[0].getCoordinates()
 
-        with session.begin(subtransactions=True):
-            pointing = session.query(plateDB.Pointing).join(
-                plateDB.PlatePointing).join(plateDB.Observation).join(
-                    plateDB.Exposure).join(mangaDB.Exposure).join(
-                        mangaDB.Set).filter(
-                            mangaDB.Set.pk == self.pk).one()
+    def getHA(self, midPoint=False):
+        """Returns the HA interval of the exposures in the set. If midPoint is
+        set, the middle point of the exposures is used for the calculation."""
 
-        return np.array([pointing.center_ra, pointing.center_dec], np.float)
+        if not midPoint:
+            expHAs = np.array([exposure.getHA()
+                               for exposure in self.totoroExposures
+                               if exposure.valid])
+            return getMinMaxIntervalSequence(expHAs)
+        else:
+            pass
 
     def getHARange(self):
-        """Returns the HA range of the exposures in the set."""
-
-        expHARanges = np.array([exposure.getHARange()
-                                for exposure in self.exposures
-                                if exposure.valid])
-        return getMinMaxIntervalSequence(expHARanges)
-
-    def getHALimits(self):
         """Returns the HA limits to add more exposures to the set."""
 
-        haRange = self.getHARange()
+        haRange = self.getHA()
         return np.array([np.max(haRange) - 15., np.min(haRange) + 15.]) % 360.
 
     def getDitherPositions(self):
         """Returns a list of dither positions in the set."""
 
-        return [exp.ditherPosition for exp in self.exposures]
+        return [exp.ditherPosition for exp in self.totoroExposures]
 
     def getMissingDitherPositions(self):
         """Returns a list of missing dither positions."""
@@ -145,7 +204,7 @@ class Set(BaseDBClass):
         the set. The return format is [b1SN2, b2SN2, r1SN2, r2SN2]."""
 
         validExposures = []
-        for exposure in self.exposures:
+        for exposure in self.totoroExposures:
             if exposure.valid:
                 validExposures.append(exposure)
 
@@ -160,7 +219,7 @@ class Set(BaseDBClass):
 
         maxSN2Factor = config['set']['maxSN2Factor']
 
-        sn2 = np.array([exp.getSN2Array() for exp in self.exposures])
+        sn2 = np.array([exp.getSN2Array() for exp in self.totoroExposures])
         sn2Average = np.array(
             [(np.mean(ss[0:2]), np.mean(ss[2:4])) for ss in sn2])
 
@@ -181,7 +240,7 @@ class Set(BaseDBClass):
 
         maxSeeingRange = config['set']['maxSeeingRange']
         maxSeeing = config['exposure']['maxSeeing']
-        seeings = np.array([exp.seeing for exp in self.exposures])
+        seeings = np.array([exp.seeing for exp in self.totoroExposures])
 
         seeingRangeMin = np.max(seeings) - maxSeeingRange
         seeingRangeMax = np.min(seeings) + maxSeeingRange
@@ -190,15 +249,15 @@ class Set(BaseDBClass):
 
         return np.array([seeingRangeMin, seeingRangeMax])
 
-    def getQuality(self):
-        """Returns the quality of the set (Excellent, Good, Poor)."""
+    def getQuality(self, **kwargs):
+        """Returns the quality of the set."""
 
-        return checkSet(self, verbose=False)
+        return checkSet(self, silent=True, **kwargs)
 
     def getValidExposures(self):
 
         validExposures = []
-        for exp in self.exposures:
+        for exp in self.totoroExposures:
             if exp.valid is True:
                 validExposures.append(exp)
 
@@ -207,15 +266,15 @@ class Set(BaseDBClass):
     def getAverageSeeing(self):
 
         seeings = []
-        for exp in self.exposures:
+        for exp in self.totoroExposures:
             if exp.valid:
-                seeings.append(exp.manga_seeing)
+                seeings.append(exp.seeing)
 
         return np.mean(seeings)
 
     def getLSTRange(self):
 
-        ha0, ha1 = self.getHALimits()
+        ha0, ha1 = self.getHARange()
 
         lst0 = (ha0 + self.ra) % 360. / 15
         lst1 = (ha1 + self.ra) % 360. / 15
@@ -226,10 +285,10 @@ class Set(BaseDBClass):
 
         lst0, lst1 = self.getLSTRange()
 
-        ut0 = self.site.localTime(lst0, date=date, utc=True,
-                                  returntype='datetime')
-        ut1 = self.site.localTime(lst1, date=date, utc=True,
-                                  returntype='datetime')
+        ut0 = site.localTime(lst0, date=date, utc=True,
+                             returntype='datetime')
+        ut1 = site.localTime(lst1, date=date, utc=True,
+                             returntype='datetime')
 
         if format == 'str':
             return ('{0:%H:%M}'.format(ut0), '{0:%H:%M}'.format(ut1))
@@ -238,7 +297,7 @@ class Set(BaseDBClass):
 
     @property
     def complete(self):
-        if self.getQuality() != 'Incomplete':
+        if self.getQuality() not in ['Incomplete']:
             return True
         else:
             return False

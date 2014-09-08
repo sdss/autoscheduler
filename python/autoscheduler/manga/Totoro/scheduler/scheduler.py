@@ -16,11 +16,10 @@ from __future__ import division
 from __future__ import print_function
 from astropysics import obstools
 from .observingPlan import ObservingPlan
-from ..dbclasses import Fields
+# from ..dbclasses import Fields
 from ..dbclasses import Plates
-from ..utils import createSite
 from .timeline import Timelines
-from .. import log
+from .. import log, site
 
 
 class BaseScheduler(object):
@@ -34,7 +33,7 @@ class BaseScheduler(object):
     def __init__(self, startDate=None, endDate=None, **kwargs):
 
         self._observingPlan = ObservingPlan(**kwargs)
-        self.site = createSite(**kwargs)
+        self.site = site
         self._setStartEndDate(startDate, endDate, **kwargs)
 
         self.observingBlocks = self._observingPlan.getObservingBlocks(
@@ -65,8 +64,8 @@ class BaseScheduler(object):
         self.endDate = endDate
         self.currentDate = obstools.calendar_to_jd(None)
 
-        log.info('Start date: {0}'.format(self.startDate))
-        log.info('End date: {0}'.format(self.endDate))
+        log.debug('Start date: {0}'.format(self.startDate))
+        log.debug('End date: {0}'.format(self.endDate))
 
 
 class Planner(BaseScheduler):
@@ -132,27 +131,28 @@ class Nightly(BaseScheduler):
 
     def __init__(self, startDate=None, endDate=None, plates=None, **kwargs):
 
-        log.info('Running in NIGHTLY MODE.')
+        log.info('entering Nightly mode.')
 
         super(Nightly, self).__init__(startDate=startDate,
                                       endDate=endDate, scope='nightly',
                                       **kwargs)
 
         if plates is None:
-            self.plates = self.getPlates()
+            self.plates = self.getPlates(**kwargs)
         else:
+            log.info('using programmatic input for plates.')
+            log.info('{0} input plates'.format(len(plates)))
             self.plates = plates
 
     def getPlates(self, **kwargs):
         """Gets the plugged plates."""
 
-        log.info('Finding plugged plates.')
-        plates = Plates(onlyPlugged=True, onlyAtAPO=True,
-                        onlyIncomplete=False, rearrangeExposures=True,
-                        **kwargs)
+        plates = Plates.getPlugged(**kwargs)
 
         if len(plates) == 0:
             log.info('no plugged plates found.')
+        else:
+            log.info('found {0} plugged plates'.format(len(plates)))
 
         return plates
 

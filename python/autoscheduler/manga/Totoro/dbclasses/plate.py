@@ -14,161 +14,175 @@ Revision history:
 
 from __future__ import division
 from __future__ import print_function
-from .plugging import Plugging
-from .baseDBClass import BaseDBClass
-from .set import Set
-from .. import Session, plateDB, mangaDB
+from ..apoDB import TotoroDBConnection
 from ..utils import mlhalimit, isPlateComplete
-import sqlalchemy
-from ..exceptions import TotoroNotImplemented, TotoroError
-from .. import log, config
-from ..logic import rearrangeExposures
+from ..exceptions import TotoroError, MultiplePlatePointings, PlateNotPlugged
+from ..exceptions import NoMangaExposure
+import warnings
+from .. import log, config, dustMap, site
+from .set import getPlateSets, Set
+from ..logic import setArrangement, updateSets
 import numpy as np
-from ..utils import createSite, getIntervalIntersectionLength
-from .. import dustMap
+from ..utils import getIntervalIntersectionLength, getAPOComplete
 from copy import deepcopy
 
 
-session = Session()
+totoroDB = TotoroDBConnection()
+plateDB = totoroDB.plateDB
+mangaDB = totoroDB.mangaDB
+session = totoroDB.Session()
 
 
 class Plates(list):
 
-    def __init__(self, inp=None, format='pk', **kwargs):
+    def __init__(self, inp, format='pk', **kwargs):
 
-        if inp is None:
-
-            plates = self.getPlates(**kwargs)
-            print(kwargs)
-            list.__init__(
-                self, [Plate(plate.pk, format='pk',
-                             autocomplete=True, **kwargs)
-                       for plate in plates])
-
+        if all([isinstance(ii, Plate) for ii in inp]):
+            list.__init__(self, inp)
         else:
-
-            raise TotoroNotImplemented('creating Plate instances from pk '
-                                       'not yet implemented.')
-
-    @classmethod
-    def fromList(cls, plateList, **kwargs):
-
-        newPlates = Plates.__new__(cls)
-        list.__init__(newPlates, plateList)
-
-        return newPlates
+            list.__init__(self, [Plate(ii, format=format, **kwargs)
+                                 for ii in inp])
 
     @staticmethod
-    def getPlates(onlyPlugged=False, onlyAtAPO=True,
-                  onlyIncomplete=False, **kwargs):
+    def getPlugged(onlyIncomplete=False, **kwargs):
 
-        if onlyPlugged:
-            with session.begin(subtransactions=True):
-                activePluggings = session.query(
-                    plateDB.ActivePlugging).join(plateDB.Plugging).join(
-                        plateDB.Plate).join(plateDB.PlateToSurvey).join(
-                            plateDB.Survey).filter(
-                                plateDB.Survey.label == 'MaNGA').all()
-
-                plates = [session.query(plateDB.Plate).get(
-                          actPlug.plugging.plate_pk)
-                          for actPlug in activePluggings]
-
-        elif onlyPlugged is False and onlyAtAPO:
-            with session.begin(subtransactions=True):
-                plates = session.query(
-                    plateDB.Plate).join(plateDB.PlateLocation).filter(
-                        plateDB.PlateLocation.label == 'APO').join(
-                            plateDB.PlateToSurvey).join(plateDB.Survey).filter(
-                                plateDB.Survey.label == 'MaNGA').all()
-
-        else:
-            with session.begin(subtransactions=True):
-                plates = session.query(plateDB.Plate).join(
-                    plateDB.PlateToSurvey).join(plateDB.Survey).filter(
+        with session.begin(subtransactions=True):
+            activePluggings = session.query(
+                plateDB.ActivePlugging).join(
+                    plateDB.Plugging,
+                    plateDB.Plate,
+                    plateDB.PlateToSurvey,
+                    plateDB.Survey).filter(
                         plateDB.Survey.label == 'MaNGA').all()
 
+        plates = [actPlug.plugging.plate_pk for actPlug in activePluggings]
+
         if onlyIncomplete:
-            incompletePlates = []
-            for plate in plates:
-                if not isPlateComplete(plate.pk, format='plate_pk'):
-                    incompletePlates.append(plate)
-            plates = incompletePlates
-
-        return plates
-
-
-class Plate(BaseDBClass):
-
-    def __init__(self, inp, format='pk', autocomplete=True,
-                 pluggings=True, sets=True, rearrangeExposures=False,
-                 verbose=True, mock=False, **kwargs):
-
-        self.pluggings = []
-        self.sets = []
-        self._complete = None
-
-        self.site = createSite()
-
-        self.isMock = mock
-
-        if not self.isMock:
-
-            self._rearrangeExposures = rearrangeExposures
-
-            self.__DBClass__ = plateDB.Plate
-            super(Plate, self).__init__(inp, format=format,
-                                        autocomplete=autocomplete)
-
-            self.checkPlate()
-
-            if verbose:
-                log.debug('Loaded plate with pk={0}, plateid={1}'.format(
-                    self.pk, self.plate_id))
-
-        if 'coords' in kwargs:
-            self.coords = kwargs['coords']
+            return Plates._getIncomplete(plates, **kwargs)
         else:
-            self.coords = self.getCoords()
+            return Plates(plates, **kwargs)
+
+    @staticmethod
+    def getAtAPO(onlyIncomplete=False, **kwargs):
+
+        with session.begin(subtransactions=True):
+            plates = session.query(plateDB.Plate).join(
+                plateDB.PlateLocation).filter(
+                    plateDB.PlateLocation.label == 'APO').join(
+                        plateDB.PlateToSurvey).join(
+                        plateDB.Survey).filter(
+                            plateDB.Survey.label == 'MaNGA').all()
+
+        plates = [plate.pk for plate in plates]
+
+        if onlyIncomplete:
+            return Plates._getIncomplete(plates, **kwargs)
+        else:
+            return Plates(plates, **kwargs)
+
+    @staticmethod
+    def getAll(onlyIncomplete=False, **kwargs):
+
+        with session.begin(subtransactions=True):
+            plates = session.query(plateDB.Plate).join(
+                plateDB.PlateToSurvey).join(plateDB.Survey).filter(
+                    plateDB.Survey.label == 'MaNGA').all()
+
+        plates = [plate.pk for plate in plates]
+
+        if onlyIncomplete:
+            return Plates._getIncomplete(plates, **kwargs)
+        else:
+            return Plates(plates, **kwargs)
+
+    @staticmethod
+    def _getIncomplete(plates, **kwargs):
+
+        totoroPlates = [Plate(plate, format='pk') for plate in plates]
+
+        incompletePlates = []
+        for totoroPlate in totoroPlates:
+            if not isPlateComplete(totoroPlate):
+                incompletePlates.append(totoroPlate)
+        return incompletePlates
+
+
+class Plate(plateDB.Plate):
+
+    def __new__(cls, input, format='pk', **kwargs):
+
+        if input is None:
+            return plateDB.Plate.__new__(cls)
+
+        base = cls.__bases__[0]
+
+        with session.begin():
+            instance = session.query(base).filter(
+                eval('{0}.{1} == {2}'.format(base.__name__, format, input))
+                ).one()
+
+        instance.__class__ = cls
+
+        return instance
+
+    def __init__(self, input, format='pk', mock=False, silent=False, **kwargs):
+
+        self._complete = None
+        self.isMock = mock
+        self.kwargs = kwargs
 
         if 'dust' in kwargs:
             self.dust = kwargs['dust']
         else:
             if dustMap is None:
-                self.dust = None
-            else:
-                self.dust = dustMap(self.coords[0], self.coords[1])
+                self.dust = None if dustMap is None else dustMap(self.ra,
+                                                                 self.dec)
+        self.mlhalimit = mlhalimit(self.dec)
 
-        self.mlhalimit = mlhalimit(self.coords[1])
+        if not self.isMock:
+            self.checkPlate()
+            self.sets = getPlateSets(self.pk, format='pk', silent=silent,
+                                     **kwargs)
+            self.updateSets()
 
-        if pluggings and not self.isMock:
-            self.loadPluggingsFromDB()
+            if silent is False:
+                log.debug('loaded plate with pk={0}, plateid={1}'.format(
+                          self.pk, self.plate_id))
 
-        if sets and not self.isMock:
-            self.loadSetsFromDB()
+        else:
+            self.sets = []
 
     @classmethod
     def fromPlateID(cls, plateid, **kwargs):
-
-        with session.begin(subtransactions=True):
-            plate = session.query(
-                plateDB.Plate).filter(plateDB.Plate.plate_id == plateid).one()
-
-        return cls(plate.pk, **kwargs)
+        return Plate(plateid, format='plate_id', **kwargs)
 
     @classmethod
-    def createMockPlate(cls, pk=None, location_id=None,
-                        ra=None, dec=None, verbose=False):
+    def fromSets(cls, sets, silent=False, **kwargs):
 
-        mockPlate = cls(None, mock=True, coords=(ra, dec))
+        newPlate = plateDB.Plate.__new__(cls)
+        newPlate.__init__(None, mock=True, **kwargs)
+        newPlate.sets = sets
+
+        if not silent:
+            log.debug('created mock plate from sets pk={0}'.format(
+                ', '.join(map(str, sets))))
+
+        return newPlate
+
+    @classmethod
+    def createMockPlate(cls, ra=None, dec=None, silent=False, **kwargs):
+
+        if ra is None or dec is None:
+            raise TotoroError('ra and dec must be specified')
+
+        mockPlate = plateDB.Plate.__new__(cls)
+        mockPlate.__init__(None, mock=True, ra=ra, dec=dec, **kwargs)
 
         mockPlate.isMock = True
-        mockPlate.pk = pk
-        mockPlate.location_id = location_id
 
-        if verbose:
+        if not silent:
             log.debug(
-                'Created mock plate with ra={0:.3f} and dec={0:.3f}'.format(
+                'created mock plate with ra={0:.3f} and dec={0:.3f}'.format(
                     mockPlate.coords[0], mockPlate.coords[1]))
 
         return mockPlate
@@ -181,110 +195,95 @@ class Plate(BaseDBClass):
         if not self.isMaNGA:
             raise TotoroError('this is not a MaNGA plate!')
 
+        nMaNGAExposures = len(self.getMangadbExposures())
+        nScienceExposures = len(self.getScienceExposures())
+        if nMaNGAExposures != nScienceExposures:
+            warnings.warn('{0} plateDB.Exposures found for plate_id={1} '
+                          'but only {2} mangaDB.Exposures'.format(
+                              nScienceExposures, self.plate_id,
+                              nMaNGAExposures), NoMangaExposure)
+
     @property
     def isMaNGA(self):
 
-        with session.begin(subtransactions=True):
-            surveyCount = session.query(plateDB.Survey).join(
-                plateDB.PlateToSurvey).join(plateDB.Plate).filter(
-                    plateDB.Plate.pk == self.pk,
-                    plateDB.Survey.label == 'MaNGA').count()
-
-        if surveyCount == 1:
-            return True
+        for survey in self.surveys:
+            if survey.label == 'MaNGA':
+                return True
 
         return False
 
-    def getCoords(self):
+    def updateSets(self):
+        result = updateSets(self)
+        if result:
+            self.update()
 
-        with session.begin(subtransactions=True):
-            try:
-                platePointing = session.query(plateDB.Pointing).join(
-                    plateDB.PlatePointing).filter(
-                        plateDB.PlatePointing.plate_pk == self.pk).one()
-            except:
-                raise sqlalchemy.orm.exc.NoResultFound(
-                    'No pointing for plate with pk={0}'.format(self.pk))
+    def rearrangeSets(self, startDate=None, **kwargs):
+        result = setArrangement.rearrangeSets(
+            self, startDate=startDate, **kwargs)
+        if result is True:
+            self.update()
 
-            centerRA = platePointing.center_ra
-            centerDec = platePointing.center_dec
+    @property
+    def ra(self):
+        return self.getCoordinates()[0]
 
-            return (float(centerRA), float(centerDec))
+    @property
+    def dec(self):
+        return self.getCoordinates()[1]
 
-    def loadPluggingsFromDB(self):
+    @property
+    def coords(self):
+        """Alias for getCoordinates(). Provides backwards compatibility."""
+        return self.getCoordinates()
 
-        self.pluggings = []
+    def getCoordinates(self):
 
-        with session.begin(subtransactions=True):
-            pluggings = session.query(plateDB.Plugging).filter(
-                plateDB.Plugging.plate_pk == self.pk)
+        if 'ra' in self.kwargs and 'dec' in self.kwargs:
+            if (self.kwargs['ra'] is not None and
+                    self.kwargs['dec'] is not None):
+                return np.array(
+                    [self.kwargs['ra'], self.kwargs['ra']], np.float)
+        else:
 
-        for plugging in pluggings:
-            self.pluggings.append(Plugging(plugging.pk, autocomplete=True,
-                                           format='pk', sets=False))
+            if len(self.plate_pointings) > 1:
+                warnings.warn('multiple plate pointings for plate_id={0:d}. '
+                              'Using the first one.'.format(self.plate_id),
+                              MultiplePlatePointings)
 
-    def loadSetsFromDB(self):
-
-        from .set import Set
-
-        self.sets = []
-
-        if self._rearrangeExposures:
-            status = rearrangeExposures(self, force=True)
-
-            if status is False:
-                raise TotoroError('failed while reorganising exposures.')
-
-        with session.begin(subtransactions=True):
-            sets = session.query(mangaDB.Set).join(mangaDB.Exposure).join(
-                plateDB.Exposure).join(plateDB.Observation).join(
-                    plateDB.PlatePointing).join(plateDB.Plate).filter(
-                        plateDB.Plate.pk == self.pk).all()
-
-        for set in sets:
-            self.sets.append(Set(set.pk, autocomplete=True,
-                                 format='pk', exposures=True))
+            return np.array(
+                [self.plate_pointings[0].pointing.center_ra,
+                 self.plate_pointings[0].pointing.center_dec], np.float)
 
     @property
     def isComplete(self):
         if self._complete is not None:
             return self._complete
         else:
-            return self.getPlateCompletion()[0]
-
-    @isComplete.setter
-    def isComplete(self, value):
-        self._complete = value
+            return isPlateComplete(self)
 
     def copy(self):
         return deepcopy(self)
 
     def getPlateCompletion(self, includeIncompleteSets=False):
 
-        totalSN = self.getCumulatedSN2(includeIncomplete=includeIncompleteSets)
+        totalSN = self.getCumulatedSN2(
+            includeIncomplete=includeIncompleteSets)
 
-        for plugging in self.pluggings:
-            pluggingStatus = plugging.getPluggingStatus()
-            if pluggingStatus in ['Overriden Good']:
-                return (True, totalSN)
-            elif pluggingStatus in ['Incomplete', 'Overriden Incomplete']:
-                return (False, totalSN)
+        completionRates = totalSN.copy()
+        completionRates[0:2] /= config['SN2thresholds']['plateBlue']
+        completionRates[2:] /= config['SN2thresholds']['plateRed']
 
-        if np.all(totalSN[0:2] >= config['SN2thresholds']['plateBlue']) and \
-                np.all(totalSN[2:] >= config['SN2thresholds']['plateRed']):
-            return (True, totalSN)
-
-        return (False, totalSN)
+        return np.min(completionRates)
 
     def getCumulatedSN2(self, includeIncomplete=False):
 
-        validStatuses = ['Good', 'Excellent', 'Bad']
+        validStatuses = ['Good', 'Excellent']
         if includeIncomplete:
             validStatuses.append('Incomplete')
 
         validSets = []
         for set in self.sets:
-            if set.getQuality() in validStatuses:
+            if set.getQuality()[0] in validStatuses:
                 validSets.append(set)
 
         if len(validSets) == 0:
@@ -292,18 +291,49 @@ class Plate(BaseDBClass):
         else:
             return np.sum([set.getSN2Array() for set in validSets], axis=0)
 
-    def getCartridgeNumber(self):
+    def getActiveCartNumber(self):
 
-        with session.begin(subtransactions=True):
-            cart = session.query(plateDB.Cartridge).join(
-                plateDB.Plugging).join(plateDB.ActivePlugging).join(
+        for plugging in self.pluggings:
+            if len(plugging.activePlugging) > 0:
+                return int(plugging.cartridge.number)
+
+        raise PlateNotPlugged(
+            'plate_id={0} is not currently plugged'.format(self.plate_id))
+
+    def getMangadbExposures(self):
+        """Returns a list of mangaDB.Exposure objects with all the exposures
+        for this plate."""
+
+        with session.begin():
+            mangaExposures = session.query(totoroDB.mangaDB.Exposure).join(
+                plateDB.Exposure,
+                plateDB.Observation,
+                plateDB.Plugging,
                 plateDB.Plate).filter(
-                plateDB.Plate.pk == self.pk)
+                    plateDB.Plate.pk == self.pk).all()
 
-        try:
-            return cart.one().number
-        except:
-            return 0
+        return mangaExposures
+
+    def getScienceExposures(self):
+        """Returns a list of all plateDB.Exposure science exposures for
+        the plate."""
+
+        scienceExps = []
+
+        for plugging in self.pluggings:
+            scienceExps += plugging.scienceExposures()
+
+        return scienceExps
+
+    def getTotoroExposures(self):
+        """Returns a list of Totoro dbclasses.Exposure instances for this
+        Plate insance."""
+
+        totoroExposures = []
+        for set in self.sets:
+            totoroExposures += set.totoroExposures
+
+        return totoroExposures
 
     def getValidSets(self, includeIncomplete=False):
 
@@ -317,13 +347,25 @@ class Plate(BaseDBClass):
 
         return validSets
 
+    def update(self, **kwargs):
+        """Reloads the plate."""
+
+        kwargs.update(self.kwargs)
+
+        newSelf = Plate(self.pk, format='pk', **kwargs)
+        self = newSelf
+
+        log.debug('plate with plate_id={0} has been reloaded'.format(
+                  self.plate_id))
+
     def getValidExposures(self):
         """Returns all valid exposures, even if they belong to an incomplete
         or bad set."""
 
         validExposures = []
+
         for set in self.sets:
-            for exp in set.exposures:
+            for exp in set.totoroExposures:
                 if exp.valid is True:
                     validExposures.append(exp)
 
@@ -343,8 +385,8 @@ class Plate(BaseDBClass):
 
         lst0, lst1 = self.getLSTRange()
 
-        ut0 = self.site.localTime(lst0, utc=True, returntype='datetime')
-        ut1 = self.site.localTime(lst1, utc=True, returntype='datetime')
+        ut0 = site.localTime(lst0, utc=True, returntype='datetime')
+        ut1 = site.localTime(lst1, utc=True, returntype='datetime')
 
         if format == 'str':
             return ('{0:%H:%M}'.format(ut0), '{0:%H:%M}'.format(ut1))
@@ -364,8 +406,8 @@ class Plate(BaseDBClass):
 
         return True if secIntersectionLength >= minLength else False
 
-    def addMockExposure(self, startTime=None, set=None,
-                        expTime=None, **kwargs):
+    def addMockExposure(self, startTime=None, set=None, expTime=None,
+                        **kwargs):
         """Creates a mock expusure in the indicated set. If set=None,
         a new set will be created."""
 
@@ -387,7 +429,7 @@ class Plate(BaseDBClass):
         """Returns incomplete sets that are valid for an exposure starting at
         JD=startTime."""
 
-        LST0 = self.site.localSiderialTime(startTime)
+        LST0 = site.localSiderialTime(startTime)
         LST1 = (LST0 + expTime / 60.) % 24.
 
         incompleteSets = [set for set in self.sets if not set.complete]
@@ -411,7 +453,7 @@ class Plate(BaseDBClass):
 
         exposures = []
         for set in self.sets:
-            for exp in set.exposures:
+            for exp in set.totoroExposures:
                 if exp.valid:
                     exposures.append(exp)
 
@@ -421,18 +463,15 @@ class Plate(BaseDBClass):
         return exposures[order[-1]]
 
     def getPriority(self):
-
-        with session.begin(subtransactions=True):
-            platePointing = session.query(plateDB.PlatePointing).join(
-                plateDB.Plate).filter(plateDB.Plate.pk == self.pk).one()
-
-        return platePointing.priority
+        return self.plate_pointings[0].priority
 
     @property
     def isPlugged(self):
+        try:
+            self.getActiveCartNumber()
+            return True
+        except:
+            return False
 
-        for plugging in self.pluggings:
-            if plugging.isActive:
-                return True
-
-        return False
+    def getAPOComplete(self):
+        return getAPOComplete(self)

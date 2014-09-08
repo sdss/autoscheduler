@@ -18,28 +18,16 @@ import numpy as np
 from .. import config
 from astropysics import obstools
 from .. import log
+from ..exceptions import TotoroError, TotoroUserWarning
+import warnings
+from sdss.manga import mlhalimit as mlhalimitHours
+from collections import OrderedDict
 
 
 def mlhalimit(dec):
-    """Returns HA limits.
+    """Returns HA limits in degrees."""
 
-    Calculates the maximum HAs acceptable for a list of declinations.
-    Uses the polinomial fit by David Law and a omega limit of 0.5.
-
-    """
-
-    funcFit = np.array([1.59349, 0.109658, -0.00607871,
-                        0.000185393, -2.54646e-06, 1.16686e-08])[::-1]
-
-    dec = np.atleast_1d(dec)
-    halimit = np.abs(np.polyval(funcFit, dec))
-
-    halimit[np.where((dec < -10) | (dec > 80))] = 0.0
-
-    if len(halimit) == 1:
-        return halimit[0] * 15
-    else:
-        return halimit * 15
+    return mlhalimitHours(dec) * 15.
 
 
 def computeAirmass(dec, ha, lat=config['observatory']['latitude'],
@@ -70,43 +58,69 @@ def computeAirmass(dec, ha, lat=config['observatory']['latitude'],
         return airmass
 
 
-def isPlateComplete(inp, format='plate_id'):
+def isPlateComplete(plate, format='plate_id', **kwargs):
     """Returns if a plate is complete using the MaNGA logic."""
 
     from ..dbclasses import Plate
 
-    format = format.lower()
+    if not isinstance(plate, Plate):
+        if format.lower() not in ['pk', 'plate_id']:
+            raise TotoroError('format must be plate_id or pk.')
+        plate = Plate(plate, format=format.lower(), **kwargs)
 
-    if format in ['plate_pk', 'pk']:
-        plate = Plate(inp, format='pk', rearrageExposures=True)
-    elif format in ['plate_id', 'id']:
-        plate = Plate.fromPlateID(inp, rearrageExposures=True)
+    if plate.getPlateCompletion(includeIncompleteSets=False) > 1.:
+        plateComplete = True
+    else:
+        plateComplete = False
 
-    return plate.isComplete
+    plugStatus = np.array(
+        [plugging.status.label for plugging in plate.pluggings])
+    if 'Good' in plugStatus or 'Overriden Good' in plugStatus:
+        plugComplete = True
+    elif 'Overriden Incomplete' in plugStatus:
+        plugComplete = False
+    else:
+        plugComplete = None
+
+    if plugComplete is not None:
+        if plugComplete is not plateComplete:
+            warnings.warn('plugging status is {0} but calculated '
+                          'status is {1}.'.format(
+                              'complete' if plugComplete else 'incomplete',
+                              'complete' if plateComplete else 'incomplete'),
+                          TotoroUserWarning)
+            return plugComplete
+    else:
+        return plateComplete
 
 
-def getAPOcomplete(inp, format='plate_id'):
+def getAPOcomplete(plates, format='plate_id', **kwargs):
     """Returns a dictionary with the APOcomplete output."""
 
     from ..dbclasses import Plate
-    from collections import OrderedDict
 
     format = format.lower()
-    inp = np.atleast_1d(inp)
+    if format.lower() not in ['pk', 'plate_id']:
+        raise TotoroError('format must be plate_id or pk.')
+
+    plates = np.atleast_1d(plates)
 
     APOcomplete = OrderedDict()
 
-    for ii in inp:
+    for plate in plates:
 
-        if format in ['plate_pk', 'pk']:
-            plate = Plate(ii, format='pk', rearrangeExposures=False)
-        elif format in ['plate_id', 'id']:
-            plate = Plate.fromPlateID(ii, rearrangeExposures=False)
+        if not isinstance(plate, Plate):
+            plate = Plate(plate, format=format.lower(), **kwargs)
+
+        if isPlateComplete(plate) is False:
+            warnings.warn('plate_id={0} is not complete. APOcomplete output '
+                          'must not be used.'.format(plate.plate_id),
+                          TotoroUserWarning)
 
         APOcomplete[plate.plate_id] = []
 
         for set in plate.sets:
-            for exp in set.exposures:
+            for exp in set.totoroExposures:
 
                 mjd = exp.getMJD()
                 ss = set.pk

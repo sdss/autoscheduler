@@ -29,7 +29,6 @@ python/autoscheduler/eboss/get_eboss_plates.py -text
 python/autoscheduler/eboss/observability.py -text
 python/autoscheduler/eboss/pick_eboss_plates.py -text
 python/autoscheduler/eboss/schedule_eboss.py -text
-python/autoscheduler/manga/Totoro/APOplateDB.py -text
 python/autoscheduler/manga/Totoro/__init__.py -text
 python/autoscheduler/manga/Totoro/apoDB.py -text
 python/autoscheduler/manga/Totoro/backup/conversion.py.bak -text
@@ -53,11 +52,9 @@ python/autoscheduler/manga/Totoro/data/finalTilingCatalogue_v0.5.fits -text svne
 python/autoscheduler/manga/Totoro/data/nightly.D.txt -text
 python/autoscheduler/manga/Totoro/data/nightly.D_UTC.txt -text
 python/autoscheduler/manga/Totoro/dbclasses/__init__.py -text
-python/autoscheduler/manga/Totoro/dbclasses/baseDBClass.py -text
 python/autoscheduler/manga/Totoro/dbclasses/exposure.py -text
 python/autoscheduler/manga/Totoro/dbclasses/field.py -text
 python/autoscheduler/manga/Totoro/dbclasses/plate.py -text
-python/autoscheduler/manga/Totoro/dbclasses/plugging.py -text
 python/autoscheduler/manga/Totoro/dbclasses/set.py -text
 python/autoscheduler/manga/Totoro/defaults.yaml -text
 python/autoscheduler/manga/Totoro/exceptions.py -text
@@ -70,6 +67,7 @@ python/autoscheduler/manga/Totoro/helpers/tilecenters_180_SGC.fits -text
 python/autoscheduler/manga/Totoro/logic/__init__.py -text
 python/autoscheduler/manga/Totoro/logic/mangaLogic.py -text
 python/autoscheduler/manga/Totoro/logic/mangaLogicTimeline.py -text
+python/autoscheduler/manga/Totoro/logic/setArrangement.py -text
 python/autoscheduler/manga/Totoro/output/__init__.py -text
 python/autoscheduler/manga/Totoro/output/output.py -text
 python/autoscheduler/manga/Totoro/output/tabularOutput.py -text
@@ -87,10 +85,11 @@ python/autoscheduler/manga/Totoro/tests/testOutput.pckl -text
 python/autoscheduler/manga/Totoro/tests/testOutput.py -text
 python/autoscheduler/manga/Totoro/tests/testPlanner.py -text
 python/autoscheduler/manga/Totoro/tests/testPlugger.py -text
+python/autoscheduler/manga/Totoro/tests/unitTestPlates.py -text
+python/autoscheduler/manga/Totoro/tests/unitTestSets.py -text
 python/autoscheduler/manga/Totoro/utils/__init__.py -text
 python/autoscheduler/manga/Totoro/utils/intervals.py -text
 python/autoscheduler/manga/Totoro/utils/utils.py -text
-python/autoscheduler/manga/Totoro/version.py -text
 python/autoscheduler/manga/__init__.py -text
 python/autoscheduler/manga/schedule_manga.py -text
 python/autoscheduler/night_schedule.py -text

@@ -42,8 +42,10 @@ def getNightlyOutput(input=None, format='dict', **kwargs):
 
     output = OrderedDict()
 
-    output['mangaStart'] = float(nightly.startDate)
-    output['mangaEnd'] = float(nightly.endDate)
+    output['mangaStart'] = float(nightly.startDate) \
+        if nightly.startDate is not None else None
+    output['mangaEnd'] = float(nightly.endDate) \
+        if nightly.endDate is not None else None
     output['currentTime'] = float(nightly.currentDate)
 
     # For future implementation
@@ -56,8 +58,9 @@ def getNightlyOutput(input=None, format='dict', **kwargs):
         output['plates'][plate.plate_id] = OrderedDict()
         thisPlate = output['plates'][plate.plate_id]
 
-        thisPlate['cartridge'] = plate.getCartridgeNumber()
+        thisPlate['cartridge'] = plate.getActiveCartNumber()
         thisPlate['complete'] = plate.isComplete
+        thisPlate['completionPercentage'] = plate.getPlateCompletion() * 100.
         thisPlate['HARange'] = formatValue(
             np.array([-1., 1.]) * plate.mlhalimit)
         thisPlate['UTVisibilityWindow'] = formatValue(
@@ -79,22 +82,21 @@ def getNightlyOutput(input=None, format='dict', **kwargs):
             thisSet['SN2Range'] = formatValue(set.getSN2Range())
             thisSet['seeingRange'] = formatValue(set.getSeeingRange())
             thisSet['UTRange'] = set.getUTVisibilityWindow(format='datetime')
-            thisSet['HARange'] = formatValue(set.getHALimits())
+            thisSet['HARange'] = formatValue(set.getHARange())
             thisSet['missingDithers'] = formatValue(
                 set.getMissingDitherPositions())
 
             thisSet['exposures'] = OrderedDict()
 
-            for exposure in set.exposures:
+            for exposure in set.totoroExposures:
 
                 thisSet['exposures'][exposure.pk] = OrderedDict()
                 thisExposure = thisSet['exposures'][exposure.pk]
 
                 thisExposure['valid'] = exposure.valid
                 thisExposure['ditherPosition'] = exposure.ditherPosition
-                thisExposure['obsHARange'] = formatValue(exposure.getHARange())
-                thisExposure['obsJDRange'] = formatValue(
-                    exposure.getJDObserved())
+                thisExposure['obsHARange'] = formatValue(exposure.getHA())
+                thisExposure['obsJDRange'] = formatValue(exposure.getJD())
 
                 thisExposure['seeing'] = exposure.seeing
                 thisExposure['SN2'] = formatValue(exposure.getSN2Array())

@@ -4,15 +4,31 @@ logging:
     logFileLevel: DEBUG
     logFilePath: '~/.totoro/totoro.log'
 
-dbConnection:
+dbConnectionProduction: &dbConnectionProduction
     user: sdssdb_admin
     password: 4-photometry
     host: localhost
     port: 5432
     database: apodb
 
+dbConnectionDev: &dbConnectionDev
+    user: sdssdb_admin
+    password: 4-photometry
+    host: localhost
+    port: 5440
+    database: apo_platedb
+
+dbConnectionTunnel: &dbConnectionTunnel
+    user: sdssdb_admin
+    password: 4-photometry
+    host: localhost
+    port: 6432
+    database: apodb
+
+dbConnection: *dbConnectionProduction
+
 observingPlan:
-    schedule: +data/Sch_base.6yrs.txt.frm.dat
+    schedule: +../../../../schedules/Sch_base.6yrs.txt.frm.dat
 
 tilingCatalogue: +data/finalTilingCatalogue_v0.5.fits
 
@@ -47,14 +63,15 @@ simulation:
 
 SN2thresholds:
     plateRed: 60
-    plateBlue: 27
-    exposureRed: 3.5
-    exposureBlue: 1.
+    plateBlue: 25
+    exposureRed: 3.0
+    exposureBlue: 0.8
 
 exposure:
     exposureTime: 900
     minExpTime: 899
     maxSeeing: 2.5
+    validDitherPositions: ['N', 'S', 'E']
 
 set:
     excellentSeeing: 1.5

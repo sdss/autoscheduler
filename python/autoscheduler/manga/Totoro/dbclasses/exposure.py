@@ -14,88 +14,97 @@ Revision history:
 
 from __future__ import division
 from __future__ import print_function
-from .baseDBClass import BaseDBClass
-from ..exceptions import TotoroError
-from .. import plateDB, mangaDB, Session
-from .. import logic
-from .. import log, config
+from ..exceptions import TotoroError, NoMangaExposure
+from .. import TotoroDBConnection
+from ..logic import mangaLogic
+from .. import log, config, site
 import numpy as np
 from .. import utils
 from astropy import time
 from .. import dustMap
+import warnings
 
 
-session = Session()
+totoroDB = TotoroDBConnection()
+plateDB = totoroDB.plateDB
+mangaDB = totoroDB.mangaDB
+session = totoroDB.Session()
 
 
-class Exposure(BaseDBClass):
+class Exposure(plateDB.Exposure):
 
-    def __init__(self, inp, format='pk', autocomplete=True,
-                 extendFromMaNGA=True, verbose=True, mock=False, **kwargs):
+    def __new__(cls, input, format='pk', parent='plateDB', *args, **kwargs):
+
+        if input is None:
+            return plateDB.Exposure.__new__(cls)
+
+        base = cls.__bases__[0]
+
+        if isinstance(input, base):
+            instance = input
+
+        elif isinstance(input, mangaDB.Exposure):
+            instance = input.platedbExposure
+
+        else:
+            if parent.lower() == 'platedb':
+                with session.begin():
+                    instance = session.query(base).filter(
+                        eval('{0}.{1} == {2}'.format(base.__name__,
+                                                     format, input))).one()
+
+            elif parent.lower() == 'mangadb':
+                with session.begin():
+                    instance = session.query(base).join(
+                        mangaDB.Exposure).filter(
+                            eval('mangaDB.Exposure.{0} == {1}'.format(
+                                format, input))).one()
+
+        instance.__class__ = cls
+
+        return instance
+
+    def __init__(self, input, format='pk', mock=False, silent=False,
+                 *args, **kwargs):
 
         self._valid = None
         self._ditherPosition = None
         self._sn2Array = None
 
         self.isMock = mock
+        self.kwargs = kwargs
 
-        if not self.isMock:
-            self.__DBClass__ = plateDB.Exposure
-            super(Exposure, self).__init__(inp=inp, format=format,
-                                           autocomplete=autocomplete)
-
-            if verbose:
-                log.debug('Loaded exposure with pk={0}'.format(self.pk))
-
-            if extendFromMaNGA:
-                self.loadFromMangaDB()
-
-            self.ra, self.dec = self.getCoordinates()
-
-        else:
-            self.ra, self.dec = kwargs['ra'], kwargs['dec']
+        if not silent:
+            log.debug('Loaded exposure plateDB.Exposure.pk={0}'
+                      .format(self.pk))
 
         self.mlhalimit = utils.mlhalimit(self.dec)
-        self.site = utils.createSite(verbose=False)
 
-    def loadFromMangaDB(self):
+        self._mangaExposure = (self.mangadbExposure[0]
+                               if len(self.mangadbExposure) > 0 else None)
+        if self._mangaExposure is None:
+            warnings.warn('plateDB.Exposure.pk={0} has no mangaDB.Exposure '
+                          'counterpart.', NoMangaExposure)
 
-        with session.begin(subtransactions=True):
+    def update(self, **kwargs):
+        """Reloads the exposure."""
 
-            try:
-                mangaExposure = session.query(mangaDB.Exposure).filter(
-                    mangaDB.Exposure.platedb_exposure_pk == self.pk).one()
-            except:
-                raise TotoroError(
-                    'exposure pk={0} has no mangaDB counterpart'.format(
-                        self.pk))
+        newSelf = Exposure(self.pk, fromat='pk', silent=True, mock=self.isMock,
+                           **self.kwargs)
+        self = newSelf
 
-            try:
-                mangaSN = session.query(mangaDB.SN2Values).filter(
-                    mangaDB.SN2Values.exposure_pk == mangaExposure.pk).one()
-            except:
-                raise TotoroError(
-                    'mangaDB.Exposure pk={0} '.format(mangaExposure.pk) +
-                    'has no mangaDB.SN2Values counterpart')
-
-        for column in mangaExposure.__table__.columns.keys():
-            setattr(self, 'manga_' + column, getattr(mangaExposure, column))
-
-        for column in mangaSN.__table__.columns.keys():
-            setattr(self, 'manga_' + column, getattr(mangaSN, column))
-
-        self.status = mangaExposure.status.label
-        self.expTime = mangaExposure.platedbExposure.exposure_time
+        log.debug('Exposure pk={0} has been reloaded'.format(
+                  self.pk))
 
     @classmethod
     def createMockExposure(cls, startTime=None, expTime=None,
                            ditherPosition='E', ra=None, dec=None,
-                           verbose=False, **kwargs):
+                           silent=True, **kwargs):
 
         if ra is None or dec is None:
             raise TotoroError('ra and dec must be specified')
 
-        newExposure = cls(None, mock=True, ra=ra, dec=dec)
+        newExposure = Exposure(None, mock=True, ra=ra, dec=dec, **kwargs)
         newExposure.pk = None if 'pk' not in kwargs else kwargs['pk']
 
         if startTime is None:
@@ -115,9 +124,9 @@ class Exposure(BaseDBClass):
 
         newExposure.simulateObservedParamters()
 
-        if verbose:
-            log.debug('Created mock exposure with pk={0}'.format(
-                newExposure.pk))
+        if not silent:
+            log.debug('Created mock exposure with ra={0:.3f} and dec={0:.3f}'
+                      .format(newExposure.ra, newExposure.dec))
 
         return newExposure
 
@@ -141,20 +150,27 @@ class Exposure(BaseDBClass):
         self._valid = True
         self.status = 'Good'
 
+    @property
+    def ra(self):
+        return self.getCoordinates()[0]
+
+    @property
+    def dec(self):
+        return self.getCoordinates()[1]
+
     def getCoordinates(self):
 
-        if hasattr(self, 'ra') and hasattr(self, 'dec'):
-            return np.array([self.ra, self.dec])
+        if 'ra' in self.kwargs and 'dec' in self.kwargs:
+            if (self.kwargs['ra'] is not None and
+                    self.kwargs['dec'] is not None):
+                return np.array(
+                    [self.kwargs['ra'], self.kwargs['ra']], np.float)
+        else:
+            pointing = (self.observation.plate_pointing.pointing)
+            return np.array(
+                [pointing.center_ra, pointing.center_dec], np.float)
 
-        with session.begin(subtransactions=True):
-            pointing = session.query(plateDB.Pointing).join(
-                plateDB.PlatePointing).join(plateDB.Observation).join(
-                    plateDB.Exposure).join(mangaDB.Exposure).filter(
-                        mangaDB.Exposure.pk == self.manga_pk).one()
-
-        return np.array([pointing.center_ra, pointing.center_dec], np.float)
-
-    def getHARange(self):
+    def getHA(self):
         """Returns the HA range in which the exposure was taken."""
 
         startTime = float(self.start_time)
@@ -163,7 +179,7 @@ class Exposure(BaseDBClass):
         t0 = time.Time(0, format='mjd', scale='tai')
         tStart = t0 + time.TimeDelta(startTime, format='sec', scale='tai')
 
-        lst = self.site.localSiderialTime(tStart.jd)
+        lst = site.localSiderialTime(tStart.jd)
         ha = (lst * 15. - self.ra) % 360.
 
         return np.array([ha, ha + expTime / 3600. * 15]) % 360.
@@ -175,10 +191,7 @@ class Exposure(BaseDBClass):
         if self._sn2Array is not None:
             return self._sn2Array
 
-        with session.begin(subtransactions=True):
-            SN2Values = session.query(mangaDB.SN2Values).join(
-                mangaDB.Exposure).filter(
-                    mangaDB.Exposure.pk == self.manga_pk).one()
+        SN2Values = self._mangaExposure.sn2values[0]
 
         return np.array([SN2Values.b1_sn2, SN2Values.b2_sn2,
                          SN2Values.r1_sn2, SN2Values.r2_sn2])
@@ -188,16 +201,21 @@ class Exposure(BaseDBClass):
         if self._valid is not None:
             return self._valid
         else:
-            return logic.checkExposure(self)
+            return self.isValid()
 
     @valid.setter
     def valid(self, value):
         self._valid = value
 
+    def isValid(self, flag=True):
+        """Checks if an exposure is valid."""
+
+        return mangaLogic.checkExposure(self, flag=flag)
+
     @property
     def ditherPosition(self):
         if self._ditherPosition is None:
-            return self.manga_dither_position[0].upper()
+            return self._mangaExposure.dither_position[0].upper()
         else:
             return self._ditherPosition
 
@@ -207,9 +225,9 @@ class Exposure(BaseDBClass):
 
     @property
     def seeing(self):
-        return self.manga_seeing
+        return self._mangaExposure.seeing
 
-    def getLSTRange(self):
+    def getLST(self):
 
         ha0, ha1 = self.getHARange()
 
@@ -218,7 +236,7 @@ class Exposure(BaseDBClass):
 
         return np.array([lst0, lst1])
 
-    def getUTObserved(self, format=None):
+    def getUT(self, format=None):
 
         startTime = float(self.start_time)
         t0 = time.Time(0, format='mjd', scale='tai')
@@ -226,10 +244,10 @@ class Exposure(BaseDBClass):
 
         lst0, lst1 = self.getLSTRange()
 
-        ut0 = self.site.localTime(lst0, date=tStart.datetime,
-                                  utc=True, returntype='datetime')
-        ut1 = self.site.localTime(lst1, date=tStart.datetime,
-                                  utc=True, returntype='datetime')
+        ut0 = site.localTime(lst0, date=tStart.datetime,
+                             utc=True, returntype='datetime')
+        ut1 = site.localTime(lst1, date=tStart.datetime,
+                             utc=True, returntype='datetime')
 
         if format == 'str':
             return ('{0:%H:%M}'.format(ut0), '{0:%H:%M}'.format(ut1))
@@ -238,7 +256,7 @@ class Exposure(BaseDBClass):
 
         return (ut0, ut1)
 
-    def getJDObserved(self):
+    def getJD(self):
 
         startTime = float(self.start_time)
         t0 = time.Time(0, format='mjd', scale='tai')
@@ -250,20 +268,7 @@ class Exposure(BaseDBClass):
         return (tStart.jd, tEnd.jd)
 
     def getPlatePK(self):
-
-        with session.begin(subtransactions=True):
-            platePK = session.query(plateDB.Plate.pk).join(
-                plateDB.PlatePointing, plateDB.Observation,
-                plateDB.Exposure).filter(
-                    plateDB.Exposure.pk == self.pk).scalar()
-
-        return int(platePK)
+        return int(self.observation.plate_pointing.plate.pk)
 
     def getMJD(self):
-
-        with session.begin(subtransactions=True):
-            mjd = session.query(plateDB.Observation.mjd).join(
-                plateDB.Exposure).filter(
-                    plateDB.Exposure.pk == self.pk).scalar()
-
-        return int(mjd)
+        return self.mjd()
