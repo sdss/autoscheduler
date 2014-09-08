@@ -31,6 +31,7 @@ python/autoscheduler/eboss/pick_eboss_plates.py -text
 python/autoscheduler/eboss/schedule_eboss.py -text
 python/autoscheduler/manga/Totoro/APOplateDB.py -text
 python/autoscheduler/manga/Totoro/__init__.py -text
+python/autoscheduler/manga/Totoro/apoDB.py -text
 python/autoscheduler/manga/Totoro/backup/conversion.py.bak -text
 python/autoscheduler/manga/Totoro/backup/defaults.py -text
 python/autoscheduler/manga/Totoro/backup/logger.py.bak -text
