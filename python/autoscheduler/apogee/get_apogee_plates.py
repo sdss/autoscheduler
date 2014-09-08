@@ -94,11 +94,11 @@ def get_plates(errors, plan=False, loud=True):
 	
 	# Save data to structure
 	missing = []
-	print(stage1)
 	for i in range(len(stage1)):
 		try:
 			# Check to see whether this is a MaNGA-led plate
-			if stage1[i][11] is not None: continue
+			if stage1[i][11] is not None: 
+				if stage1[i][11] == 2 or stage1[i][11] == 3: continue
 			apg.append(apgplate())
 			apg[-1].locationid = stage1[i][0]
 			apg[-1].ra = float(stage1[i][1])
