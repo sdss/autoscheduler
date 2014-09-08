@@ -27,7 +27,7 @@ import numpy as np
 from astropy.time import Time
 
 
-def updateSets(plate, format='plate_id', **kwargs):
+def updateSets(plate, **kwargs):
     """Finds missing exposures """
 
     log.debug('updating sets for plate_id={0}'.format(plate.plate_id))
@@ -42,14 +42,22 @@ def updateSets(plate, format='plate_id', **kwargs):
                      ', '.join([str(exp.mangadbExposure[0].pk)
                                 for exp in newExposures])))
 
-        results = []
-        for exp in newExposures:
-            results.append(addExposure(exp, plate))
-        if any(results):
-            removeOrphanSets()
-            return True
+        if len(newExposures) >= \
+                config['setArrangement']['forceRearrangementMinExposures']:
+            log.info('more than {0} new exposures found. Triggering a complete'
+                     ' set rearrangement.'
+                     .format(config['setArrangement']
+                             ['forceRearrangementMinExposures']))
+            return rearrangeSets(plate, **kwargs)
         else:
-            return False
+            results = []
+            for exp in newExposures:
+                results.append(addExposure(exp, plate))
+            if any(results):
+                removeOrphanSets()
+                return True
+            else:
+                return False
     else:
         log.debug('no new exposures found.')
         return False
@@ -231,8 +239,10 @@ def getNumberPermutations(ditherPositions):
             [factorial(ii) for ii in sorted(repDict.values())[1:]]))
 
 
-def getOptimalArrangement(plate, startDate=None, expLimit=15, forceLimit=False,
-                          **kwargs):
+def getOptimalArrangement(plate, startDate=None,
+                          expLimit=config['setArrangement']['exposureLimit'],
+                          forceLimit=False, **kwargs):
+
     from ..dbclasses import Exposure, Set, Plate
 
     exposures = [Exposure(exp.pk, parent='mangaDB', silent=True)

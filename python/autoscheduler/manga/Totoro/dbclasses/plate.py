@@ -23,7 +23,7 @@ from .. import log, config, dustMap, site
 from .set import getPlateSets, Set
 from ..logic import setArrangement, updateSets
 import numpy as np
-from ..utils import getIntervalIntersectionLength, getAPOComplete
+from ..utils import getIntervalIntersectionLength, getAPOcomplete
 from copy import deepcopy
 
 
@@ -473,5 +473,5 @@ class Plate(plateDB.Plate):
         except:
             return False
 
-    def getAPOComplete(self):
-        return getAPOComplete(self)
+    def getAPOcomplete(self):
+        return getAPOcomplete(self)
