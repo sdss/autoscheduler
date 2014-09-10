@@ -1,6 +1,5 @@
 # Licensed under a 3-clause BSD style license - see LICENSE.rst
 
-import os
 import warnings
 from .exceptions import DustMapWarning, TotoroError
 # warnings.filterwarnings('ignore', module='astropy.time.core')
