@@ -12,7 +12,7 @@ Licensed under a 3-clause BSD license.
 import os
 from ..core import ConfigObject
 from sqlalchemy import create_engine, MetaData
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy.orm import sessionmaker, scoped_session
 from sqlalchemy.ext.declarative import declarative_base
 
 # APO database configuration parameters
@@ -78,11 +78,13 @@ class DatabaseConnection(object):
                 '{0}:{1}@{2}:{3}/{4}'.format(
                     USER(), PASSWORD(), HOST(), PORT(), DB_NAME())
 
-        self.engine = create_engine(connectionString, echo=False)
+        self.connectionString = connectionString
+        self.engine = create_engine(self.connectionString, echo=False)
         self.metadata = MetaData()
-        Session = sessionmaker(bind=self.engine)
+        self.metadata.bind = self.engine
         self.Base = declarative_base(bind=self.engine)
-        self.session = Session()
+        self.Session = scoped_session(sessionmaker(bind=self.engine,
+                                                   autocommit=True))
 
     def close(self):
         self.session.close()
