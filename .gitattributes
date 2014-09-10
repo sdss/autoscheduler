@@ -31,17 +31,6 @@ python/autoscheduler/eboss/pick_eboss_plates.py -text
 python/autoscheduler/eboss/schedule_eboss.py -text
 python/autoscheduler/manga/Totoro/__init__.py -text
 python/autoscheduler/manga/Totoro/apoDB.py -text
-python/autoscheduler/manga/Totoro/backup/conversion.py.bak -text
-python/autoscheduler/manga/Totoro/backup/defaults.py -text
-python/autoscheduler/manga/Totoro/backup/logger.py.bak -text
-python/autoscheduler/manga/Totoro/backup/mangaDB.sql -text
-python/autoscheduler/manga/Totoro/backup/plateDB/PlateDB.py.bak -text
-python/autoscheduler/manga/Totoro/backup/plateDB/__init__.py -text
-python/autoscheduler/manga/Totoro/backup/plateDB/connection.py -text
-python/autoscheduler/manga/Totoro/backup/plateDB/dataModel.py -text
-python/autoscheduler/manga/Totoro/backup/plateDB/queries.py -text
-python/autoscheduler/manga/Totoro/backup/plateDB_Test.dump -text
-python/autoscheduler/manga/Totoro/backup/plateUtils.py -text
 python/autoscheduler/manga/Totoro/core/__init__.py -text
 python/autoscheduler/manga/Totoro/core/colourPrint.py -text
 python/autoscheduler/manga/Totoro/core/configuration.py -text
