@@ -21,10 +21,12 @@ from ..exceptions import NoMangaExposure
 import warnings
 from .. import log, config, dustMap, site
 from .set import getPlateSets, Set
-from ..logic import setArrangement, updateSets
+from .exposure import Exposure
+from ..logic import setArrangement, updateSets, getValidSet
 import numpy as np
 from ..utils import getIntervalIntersectionLength, getAPOcomplete
 from copy import deepcopy
+import os
 
 
 totoroDB = TotoroDBConnection()
@@ -109,7 +111,7 @@ class Plates(list):
 
 class Plate(plateDB.Plate):
 
-    def __new__(cls, input, format='pk', **kwargs):
+    def __new__(cls, input=None, format='pk', **kwargs):
 
         if input is None:
             return plateDB.Plate.__new__(cls)
@@ -125,7 +127,8 @@ class Plate(plateDB.Plate):
 
         return instance
 
-    def __init__(self, input, format='pk', mock=False, silent=False, **kwargs):
+    def __init__(self, input, format='pk', mock=False, silent=False,
+                 updateSets=True, **kwargs):
 
         self._complete = None
         self.isMock = mock
@@ -134,16 +137,16 @@ class Plate(plateDB.Plate):
         if 'dust' in kwargs:
             self.dust = kwargs['dust']
         else:
-            if dustMap is None:
-                self.dust = None if dustMap is None else dustMap(self.ra,
-                                                                 self.dec)
+            self.dust = None if dustMap is None else dustMap(self.ra, self.dec)
+
         self.mlhalimit = mlhalimit(self.dec)
 
         if not self.isMock:
             self.checkPlate()
             self.sets = getPlateSets(self.pk, format='pk', silent=silent,
                                      **kwargs)
-            self.updateSets()
+            if updateSets:
+                self.updateSets()
 
             if silent is False:
                 log.debug('loaded plate with pk={0}, plateid={1}'.format(
@@ -242,7 +245,7 @@ class Plate(plateDB.Plate):
             if (self.kwargs['ra'] is not None and
                     self.kwargs['dec'] is not None):
                 return np.array(
-                    [self.kwargs['ra'], self.kwargs['ra']], np.float)
+                    [self.kwargs['ra'], self.kwargs['dec']], np.float)
         else:
 
             if len(self.plate_pointings) > 1:
@@ -406,24 +409,32 @@ class Plate(plateDB.Plate):
 
         return True if secIntersectionLength >= minLength else False
 
-    def addMockExposure(self, startTime=None, set=None, expTime=None,
-                        **kwargs):
-        """Creates a mock expusure in the indicated set. If set=None,
-        a new set will be created."""
+    def addMockExposure(self, exposure=None, startTime=None, set=None,
+                        expTime=None, silent=False, **kwargs):
+        """Creates a mock expusure in the best possible way."""
 
         ra, dec = self.coords
 
-        if set is None:
-            set = self.getIncompleteSet(startTime, expTime)
+        if exposure is None:
+            exposure = Exposure.createMockExposure(
+                startTime=startTime, expTime=expTime, ra=ra, dec=dec,
+                silent=silent, **kwargs)
 
-        if set is None:
-            set = Set.createMockSet(ra=ra, dec=dec, **kwargs)
-            self.sets.append(set)
+        if exposure.isValid(silent=silent)[0] is False:
+            if not silent:
+                log.debug('mock exposure is invalid.')
+            return False
 
-        set.addMockExposure(startTime=startTime, expTime=expTime,
-                            ra=ra, dec=dec, **kwargs)
+        validSet = getValidSet(exposure, self)
+        added = False
+        for set in self.sets:
+            if set == validSet:
+                set.totoroExposures.append(exposure)
+                added = True
+        if not added:
+            self.sets.append(Set.fromExposures([exposure], sient=silent))
 
-        return None
+        return exposure
 
     def getIncompleteSet(self, startTime, expTime):
         """Returns incomplete sets that are valid for an exposure starting at
@@ -475,3 +486,15 @@ class Plate(plateDB.Plate):
 
     def getAPOcomplete(self):
         return getAPOcomplete(self)
+
+    def getMangaTileID(self):
+        if len(self.design.inputs) == 0:
+            return None
+        else:
+            for input in self.design.inputs:
+                basename = os.path.basename(input.filepath)
+                if 'mangaScience' not in basename:
+                    continue
+                noExt = os.path.splitext(basename)[0]
+                return int(noExt.split('_')[1])
+            return None

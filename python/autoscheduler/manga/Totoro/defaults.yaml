@@ -30,7 +30,8 @@ dbConnection: *dbConnectionProduction
 observingPlan:
     schedule: +../../../../schedules/Sch_base.6yrs.txt.frm.dat
 
-tilingCatalogue: +data/finalTilingCatalogue_v0.5.fits
+fields:
+    tilingCatalogue: $MANGA_TILING_CATALOGUE
 
 observatory:
     longitude: 254.179722   # In East degrees
@@ -45,8 +46,9 @@ dustMap:
     grid: +data/IGincrease.fits
 
 planner:
+    nCarts: 4
     efficiency: 0.85
-    maxLeftoverTime: 300.
+    maxLeftoverTime: 900.
 
 plugger:
     nCarts: 2

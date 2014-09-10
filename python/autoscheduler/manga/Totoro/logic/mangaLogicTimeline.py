@@ -15,13 +15,10 @@ Revision history:
 from __future__ import division
 from __future__ import print_function
 import numpy as np
-from ..utils import createSite, JDdiff
+from ..utils import JDdiff
 from ..utils import getIntervalIntersection, isPointInInterval
-from .. import config
+from .. import config, site
 from astropy import table
-
-
-site = createSite()
 
 
 def getOptimalPlate(plates, JD0, JD1, mode='planner', **kwargs):
@@ -38,7 +35,8 @@ def getOptimalPlate(plates, JD0, JD1, mode='planner', **kwargs):
         for plate in plates
     ]
 
-    completionTable = table.Table(rows=plateCompletion,
+    plateNewExposures = np.array(zip(*plateCompletion)[1])
+    completionTable = table.Table(rows=zip(*plateCompletion)[0],
                                   names=['plate', 'completion', 'nSets',
                                          'blueSN2', 'redSN2', 'nNewExp'])
 
@@ -57,7 +55,7 @@ def getOptimalPlate(plates, JD0, JD1, mode='planner', **kwargs):
         table.Column(priorities, 'priority'))
 
     if len(completionTable) == 0:
-        return None
+        return (None, [])
 
     completionTable = completionTable[completionTable['priority'] > 1]
 
@@ -81,16 +79,26 @@ def getOptimalPlate(plates, JD0, JD1, mode='planner', **kwargs):
             selectedStatus.sort('completion')
             selectedStatus.reverse()
 
-            return selectedStatus['plate'][0]
+            plate = selectedStatus['plate'][0]
+            newExposures = plateNewExposures[
+                plateNewExposures[:, 0] == plate][0][1]
+            return (plate, newExposures)
 
         else:
 
-            return selectedStatus['plate'][0]
+            plate = selectedStatus['plate'][0]
+            newExposures = plateNewExposures[
+                plateNewExposures[:, 0] == plate][0][1]
+            return (plate, newExposures)
 
     else:
 
         completionTable.sort('completion')
-        return completionTable['plate'][-1]
+
+        plate = completionTable['plate'][-1]
+        newExposures = plateNewExposures[
+            plateNewExposures[:, 0] == plate][0][1]
+        return (plate, newExposures)
 
 
 def getVisiblePlates(plates, LST0, LST1, **kwargs):
@@ -143,19 +151,30 @@ def getPlatesWithEnoughTime(plates, JD0, JD1):
 
 def simulateCompletionStatus(plate, JD0, JD1, **kwargs):
 
-    simulatedPlate, nNewExp = simulateExposures(plate, JD0, JD1, **kwargs)
+    simulatedPlate, newExposures = simulateExposures(plate, JD0, JD1, **kwargs)
 
     sn2Array = simulatedPlate.getCumulatedSN2(includeIncomplete=True)
+
     blueSN2 = np.mean(sn2Array[0:])
     redSN2 = np.mean(sn2Array[2:])
 
     nSets = len(simulatedPlate.sets)
 
-    completion = np.array([blueSN2 / config['SN2thresholds']['plateBlue'],
-                           redSN2 / config['SN2thresholds']['plateRed']])
+    completion = simulatedPlate.getPlateCompletion(includeIncompleteSets=True)
 
-    return (simulatedPlate, np.min(completion),
-            nSets, blueSN2, redSN2, nNewExp)
+    for exp in newExposures:
+        for set in plate.sets:
+            if exp in set.totoroExposures:
+                set.totoroExposures.remove(exp)
+
+    for set in plate.sets:
+        if len(set.totoroExposures) == 0:
+            plate.sets.remove(set)
+
+    nNewExp = len(newExposures)
+
+    return ((plate, completion, nSets, blueSN2, redSN2,
+             nNewExp), (plate, newExposures))
 
 
 def simulateExposures(plate, JD0, JD1, LST0=None, LST1=None, expTime=None,
@@ -165,8 +184,9 @@ def simulateExposures(plate, JD0, JD1, LST0=None, LST1=None, expTime=None,
     LST1 = site.localSiderialTime(JD1) if LST1 is None else LST1
 
     plateLSTRange = plate.getLSTRange()
+
     if not isPointInInterval(LST0, plateLSTRange):
-        return (plate, 0)
+        return plate, []
 
     plateLST0, plateLST1 = getIntervalIntersection((LST0, LST1),
                                                    plate.getLSTRange(),
@@ -174,8 +194,6 @@ def simulateExposures(plate, JD0, JD1, LST0=None, LST1=None, expTime=None,
 
     plateJD0 = JD0
     plateJD1 = JD0 + (plateLST1 - LST0) % 24 / 24.
-
-    cPlate = plate.copy()
 
     currentJD = plateJD0
     remainingTime = JDdiff(currentJD, plateJD1)
@@ -186,16 +204,21 @@ def simulateExposures(plate, JD0, JD1, LST0=None, LST1=None, expTime=None,
     if maxLeftoverTime is None:
         maxLeftoverTime = expTime
 
-    nNewExposures = 0
+    newExposures = []
 
     while remainingTime >= maxLeftoverTime:
 
-        if cPlate.getPlateCompletion(includeIncompleteSets=True)[0]:
+        if plate.getPlateCompletion() > 1:
             break
 
-        cPlate.addMockExposure(set=None, startTime=currentJD, expTime=expTime)
-        nNewExposures += 1
+        newExposure = plate.addMockExposure(set=None, startTime=currentJD,
+                                            expTime=expTime)
+        if newExposure is False:
+            break
+
+        newExposures.append(newExposure)
+
         currentJD += expTime / 86400.
         remainingTime = JDdiff(currentJD, plateJD1)
 
-    return (cPlate, nNewExposures)
+    return plate, newExposures

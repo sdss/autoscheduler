@@ -52,8 +52,13 @@ class ObservingPlan(object):
             schedule = os.path.join(os.path.dirname(__file__),
                                     '../' + schedule[1:])
 
+        schedule = os.path.realpath(schedule)
+        scheduleToPrint = schedule[:15] + '...' + schedule[-45:] \
+            if len(schedule) > 70 else schedule
+
         if not os.path.exists(schedule):
-            raise TotoroError('schedule {0} not found'.format(schedule))
+            raise TotoroError('schedule {0} not found'.format(
+                              scheduleToPrint))
 
         self.plan = table.Table.read(schedule, format='ascii.no_header')
         self.plan.keep_columns(['col1', 'col11', 'col12'])
@@ -61,8 +66,7 @@ class ObservingPlan(object):
         self.plan.rename_column('col11', 'JD0')
         self.plan.rename_column('col12', 'JD1')
 
-        log.info('Observing plan {0} loaded.'.format(
-            os.path.realpath(schedule)))
+        log.info('observing plan {0} loaded.'.format(scheduleToPrint))
 
         self.addRunDayCol()
         self.plan = self.plan[(self.plan['JD0'] > 0) & (self.plan['JD1'] > 0)]
@@ -85,6 +89,10 @@ class ObservingPlan(object):
                 run.append(-1)
                 nDay = 1
                 nRun += 1
+
+        run = np.array(run)
+        for nn, value in enumerate(np.unique(run[run > 0])):
+            run[run == value] = nn + 1
 
         self.plan.add_column(table.Column(data=run, name='RUN', dtype=int))
         self.plan.add_column(table.Column(data=ll, name='RUN_DAY', dtype=int))
@@ -157,6 +165,19 @@ class ObservingPlan(object):
                                                             totalTime))
 
         return validDates
+
+    def getRun(self, startDate=None):
+
+        jd = int(startDate if startDate is not None else time.Time.now().jd)
+
+        if jd not in self.plan['JD']:
+            raise TotoroError('JD={0} not found in schedule'.format(jd))
+
+        firstDay = self.plan[self.plan['JD'] == jd]
+        runNumber = firstDay['RUN']
+        lastDay = self.plan[self.plan['RUN'] == runNumber][-1]
+        print(firstDay, lastDay)
+        return (firstDay['JD0'], lastDay['JD1'])
 
     def __repr__(self):
         return self.plan.__repr__()

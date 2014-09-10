@@ -60,7 +60,8 @@ def checkExposure(exposure, format='pk', parent='plateDB', flag=True,
 
     # Performs a quick check to see if the exposure is alredy flagged.
     if isinstance(exposure, Exposure):
-        statusLabel = exposure._mangaExposure.status.label
+        statusLabel = exposure._mangaExposure.status.label \
+            if not exposure.isMock else None
         if exposure.isMock:
             flag = False
     else:
@@ -73,7 +74,7 @@ def checkExposure(exposure, format='pk', parent='plateDB', flag=True,
                                 parent=parent, silent=True)
             statusLabel = exposure._mangaExposure.status.label
 
-    if not forceReflag:
+    if not forceReflag and statusLabel is not None:
         if statusLabel.lower() in ['override good', 'totoro good']:
             return (True, 0)
         elif statusLabel.lower() in ['bad', 'override bad', 'totoro bad']:
@@ -95,7 +96,8 @@ def checkExposure(exposure, format='pk', parent='plateDB', flag=True,
 
     # Checks dither position
     if (exposure.ditherPosition not in
-            config['exposure']['validDitherPositions']):
+            config['exposure']['validDitherPositions']
+            and exposure.ditherPosition is not None):
         return flagHelper(False, 1,
                           'Invalid exposure. plateDB.Exposure.pk={0} '
                           'has dither position {1}'
@@ -113,7 +115,7 @@ def checkExposure(exposure, format='pk', parent='plateDB', flag=True,
 
     # Checks seeing
     maxSeeing = config['exposure']['maxSeeing']
-    seeing = exposure._mangaExposure.seeing
+    seeing = exposure.seeing
     if seeing > maxSeeing:
         return flagHelper(False, 3,
                           'Invalid exposure. plateDB.Exposure.pk={0} '
@@ -286,10 +288,11 @@ def checkSet(input, flag=True, flagExposures=True, silent=False,
                           'set pk={0} has {1} exposures!'
                           .format(set.pk, len(setDitherPositions)))
 
-    if np.unique(setDitherPositions).size < setDitherPositions.size:
-        return flagHelper('Bad', 6,
-                          'set pk={0} has multiple exposures with '
-                          'the same dither position'.format(set.pk))
+    if not all([sD is None for sD in setDitherPositions]):
+        if np.unique(setDitherPositions).size < setDitherPositions.size:
+            return flagHelper('Bad', 6,
+                              'set pk={0} has multiple exposures with '
+                              'the same dither position'.format(set.pk))
 
     # Checks if set is incomplete
     if len(setDitherPositions) < len(ditherPositions):

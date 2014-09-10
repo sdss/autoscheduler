@@ -16,10 +16,11 @@ from __future__ import division
 from __future__ import print_function
 from astropysics import obstools
 from .observingPlan import ObservingPlan
-# from ..dbclasses import Fields
+from ..dbclasses import Fields
 from ..dbclasses import Plates
 from .timeline import Timelines
 from .. import log, site
+from astropy import time
 
 
 class BaseScheduler(object):
@@ -43,22 +44,21 @@ class BaseScheduler(object):
         """Sets the start and end date if they haven't been defined."""
 
         if scope == 'planner':
-            if startDate is None:
-                startDate = obstools.calendar_to_jd(None)
-            if endDate is None:
-                endDate = self._observingPlan.getSurveyEnd()
-
-            startDate = self._observingPlan.getClosest(startDate)['JD0']
-            endDate = self._observingPlan.getClosest(endDate)['JD1']
+            if startDate is not None and endDate is not None:
+                pass
+            else:
+                startDate, endDate = self._observingPlan.getRun(startDate)
 
         elif scope == 'nightly':
-            if startDate is None:
-                startDate = self._observingPlan.getJD(startDate)[0]
-            if endDate is None:
-                endDate = self._observingPlan.getJD(endDate)[1]
+            if startDate is None or endDate is None:
+                startDate, endDate = self._observingPlan.getJD(startDate)
 
         elif scope == 'plugger':
-            startDate, endDate = self._observingPlan.getJD(startDate)
+            if startDate is None:
+                startDate = self._observingPlan.getJD(
+                    int(time.Time.now().jd) + 1)[0]
+            else:
+                startDate = self._observingPlan.getJD(startDate)[0]
 
         self.startDate = startDate
         self.endDate = endDate
@@ -72,21 +72,19 @@ class Planner(BaseScheduler):
 
     def __init__(self, startDate=None, endDate=None, **kwargs):
 
-        log.info('Running in PLANNER MODE.')
+        log.info('entering PLANNER mode.')
 
         super(Planner, self).__init__(startDate=startDate,
                                       endDate=endDate, scope='planner',
                                       **kwargs)
 
-        self.fields = self.getFields()
+        self.fields = self.getFields(**kwargs)
 
     def getFields(self, rejectDrilled=True, **kwargs):
         """Gets a table with the fields that can be scheduled."""
 
-        log.info('Finding fields with rejectDrilled={0}'.format(rejectDrilled))
+        log.info('finding fields with rejectDrilled={0}'.format(rejectDrilled))
         fields = Fields(rejectDrilled=rejectDrilled, **kwargs)
-
-        log.info('Found {0} fields'.format(len(fields)))
 
         return fields
 
@@ -109,13 +107,13 @@ class Plugger(BaseScheduler):
 
     def getPlatesAtAPO(self, rejectComplete=True):
 
-        log.info('Getting plates at APO with rejectComplete={0}'.format(
+        log.info('getting plates at APO with rejectComplete={0}'.format(
                  rejectComplete))
 
         plates = Plates(onlyPlugged=False, onlyAtAPO=True,
                         onlyIncomplete=rejectComplete)
 
-        log.info('Plates found: {0}'.format(len(plates)))
+        log.info('plates found: {0}'.format(len(plates)))
 
         return plates
 
@@ -131,7 +129,7 @@ class Nightly(BaseScheduler):
 
     def __init__(self, startDate=None, endDate=None, plates=None, **kwargs):
 
-        log.info('entering Nightly mode.')
+        log.info('entering NIGHTLY mode.')
 
         super(Nightly, self).__init__(startDate=startDate,
                                       endDate=endDate, scope='nightly',

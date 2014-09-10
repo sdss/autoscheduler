@@ -33,7 +33,8 @@ session = totoroDB.Session()
 
 class Exposure(plateDB.Exposure):
 
-    def __new__(cls, input, format='pk', parent='plateDB', *args, **kwargs):
+    def __new__(cls, input=None, format='pk', parent='plateDB', *args,
+               **kwargs):
 
         if input is None:
             return plateDB.Exposure.__new__(cls)
@@ -70,6 +71,7 @@ class Exposure(plateDB.Exposure):
         self._valid = None
         self._ditherPosition = None
         self._sn2Array = None
+        self._seeing = None
 
         self.isMock = mock
         self.kwargs = kwargs
@@ -81,7 +83,8 @@ class Exposure(plateDB.Exposure):
         self.mlhalimit = utils.mlhalimit(self.dec)
 
         self._mangaExposure = (self.mangadbExposure[0]
-                               if len(self.mangadbExposure) > 0 else None)
+                               if len(self.mangadbExposure) > 0 else
+                               mangaDB.Exposure())
         if self._mangaExposure is None:
             warnings.warn('plateDB.Exposure.pk={0} has no mangaDB.Exposure '
                           'counterpart.', NoMangaExposure)
@@ -98,8 +101,8 @@ class Exposure(plateDB.Exposure):
 
     @classmethod
     def createMockExposure(cls, startTime=None, expTime=None,
-                           ditherPosition='E', ra=None, dec=None,
-                           silent=True, **kwargs):
+                           ditherPosition=None, ra=None, dec=None,
+                           silent=False, **kwargs):
 
         if ra is None or dec is None:
             raise TotoroError('ra and dec must be specified')
@@ -132,11 +135,11 @@ class Exposure(plateDB.Exposure):
 
     def simulateObservedParamters(self):
 
-        self.manga_seeing = 1.0
+        self._seeing = 1.0
 
         self._dust = dustMap(self.ra, self.dec)
 
-        haRange = self.getHARange()
+        haRange = self.getHA()
         ha = utils.calculateMean(haRange)
         self._airmass = utils.computeAirmass(self.dec, ha)
 
@@ -147,8 +150,8 @@ class Exposure(plateDB.Exposure):
 
         self._sn2Array = np.array([sn2Blue, sn2Blue, sn2Red, sn2Red])
 
-        self._valid = True
-        self.status = 'Good'
+        # self._valid = True
+        # self.status = 'Good'
 
     @property
     def ra(self):
@@ -164,7 +167,7 @@ class Exposure(plateDB.Exposure):
             if (self.kwargs['ra'] is not None and
                     self.kwargs['dec'] is not None):
                 return np.array(
-                    [self.kwargs['ra'], self.kwargs['ra']], np.float)
+                    [self.kwargs['ra'], self.kwargs['dec']], np.float)
         else:
             pointing = (self.observation.plate_pointing.pointing)
             return np.array(
@@ -207,14 +210,14 @@ class Exposure(plateDB.Exposure):
     def valid(self, value):
         self._valid = value
 
-    def isValid(self, flag=True):
+    def isValid(self, flag=True, **kwargs):
         """Checks if an exposure is valid."""
 
-        return mangaLogic.checkExposure(self, flag=flag)
+        return mangaLogic.checkExposure(self, flag=flag, **kwargs)
 
     @property
     def ditherPosition(self):
-        if self._ditherPosition is None:
+        if self._ditherPosition is None and self.isMock is False:
             return self._mangaExposure.dither_position[0].upper()
         else:
             return self._ditherPosition
@@ -225,11 +228,14 @@ class Exposure(plateDB.Exposure):
 
     @property
     def seeing(self):
-        return self._mangaExposure.seeing
+        if not self.isMock and self._seeing is None:
+            return self._mangaExposure.seeing
+        else:
+            return self._seeing
 
     def getLST(self):
 
-        ha0, ha1 = self.getHARange()
+        ha0, ha1 = self.getHA()
 
         lst0 = (ha0 + self.ra) % 360. / 15
         lst1 = (ha1 + self.ra) % 360. / 15
@@ -242,7 +248,7 @@ class Exposure(plateDB.Exposure):
         t0 = time.Time(0, format='mjd', scale='tai')
         tStart = t0 + time.TimeDelta(startTime, format='sec', scale='tai')
 
-        lst0, lst1 = self.getLSTRange()
+        lst0, lst1 = self.getLST()
 
         ut0 = site.localTime(lst0, date=tStart.datetime,
                              utc=True, returntype='datetime')

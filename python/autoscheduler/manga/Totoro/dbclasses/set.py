@@ -161,7 +161,7 @@ class Set(mangaDB.Set):
             if (self.kwargs['ra'] is not None and
                     self.kwargs['dec'] is not None):
                 return np.array(
-                    [self.kwargs['ra'], self.kwargs['ra']], np.float)
+                    [self.kwargs['ra'], self.kwargs['dec']], np.float)
         else:
             self._checkHasExposures()
             return self.totoroExposures[0].getCoordinates()
@@ -252,7 +252,7 @@ class Set(mangaDB.Set):
     def getQuality(self, **kwargs):
         """Returns the quality of the set."""
 
-        return checkSet(self, silent=True, **kwargs)
+        return checkSet(self, silent=False, **kwargs)
 
     def getValidExposures(self):
 

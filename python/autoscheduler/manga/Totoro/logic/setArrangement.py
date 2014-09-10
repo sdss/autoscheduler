@@ -63,17 +63,19 @@ def updateSets(plate, **kwargs):
         return False
 
 
-def addExposure(plateDBExp, plate):
+def getValidSet(totoroExp, plate):
 
-    from ..dbclasses import Exposure, Set
-    totoroExp = Exposure(plateDBExp, silent=True)
+    from ..dbclasses import Set
+
+    if not totoroExp.isValid()[0]:
+        return False
 
     completeSets = []
     incompleteSets = []
 
     for set in plate.sets:
         quality = set.getQuality(flag=False)[0]
-        if quality in ['Excellent', 'Good', 'Poor']:
+        if quality in ['Excellent', 'Good']:
             continue
         if quality == 'Bad':
             log.info('one bad set found (pk={0}). Triggering rearrangement.'
@@ -87,6 +89,7 @@ def addExposure(plateDBExp, plate):
                 completeSets.append(set)
             elif tmpSetQuality == 'Incomplete':
                 incompleteSets.append(set)
+            set.totoroExposures.remove(totoroExp)
 
     newSet = Set.fromExposures([totoroExp], silent=True)
 
@@ -98,6 +101,22 @@ def addExposure(plateDBExp, plate):
             np.argmax([np.sum(set.getSN2Array()) for set in incompleteSets])]
     else:
         validSet = newSet
+
+    return validSet
+
+
+def addExposure(exp, plate):
+
+    from ..dbclasses import Exposure
+
+    if not isinstance(exp, Exposure):
+        totoroExp = Exposure(exp, silent=True)
+    else:
+        totoroExp = exp
+
+    validSet = getValidSet(exp, plate)
+    if not validSet:
+        return False
 
     db = TotoroDBConnection()
     session = db.Session()

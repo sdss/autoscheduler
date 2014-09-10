@@ -14,81 +14,105 @@ Revision history:
 
 from __future__ import division
 from __future__ import print_function
-from .. import config, readPath, Session, plateDB
+from .. import config, readPath, TotoroDBConnection, log
 from ..dbclasses import Plate, Plates
 from ..exceptions import TotoroError
 import os
 from astropy import table
 import numpy as np
+from numbers import Integral
 
 
-session = Session()
+db = TotoroDBConnection()
+session = db.Session()
 
 
-class Fields(Plates):
+class Fields(list):
 
-    def __init__(self, tilingCatalogue=None, rejectDrilled=True, **kwargs):
+    def __init__(self, tilingCatalogue=None, rejectDrilled=True, silent=False,
+                 **kwargs):
 
-        self.tilingCatalogue = readPath(config['tilingCatalogue']) \
+        self.tilingCatalogue = readPath(config['fields']['tilingCatalogue']) \
             if tilingCatalogue is None else readPath(tilingCatalogue)
 
         self._tiles = self._getTiles(**kwargs)
 
-        if rejectDrilled:
-            self._rejectDrilled(**kwargs)
+        mockFields = []
+        for tile in self._tiles:
+            mockField = Field.createMockPlate(
+                ra=tile['RA'], dec=tile['DEC'], silent=True, **kwargs)
+            mockField.manga_tileid = int(tile['ID'])
+            mockFields.append(mockField)
 
-        list.__init__(
-            self,
-            [Plate.createMockPlate(
-                location_id=tile['ID'],
-                ra=tile['RA'], dec=tile['DEC'])
-             for tile in self._tiles])
+        list.__init__(self, mockFields)
+
+        logMsg = 'loaded {0} fields from tiling catalogue'.format(len(self))
+        if not silent:
+            log.info(logMsg)
+        else:
+            log.debug(logMsg)
+
+        if rejectDrilled:
+            self._rejectDrilled(silent=silent, **kwargs)
 
     def _getTiles(self, **kwargs):
 
         if not os.path.exists(self.tilingCatalogue):
-            raise TotoroError('tiling catalogue does not exist.')
+            raise TotoroError('tiling catalogue {0} does not exist.'
+                              .format(os.path.realpath(self.tilingCatalogue)))
 
         tiles = table.Table.read(self.tilingCatalogue)
-        tiles = tiles[tiles['DEC'] > -5]
 
         return tiles
 
-    def _rejectDrilled(self, rejectMode='locationid', radecTol=1., **kwargs):
+    def _rejectDrilled(self, silent=False, rejectMode='manga_tileid',
+                       **kwargs):
+        """Rejects plates in self that have been drilled. rejectMode is a
+        placeholder for future functionality when fields might be rejected
+        based on the coordinates of drilled plates."""
 
-        if rejectMode.lower() == 'locationid':
-            allPlates = self.getAllMaNGAPlates(onlyLeading=True)
-            locIDs = [plate.location_id for plate in allPlates]
+        allDrilled = Plates.getAll(onlyIncomplete=False, silent=True,
+                                   updateSets=False)
+        mangaTileIDs = map(lambda xx: xx.getMangaTileID(), allDrilled)
 
-        validIdx = [idx for idx in range(len(self._tiles))
-                    if self._tiles[idx]['ID'] not in locIDs]
+        nRemoved = 0
+        for mangaTileID in mangaTileIDs:
+            result = self.removeField(mangaTileID)
+            if result:
+                nRemoved += 1
 
-        self._tiles = self._tiles[validIdx]
+        logMsg = ('rejected {0} fields because they have already been drilled'
+                  .format(nRemoved))
+        if not silent:
+            log.info(logMsg)
+        else:
+            log.debug(logMsg)
 
-    def removeField(self, locationID):
+    def removeField(self, inp):
 
-        locIDs = np.array([field.location_id for field in self])
-        idx = np.where(locIDs == locationID)[0]
+        if isinstance(inp, Integral):
+            mangaTileIDs = np.array([ff.manga_tileid for ff in self], int)
+            idx = np.where(mangaTileIDs == inp)[0]
 
-        if idx.size != 1:
-            raise TotoroError('locationID={0} does not exist and cannot '
-                              'be removed'.format(locationID))
+            if idx.size != 1:
+                return None
+            else:
+                self.remove(self[idx[0]])
+                return True
 
-        self.pop(idx[0])
+        elif isinstance(inp, Field):
+            self.remove(inp)
+            return True
 
-    @staticmethod
-    def getAllMaNGAPlates(onlyLeading=True):
+        elif inp is None:
+            return None
 
-        with session.begin(subtransactions=True):
-            mangaPlates = session.query(plateDB.Plate).join(
-                plateDB.PlateToSurvey).join(plateDB.Survey).filter(
-                    plateDB.Survey.label == 'MaNGA')
+        else:
+            raise TotoroError('input must be a manga_tileid integer or a Field'
+                              ' instance.')
 
-            if onlyLeading:
-                subQmanga = mangaPlates.subquery()
-                mangaPlates = session.query(plateDB.Plate).outerjoin(
-                    subQmanga, plateDB.Plate.pk == subQmanga.c.pk).join(
-                        plateDB.SurveyMode).filter(
-                            plateDB.SurveyMode.label == 'MaNGA dither')
 
-        return mangaPlates.all()
+class Field(Plate):
+
+    def __repr__(self):
+        return '<Field: manga_tileid={0:d}>'.format(self.manga_tileid)

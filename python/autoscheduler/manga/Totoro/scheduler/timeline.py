@@ -15,16 +15,17 @@ Revision history:
 from __future__ import division
 from __future__ import print_function
 from ..dbclasses.plate import Plates
-from .. import config, log
-from ..APOplateDB import Session, plateDB
+from .. import config, log, site
+from .. import TotoroDBConnection
 import warnings
 from ..exceptions import TotoroUserWarning
-from ..utils import JDdiff, createSite
+from ..utils import JDdiff
 from ..logic import getOptimalPlate
 import numpy as np
 
 
-session = Session
+db = TotoroDBConnection()
+session = db.Session()
 
 
 class Timelines(list):
@@ -64,11 +65,11 @@ class Timeline(object):
         else:
             self._plates = plates
 
-        self.site = createSite()
+        self.site = site
 
     def schedule(self, mode='planner', **kwargs):
 
-        log.info('Scheduling timeline with JD0={0:.4f}, JD1={1:.4f}'
+        log.info('scheduling timeline with JD0={0:.4f}, JD1={1:.4f}'
                  .format(self.startTime, self.endTime))
 
         currentTime = self.startTime
@@ -84,13 +85,14 @@ class Timeline(object):
 
         while remainingTime >= maxLeftoverTime and nCarts <= maxNCarts:
 
-            log.info('Simulating plates for {0:.5f}'.format(currentTime))
+            # log.info('Simulating plates for {0:.5f}'.format(currentTime))
 
-            optimalPlate = getOptimalPlate(
+            optimalPlate, newExposures = getOptimalPlate(
                 self._plates, currentTime, self.endTime, expTime=expTime,
                 mode=mode, **kwargs)
 
             if optimalPlate is None:
+
                 warnings.warn('no valid plates found at JD={0:.4f} '
                               '(timeline ends at JD={1:.4f})'.format(
                                   currentTime, self.endTime),
@@ -98,15 +100,18 @@ class Timeline(object):
                 currentTime += config['exposure']['exposureTime'] / 86400.
 
             else:
-                self._replaceWithOptimal(optimalPlate)
-                print(optimalPlate.plate_id, optimalPlate.getLSTRange())
+
+                for exp in newExposures:
+                    if exp is None:
+                        continue
+                    optimalPlate.addMockExposure(exposure=exp)
+
                 nCarts += 1
-                newTime = optimalPlate.getLastExposure().getJDObserved()[1]
+                newTime = optimalPlate.getLastExposure().getJD()[1]
                 currentTime = newTime
 
             remainingTime = JDdiff(currentTime, self.endTime)
 
-        print(remainingTime)
         return
 
     def getPluggedPlates(self):
