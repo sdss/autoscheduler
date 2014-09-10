@@ -458,7 +458,7 @@ def getDistance(set, startDate):
     nExpNeeded = 3 - len(set.totoroExposures)
     minLength = nExpNeeded * config['exposure']['exposureTime'] / 3600.
 
-    setLST = set.getLSTLimits()
+    setLST = set.getLSTRange()
     startDateLST = site.localSiderialTime(startDate)
 
     distance = setLST[1] - startDateLST
