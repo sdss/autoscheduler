@@ -275,6 +275,9 @@ def getOptimalArrangement(plate, startDate=None,
         else:
             invalidExposures.append(exposure)
 
+    if len(validExposures) == 0:
+        return False
+
     if len(validExposures) > expLimit:
         if forceLimit is False:
             log.info('hard limit for number of exposures in rearrangement '
@@ -339,8 +342,8 @@ def getOptimalArrangement(plate, startDate=None,
     completion = np.array(completion)
     plates = np.array(plates)
 
-    validPlates = plates[completion > 0.9 * maxCompletion]
-    validCompletion = completion[completion > 0.9 * maxCompletion]
+    validPlates = plates[completion >= 0.9 * maxCompletion]
+    validCompletion = completion[completion >= 0.9 * maxCompletion]
     sortCompletion = np.argsort(validCompletion)[::-1]
 
     maxPlates = [validPlates[idx] for idx in sortCompletion]
