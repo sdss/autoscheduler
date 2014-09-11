@@ -54,11 +54,8 @@ class BaseScheduler(object):
                 startDate, endDate = self._observingPlan.getJD(startDate)
 
         elif scope == 'plugger':
-            if startDate is None:
-                startDate = self._observingPlan.getJD(
-                    int(time.Time.now().jd) + 1)[0]
-            else:
-                startDate = self._observingPlan.getJD(startDate)[0]
+            startDate, endDate = self._observingPlan.getJD(
+                int(time.Time.now().jd) + 1)
 
         self.startDate = startDate
         self.endDate = endDate
@@ -110,8 +107,7 @@ class Plugger(BaseScheduler):
         log.info('getting plates at APO with rejectComplete={0}'.format(
                  rejectComplete))
 
-        plates = Plates(onlyPlugged=False, onlyAtAPO=True,
-                        onlyIncomplete=rejectComplete)
+        plates = Plates.getAtAPO(onlyIncomplete=True)
 
         log.info('plates found: {0}'.format(len(plates)))
 

@@ -147,7 +147,7 @@ class ObservingPlan(object):
                                (self.plan['JD0'] > 0.0) &
                                (self.plan['JD1'] > 0.0)]
 
-        if startDate is None and endDate is None:
+        if (startDate is None and endDate is None) or (len(validDates) == 0):
             log.info('no observing blocks selected.')
             return validDates
 
