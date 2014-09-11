@@ -34,7 +34,7 @@ session = totoroDB.Session()
 class Exposure(plateDB.Exposure):
 
     def __new__(cls, input=None, format='pk', parent='plateDB', *args,
-               **kwargs):
+                **kwargs):
 
         if input is None:
             return plateDB.Exposure.__new__(cls)
@@ -246,14 +246,13 @@ class Exposure(plateDB.Exposure):
 
         startTime = float(self.start_time)
         t0 = time.Time(0, format='mjd', scale='tai')
+
         tStart = t0 + time.TimeDelta(startTime, format='sec', scale='tai')
+        tEnd = tStart + time.TimeDelta(float(self.exposure_time), format='sec',
+                                       scale='tai')
 
-        lst0, lst1 = self.getLST()
-
-        ut0 = site.localTime(lst0, date=tStart.datetime,
-                             utc=True, returntype='datetime')
-        ut1 = site.localTime(lst1, date=tStart.datetime,
-                             utc=True, returntype='datetime')
+        ut0 = tStart.datetime
+        ut1 = tEnd.datetime
 
         if format == 'str':
             return ('{0:%H:%M}'.format(ut0), '{0:%H:%M}'.format(ut1))
