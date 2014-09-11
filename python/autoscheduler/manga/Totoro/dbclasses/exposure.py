@@ -204,7 +204,7 @@ class Exposure(plateDB.Exposure):
         if self._valid is not None:
             return self._valid
         else:
-            return self.isValid()
+            return self.isValid()[0]
 
     @valid.setter
     def valid(self, value):
