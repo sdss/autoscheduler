@@ -55,7 +55,8 @@ class Plates(list):
                     plateDB.Plate,
                     plateDB.PlateToSurvey,
                     plateDB.Survey).filter(
-                        plateDB.Survey.label == 'MaNGA').all()
+                        plateDB.Survey.label == 'MaNGA').order_by(
+                            plateDB.Plate.plate_id).all()
 
         plates = [actPlug.plugging.plate_pk for actPlug in activePluggings]
 
@@ -73,7 +74,8 @@ class Plates(list):
                     plateDB.PlateLocation.label == 'APO').join(
                         plateDB.PlateToSurvey).join(
                         plateDB.Survey).filter(
-                            plateDB.Survey.label == 'MaNGA').all()
+                            plateDB.Survey.label == 'MaNGA').order_by(
+                                plateDB.Plate.plate_id).all()
 
         plates = [plate.pk for plate in plates]
 
@@ -88,7 +90,8 @@ class Plates(list):
         with session.begin(subtransactions=True):
             plates = session.query(plateDB.Plate).join(
                 plateDB.PlateToSurvey).join(plateDB.Survey).filter(
-                    plateDB.Survey.label == 'MaNGA').all()
+                    plateDB.Survey.label == 'MaNGA').order_by(
+                        plateDB.Plate.plate_id).all()
 
         plates = [plate.pk for plate in plates]
 
