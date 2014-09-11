@@ -10,6 +10,11 @@ def set_priorities(apg, par, schedule, loud=True):
 	set_pri_start = time()
 	# Loop through all plates and set priorities
 	for p in range(len(apg)):
+		# Manual override
+		if apg[p].manual_priority == 10:
+			apg[p].priority = 9999.0
+			continue
+
 		# Set base priority
 		apg[p].priority = 100.0 * apg[p].manual_priority
 		
