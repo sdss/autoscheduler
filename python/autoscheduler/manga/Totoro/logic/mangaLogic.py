@@ -102,7 +102,7 @@ def checkExposure(exposure, format='pk', parent='plateDB', flag=True,
                           'Invalid exposure. plateDB.Exposure.pk={0} '
                           'has dither position {1}'
                           .format(exposure._mangaExposure.pk,
-                                  exposure._mangaExposure.ditherPosition))
+                                  exposure.ditherPosition))
 
     # Checks exposure time
     minExpTime = config['exposure']['minExpTime']
