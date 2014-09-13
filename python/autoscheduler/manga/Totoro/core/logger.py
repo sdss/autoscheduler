@@ -13,7 +13,8 @@ from logging import FileHandler
 import warnings
 from . import colourPrint
 import shutil
-import pdb
+from textwrap import TextWrapper
+
 
 # Initialize by calling initLog()
 log = None
@@ -128,7 +129,15 @@ class TotoroLogger(Logger):
         # else:
         #     record.message = '{0} [{1:s}]'.format(record.msg, record.origin)
 
-        print(': ' + record.message)
+        if len(record.message) > 70:
+            tw = TextWrapper()
+            tw.width = 70
+            tw.subsequent_indent = ' ' * (len(record.levelname)+2)
+            tw.break_on_hyphens = False
+            msg = '\n'.join(tw.wrap(record.message))
+            print(': ' + msg)
+        else:
+            print(': ' + record.message)
 
     def _set_defaults(self,
                       logLevel='WARNING',
