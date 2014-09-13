@@ -19,7 +19,8 @@ from ..apoDB import TotoroDBConnection
 from .. import log, config, site
 from ..exceptions import TotoroError, EmptySet
 from ..logic.mangaLogic import checkSet
-from ..utils import getMinMaxIntervalSequence
+from ..utils import getMinMaxIntervalSequence, getIntervalFromPoints, \
+    calculateMean
 import numpy as np
 from copy import copy
 
@@ -170,13 +171,15 @@ class Set(mangaDB.Set):
         """Returns the HA interval of the exposures in the set. If midPoint is
         set, the middle point of the exposures is used for the calculation."""
 
-        if not midPoint:
-            expHAs = np.array([exposure.getHA()
-                               for exposure in self.totoroExposures
-                               if exposure.valid])
+        validExposures = self.getValidExposures()
+        if not midPoint or len(validExposures) == 1:
+            expHAs = np.array([exp.getHA() for exp in validExposures])
             return getMinMaxIntervalSequence(expHAs)
         else:
-            pass
+            midPoints = np.array(
+                [calculateMean(exposure.getHA())
+                 for exposure in self.totoroExposures if exposure.valid])
+            return np.array(getIntervalFromPoints(midPoints))
 
     def getHARange(self):
         """Returns the HA limits to add more exposures to the set."""
@@ -297,7 +300,7 @@ class Set(mangaDB.Set):
 
     @property
     def complete(self):
-        if self.getQuality() not in ['Incomplete']:
+        if self.getQuality()[0] not in ['Incomplete']:
             return True
         else:
             return False

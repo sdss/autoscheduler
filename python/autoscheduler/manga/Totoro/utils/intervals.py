@@ -16,6 +16,7 @@ from __future__ import division
 from __future__ import print_function
 import numpy as np
 from ..exceptions import TotoroError
+import itertools
 
 
 def getIntervalIntersectionLength(aa, bb, wrapAt=360):
@@ -52,7 +53,7 @@ def getIntervalIntersection(aa, bb, wrapAt=360):
 def isPointInInterval(point, ival, wrapAt=360):
     """Returns True if point in interval."""
 
-    return (point - ival[0]) % wrapAt < (ival[1] - ival[0]) % wrapAt
+    return (point - ival[0]) % wrapAt <= (ival[1] - ival[0]) % wrapAt
 
 
 def isIntervalInsideOther(aa, bb, wrapAt=360, onlyOne=False):
@@ -114,3 +115,25 @@ def getMinMaxIntervalSequence(intervals, wrapAt=360):
 def calculateMean(interval, wrapAt=360.):
 
     return (interval[0] + ((interval[1] - interval[0]) % wrapAt) / 2.) % wrapAt
+
+
+def getIntervalFromPoints(points, wrapAt=360.):
+
+    points = np.array(points) % wrapAt
+
+    if len(points) == 1:
+        return points
+
+    validExtremes = []
+    for permutation in itertools.permutations(points, 2):
+        isValid = True
+        for point in points:
+            if not isPointInInterval(point, permutation):
+                isValid = False
+        if isValid:
+            validExtremes.append(permutation)
+
+    lengths = np.array(
+        [intervalLength(interval) for interval in validExtremes])
+    # print(validExtremes, lengths)
+    return validExtremes[np.argmin(lengths)]
