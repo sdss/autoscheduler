@@ -7,7 +7,7 @@ logging:
 dbConnectionProduction: &dbConnectionProduction
     user: sdssdb_admin
     password: 4-photometry
-    host: localhost
+    host: sdss4-db
     port: 5432
     database: apodb
 
