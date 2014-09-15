@@ -11,7 +11,7 @@ dbConnectionProduction: &dbConnectionProduction
     port: 5432
     database: apodb
 
-dbConnectionProduction: &dbConnectionLocal
+dbConnectionLocal: &dbConnectionLocal
     user: sdssdb_admin
     password: 4-photometry
     host: localhost
