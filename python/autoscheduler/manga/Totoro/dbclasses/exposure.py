@@ -49,13 +49,13 @@ class Exposure(plateDB.Exposure):
 
         else:
             if parent.lower() == 'platedb':
-                with session.begin():
+                with session.begin(subtransactions=True):
                     instance = session.query(base).filter(
                         eval('{0}.{1} == {2}'.format(base.__name__,
                                                      format, input))).one()
 
             elif parent.lower() == 'mangadb':
-                with session.begin():
+                with session.begin(subtransactions=True):
                     instance = session.query(base).join(
                         mangaDB.Exposure).filter(
                             eval('mangaDB.Exposure.{0} == {1}'.format(
@@ -88,6 +88,12 @@ class Exposure(plateDB.Exposure):
         if self._mangaExposure is None:
             warnings.warn('plateDB.Exposure.pk={0} has no mangaDB.Exposure '
                           'counterpart.', NoMangaExposure)
+
+    def __repr__(self):
+        return ('<Totoro Exposure (mangaDB.Exposure.pk={0}, exposure_no={1}, '
+                'ditherPos={2}'
+                .format(self._mangaExposure.pk, self.exposure_no,
+                        self.ditherPosition))
 
     def update(self, **kwargs):
         """Reloads the exposure."""

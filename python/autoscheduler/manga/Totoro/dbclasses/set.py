@@ -54,7 +54,7 @@ class Set(mangaDB.Set):
 
         base = cls.__bases__[0]
 
-        with session.begin():
+        with session.begin(subtransactions=True):
             instance = session.query(base).filter(
                 eval('{0}.{1} == {2}'.format(base.__name__, format, input))
                 ).one()
@@ -84,6 +84,10 @@ class Set(mangaDB.Set):
         if not silent and not self.isMock:
             log.debug('Loaded set pk={0} (plate_id={1})'.format(
                       self.pk, self.plate.plate_id))
+
+    def __repr__(self):
+        return '<Totoro Set (pk={0}, status={1})'.format(
+            self.pk, self.getQuality(flag=False)[0])
 
     def update(self, **kwargs):
         """Reloads the set."""

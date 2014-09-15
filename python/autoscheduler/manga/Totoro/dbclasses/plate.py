@@ -54,8 +54,9 @@ class Plates(list):
                     plateDB.Plugging,
                     plateDB.Plate,
                     plateDB.PlateToSurvey,
-                    plateDB.Survey).filter(
-                        plateDB.Survey.label == 'MaNGA').order_by(
+                    plateDB.Survey, plateDB.SurveyMode).filter(
+                        plateDB.Survey.label == 'MaNGA',
+                        plateDB.SurveyMode.label == 'MaNGA dither').order_by(
                             plateDB.Plate.plate_id).all()
 
         plates = [actPlug.plugging.plate_pk for actPlug in activePluggings]
@@ -73,9 +74,11 @@ class Plates(list):
                 plateDB.PlateLocation).filter(
                     plateDB.PlateLocation.label == 'APO').join(
                         plateDB.PlateToSurvey).join(
-                        plateDB.Survey).filter(
-                            plateDB.Survey.label == 'MaNGA').order_by(
-                                plateDB.Plate.plate_id).all()
+                            plateDB.Survey, plateDB.SurveyMode).filter(
+                                plateDB.Survey.label == 'MaNGA',
+                                plateDB.SurveyMode.label ==
+                                'MaNGA dither').order_by(
+                                    plateDB.Plate.plate_id).all()
 
         plates = [plate.pk for plate in plates]
 
@@ -89,9 +92,10 @@ class Plates(list):
 
         with session.begin(subtransactions=True):
             plates = session.query(plateDB.Plate).join(
-                plateDB.PlateToSurvey).join(plateDB.Survey).filter(
-                    plateDB.Survey.label == 'MaNGA').order_by(
-                        plateDB.Plate.plate_id).all()
+                plateDB.PlateToSurvey, plateDB.Survey, plateDB.SurveyMode
+                ).filter(plateDB.Survey.label == 'MaNGA',
+                         plateDB.SurveyMode.label == 'MaNGA dither').order_by(
+                    plateDB.Plate.plate_id).all()
 
         plates = [plate.pk for plate in plates]
 
@@ -121,7 +125,7 @@ class Plate(plateDB.Plate):
 
         base = cls.__bases__[0]
 
-        with session.begin():
+        with session.begin(subtransactions=True):
             instance = session.query(base).filter(
                 eval('{0}.{1} == {2}'.format(base.__name__, format, input))
                 ).one()
@@ -157,6 +161,10 @@ class Plate(plateDB.Plate):
 
         else:
             self.sets = []
+
+    def __repr__(self):
+        return ('<Totoro Plate (plate_id={0}, pk={1}, completion={2:.2f}'
+                .format(self.plate_id, self.pk, self.getPlateCompletion()))
 
     @classmethod
     def fromPlateID(cls, plateid, **kwargs):
@@ -310,7 +318,7 @@ class Plate(plateDB.Plate):
         """Returns a list of mangaDB.Exposure objects with all the exposures
         for this plate."""
 
-        with session.begin():
+        with session.begin(subtransactions=True):
             mangaExposures = session.query(totoroDB.mangaDB.Exposure).join(
                 plateDB.Exposure,
                 plateDB.Observation,
