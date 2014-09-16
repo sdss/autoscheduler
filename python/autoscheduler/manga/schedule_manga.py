@@ -1,5 +1,5 @@
 from __future__ import print_function, division
-from autoscheduler.manga.Totoro.scheduler import Nightly
+from sdss.internal.manga.Totoro.scheduler import Nightly
 
 def schedule_manga(schedule, errors, plan=False, loud=True):
 	# Get raw output from MaNGA submodule
