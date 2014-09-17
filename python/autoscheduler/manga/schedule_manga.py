@@ -11,6 +11,9 @@ def schedule_manga(schedule, errors, plan=False, loud=True):
 	for plate_id, plate_data in manga_output['plates'].iteritems():
 		plate_dict = {}
 		plate_dict['plateid'] = plate_id
+		if 'cartridge' in plate_data.keys():
+			plate_dict['cart'] = plate_data['cartridge']
+		else: plate_dict['cart'] = -1
 		plate_dict['complete'] = plate_data['complete']
 		plate_dict['HARange'] = list(plate_data['HARange'])
 		plate_dict['SN2'] = list(plate_data['SN2'])
