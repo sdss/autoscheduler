@@ -52,7 +52,7 @@ def assign_carts(apogee_choices, manga_choices, eboss_choices, errors, loud=True
 		if len(pidx) == 0: continue
 		sort_plugplan.append(plugplan[pidx[0]])
 	plugplan = sort_plugplan
-	
+	for p in sort_plugplan: print(p['cart'])
 		
 	# Save MaNGA choices to cartridges (since they are the most dependent)
 	# TO-DO
