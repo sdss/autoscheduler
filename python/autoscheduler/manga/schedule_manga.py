@@ -1,11 +1,12 @@
 from __future__ import print_function, division
 from sdss.internal.manga.Totoro.scheduler import Nightly
+import pdb
 
 def schedule_manga(schedule, errors, plan=False, loud=True):
 	# Get raw output from MaNGA submodule
 	manga_obj = Nightly(startDate=schedule['manga_start'], endDate=schedule['manga_end'])
 	manga_output = manga_obj.getOutput()
-	
+
 	# Massage the MaNGA 'plates' output into a usable format
 	plates = []
 	for plate_id, plate_data in manga_output['plates'].iteritems():
@@ -27,7 +28,10 @@ def schedule_manga(schedule, errors, plan=False, loud=True):
 			set_dict['SN2'] = list(set_data['SN2'])
 			set_dict['SN2Range'] = [list(set_data['SN2Range'][0]), list(set_data['SN2Range'][1])]
 			set_dict['seeingRange'] = list(set_data['seeingRange'])
-			set_dict['HARange'] = list(set_data['HARange'])
+
+			haRange = set_data['HARange']
+			set_dict['HARange'] = haRange if haRange is False else list(set_data['HARange'])
+
 			set_dict['missingDithers'] = list(set_data['missingDithers'])
 			set_dict['exposures'] = []
 			# Exposures contained within dither set
@@ -42,12 +46,12 @@ def schedule_manga(schedule, errors, plan=False, loud=True):
 				set_dict['exposures'].append(exp_dict)
 			plate_dict['sets'].append(set_dict)
 		plates.append(plate_dict)
-		
+
 	manga_formatted = {'plates': plates, 'schedule': []}
-	
+
 	return manga_formatted
-	
-	
-	
-	
-	
+
+
+
+
+
