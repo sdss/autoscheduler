@@ -74,13 +74,13 @@ def get_plates(plan=False, loud=True):
     ebo = []
     for i in range(len(stage1)):
         ebo.append(eboplate())
-        ebo[i].ra = stage1[i][0]
-        ebo[i].dec = stage1[i][1]
+        ebo[i].ra = float(stage1[i][0])
+        ebo[i].dec = float(stage1[i][1])
         ebo[i].plateid = stage1[i][2]
-        ebo[i].ha = stage1[i][3]
+        ebo[i].ha = float(stage1[i][3])
         ebo[i].manual_priority = stage1[i][4]
-        ebo[i].maxha = stage1[i][5]
-        ebo[i].minha = stage1[i][6]
+        if stage1[i][5]: ebo[i].maxha = float(stage1[i][5])
+        if stage1[i][6]: ebo[i].minha = float(stage1[i][6])
         ebo[i].platepk = stage1[i][7]
         ebo[i].plugged = 0
     stage1_end = time()
