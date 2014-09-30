@@ -139,7 +139,7 @@ def get_plates(errors, plan=False, loud=True):
 	stage2 = []
 	try:
 		stage2 = session.execute("SET SCHEMA 'platedb'; "+
-			"SELECT plt.plate_id, obs.mjd, sum(qr.snr_standard^2.0), count(qr.snr_standard), sum(apr.snr^2.0), count(apr.snr) "+
+			"SELECT plt.plate_id, int(exp.start_time/86400) as mjd, sum(qr.snr_standard^2.0), count(qr.snr_standard), sum(apr.snr^2.0), count(apr.snr) "+
 			"FROM (((((((platedb.exposure AS exp "+
 				"INNER JOIN platedb.survey as surv ON (exp.survey_pk = surv.pk))"+
 				"JOIN apogeeqldb.quickred AS qr ON (exp.pk=qr.exposure_pk)) "+
@@ -150,7 +150,7 @@ def get_plates(errors, plan=False, loud=True):
 				"RIGHT JOIN platedb.plate AS plt ON (pltg.plate_pk=plt.pk)) "+
 			"WHERE (surv.label='APOGEE-2' OR surv.label='APOGEE') AND expf.label='Object' "+
 				"AND qr.snr_standard!='NaN' AND (qr.snr_standard >= 10.0 OR apr.snr >= 10.0) "+
-			"GROUP BY plt.plate_id, obs.mjd ORDER BY plt.plate_id").fetchall()
+			"GROUP BY plt.plate_id, mjd ORDER BY plt.plate_id").fetchall()
 	except: pass
 	stage2_end = time()
 	if loud: print("[SQL] Read in past APOGEE observations (%.3f sec)" % ((stage2_end - stage2_start)))
