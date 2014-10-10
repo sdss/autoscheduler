@@ -52,11 +52,28 @@ def assign_carts(apogee_choices, manga_choices, eboss_choices, errors, loud=True
 		if len(pidx) == 0: continue
 		sort_plugplan.append(plugplan[pidx[0]])
 	plugplan = sort_plugplan
-	for p in sort_plugplan: print(p['cart'])
 		
 	# Save MaNGA choices to cartridges (since they are the most dependent)
 	# TO-DO
 	manpicks = manga_choices
+
+	# Find currently-plugged MaNGA plates, and adjust the cart order
+	from sdss.internal.manga.Totoro.dbclasses.plate import Plates
+	pluggedPlates = Plates.getPlugged()
+	man_cartnum, man_pctcomplete = [], []
+	for plate in pluggedPlates:
+		man_cartnum.append(plate.getActiveCartNumber())
+		man_pctcomplete.append(plate.getPlateCompletion())
+	man_pctsort = np.argsort(man_pctcomplete)
+	man_cartnum, man_pctcomplete = [man_cartnum[-x-1] for x in man_pctsort], [man_pctcomplete[-x-1] for x in man_pctsort]
+
+	print(cart_order)
+	for c in range(len(man_cartnum)):
+		man_entry = [x for x in range(len(cart_order)) if cart_order[x] == man_cartnum[c]]
+		if len(man_entry) > 0: cart_order.pop(man_entry[0])
+		cart_order.append(man_cartnum[c])
+	print(cart_order)
+
 	
 	# Save APOGEE-II choices to cartridges
 	apgsaved = np.zeros(len(apogee_choices))
