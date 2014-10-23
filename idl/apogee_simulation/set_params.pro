@@ -1,7 +1,7 @@
 PRO SET_PARAMS, params
 
 ; Define necessary parameters
-params =   {schedulefile: "../schedules/Sch_base.sdss3.txt", $			; Schedule filename
+params =   {schedulefile: "../../schedules/Sch_base.6yrs.txt", $			; Schedule filename
 			apgplatesfile: "platelists/apogee2_2016-02-10_forBen.dat", $				; APOGEE-II plate list filename
 			bosplatesfile: "platelists/EBOSS.1113.txt", $		; eBOSS plate list filename
 			

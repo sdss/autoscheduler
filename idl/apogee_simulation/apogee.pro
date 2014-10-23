@@ -39,7 +39,7 @@ time.totapg += total(alengths)
 obs.apgtim = ptr_new(atimes)
 obs.apglen = ptr_new(alengths)
 
-; ---- Compute LSTs for tonight's blocks
+; ---- Compute LSTs for tonights blocks
 alst = (*(time.lstapg))
 OBSERVATORY, 'apo', apo
 fakera = replicate(0.0,n_elements(atimes)) & fakedec = replicate(0.0,n_elements(atimes))
@@ -48,6 +48,11 @@ altaz2hadec, alt, az, apo.latitude, ha, dec
 for i=0, n_elements(ha)-1 do alst[fix(ha[i]/15.0)] += alengths[i]
 time.lstapg = ptr_new(alst)
 if keyword_set(lst) then return			; If we only want LSTs, we return here.
+
+; Print out night length and number of scheduled blocks
+openw, nite, "output/APGblocks.txt", /get_lun, /append
+printf, nite, schedule.jd-2400000, alengths
+free_lun, nite
 
 ; ---- Prioritize Plates
 ; Base Priorities
@@ -121,7 +126,7 @@ for i=0, n_elements(pickorder)-1 do begin
 	chosen[cslot] = wavail[priorder[n_elements(priorder)-1]]
 	; Remove the currently chosen plate from being chosen again
 	if apg[chosen[cslot]].stackflag eq 0 then for s=0, n_elements(obsarr[chosen[cslot],*])-1 do obsarr[chosen[cslot],s] = -10.0 $
-	; If this plate's stack flag is set, do not remove next block
+	; If this plates stack flag is set, do not remove next block
 	else for s=cslot+2, n_elements(obsarr[chosen[cslot],*])-1 do obsarr[chosen[cslot],s] = -10.0
 endfor
 time.unuapg = ptr_new(amiss)
@@ -149,7 +154,7 @@ for p=0, n_elements(chosen)-1 do begin
 		obs.apgtim = ptr_new(newtime) & obs.apglen = ptr_new(newlength) & obs.apgplt = ptr_new(newchosen)
 	endif
 endfor
-if par.sim eq 0 then return		; If we don't want to simulate observing, we exit now.
+if par.sim eq 0 then return		; If we dont want to simulate observing, we exit now.
 
 ; ---- Simulate Observing
 ; If this a bad weather night, we note that time and return

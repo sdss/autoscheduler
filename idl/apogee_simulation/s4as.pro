@@ -51,6 +51,8 @@ endelse
 if par.sim eq 1 then begin
 	openw, nite, "output/APGnightly.txt", /get_lun
 	free_lun, nite
+	openw, nite, "output/APGblocks.txt", /get_lun
+	free_lun, nite
 endif
 
 ; Begin loop through days
@@ -75,7 +77,7 @@ for d=startdate, enddate do begin
 	; Plan APOGEE-II if it does last tonight
 	if schedule[d].brtstrt gt schedule[d].drkstrt then apogee, apg, schedule[d], time, obs, weather, par, timeseed, lst=lst
 	; Account for Engineering Time
-	if schedule[d].eboss eq 0 and schedule[d].manga eq 0 and schedule[d].drkstrt gt 0 then time.toteng += (schedule[i].drkend - schedule[i].drkstrt) * 24.0
+	if schedule[d].eboss eq 0 and schedule[d].manga eq 0 and schedule[d].drkstrt gt 0 then time.toteng += (schedule[d].drkend - schedule[d].drkstrt) * 24.0
 	
 	; See if we need to print out intermittent summaries in the simulation
 	if par.sim eq 1 then out_sim, time, schedule[d]
