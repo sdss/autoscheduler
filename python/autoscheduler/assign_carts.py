@@ -19,7 +19,7 @@ def assign_carts(apogee_choices, manga_choices, eboss_choices, errors, loud=True
 	else:
 		from sdss.internal.database.connections.APODatabaseUserLocalConnection import db
 	session = db.Session()
-		
+
 	# Read in all available cartridges
 	allcarts = session.execute("SET SCHEMA 'platedb'; "+
 			"SELECT crt.number FROM platedb.cartridge AS crt "+
@@ -30,7 +30,7 @@ def assign_carts(apogee_choices, manga_choices, eboss_choices, errors, loud=True
 		if c[0] < 10: plugplan[-1]['cartsurveys'] = 1
 		if c[0] >= 10: plugplan[-1]['cartsurveys'] = 2
 		if c[0] == 2: plugplan[-1]['cartsurveys'] = 3
-	
+
 	# Read in all plates that are currently plugged
 	currentplug = session.execute("SET SCHEMA 'platedb'; "+
 		"SELECT crt.number, plt.plate_id "+
@@ -44,7 +44,7 @@ def assign_carts(apogee_choices, manga_choices, eboss_choices, errors, loud=True
 	for c,p in currentplug:
 		wcart = [x for x in range(len(plugplan)) if plugplan[x]['cart'] == c][0]
 		plugplan[wcart]['oldplate'] = p
-		
+
 	# Reorder plugplan to priority order
 	sort_plugplan, cart_order = [], [17, 16, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1]
 	for c in cart_order:
@@ -52,14 +52,14 @@ def assign_carts(apogee_choices, manga_choices, eboss_choices, errors, loud=True
 		if len(pidx) == 0: continue
 		sort_plugplan.append(plugplan[pidx[0]])
 	plugplan = sort_plugplan
-		
+
 	# Save MaNGA choices to cartridges (since they are the most dependent)
 	# TO-DO
 	manpicks = manga_choices
 
 	# Find currently-plugged MaNGA plates, and adjust the cart order
-	from sdss.internal.manga.Totoro.dbclasses.plate import Plates
-	pluggedPlates = Plates.getPlugged()
+	from sdss.internal.manga.Totoro.dbclasses.plate import getPlugged
+	pluggedPlates = getPlugged()
 	man_cartnum, man_pctcomplete = [], []
 	for plate in pluggedPlates:
 		man_cartnum.append(plate.getActiveCartNumber())
@@ -74,7 +74,7 @@ def assign_carts(apogee_choices, manga_choices, eboss_choices, errors, loud=True
 		cart_order.append(man_cartnum[c])
 	print(cart_order)
 
-	
+
 	# Save APOGEE-II choices to cartridges
 	apgsaved = np.zeros(len(apogee_choices))
 	apgpicks = []
@@ -99,7 +99,7 @@ def assign_carts(apogee_choices, manga_choices, eboss_choices, errors, loud=True
 		thispick['cart'] = plugplan[carts_avail[0]]['cart']
 		plugplan[carts_avail[0]]['cart'] = -1
 		apgpicks.append(thispick)
-		
+
 	# Save eBOSS choices to cartridges
 	ebosaved = np.zeros(len(eboss_choices))
 	ebopicks = []
@@ -123,10 +123,10 @@ def assign_carts(apogee_choices, manga_choices, eboss_choices, errors, loud=True
 		thispick['cart'] = plugplan[carts_avail[0]]['cart']
 		plugplan[carts_avail[0]]['cart'] = -1
 		ebopicks.append(thispick)
-	
+
 	cart_end = time()
 	if loud:
 		print("[PY] Assigned cartridges (%.3f sec)" % (cart_end - cart_start))
-	
+
 	return apgpicks, manpicks, ebopicks
-		
+
