@@ -88,14 +88,20 @@ def assign_carts(apogee_choices, manga_choices, eboss_choices, errors, loud=True
 		thispick['plate'] = apogee_choices[i]['plate']
 		plugplan[wplate[0]]['cart'] = -1
 		apgsaved[i] = 1
+		thispick.pop('coobs', None)
 		apgpicks.append(thispick)
 	# Second loop: assign plates to carts which are not plugged
 	for i in range(len(apogee_choices)):
 		if apgsaved[i] == 1: continue
-		carts_avail = [x for x in range(len(plugplan)) if plugplan[x]['cart'] >= 0 and (plugplan[x]['cartsurveys'] == 1 or plugplan[x]['cartsurveys'] == 3)]
+		if apogee_choices[i]['coobs']:
+			carts_avail = [x for x in range(len(plugplan)) if plugplan[x]['cart'] >= 0 and plugplan[x]['cart'] <= 4]
+			if len(carts_avail) == 0: carts_avail = [x for x in range(len(plugplan)) if plugplan[x]['cart'] >= 0 and (plugplan[x]['cartsurveys'] == 1 or plugplan[x]['cartsurveys'] == 3)]
+		else:
+			carts_avail = [x for x in range(len(plugplan)) if plugplan[x]['cart'] >= 0 and (plugplan[x]['cartsurveys'] == 1 or plugplan[x]['cartsurveys'] == 3)]
 		if len(carts_avail) == 0: continue
 		# Save new values to apgpicks
 		thispick = apogee_choices[i]
+		thispick.pop('coobs', None)
 		thispick['cart'] = plugplan[carts_avail[0]]['cart']
 		plugplan[carts_avail[0]]['cart'] = -1
 		apgpicks.append(thispick)

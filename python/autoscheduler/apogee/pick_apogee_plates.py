@@ -94,7 +94,7 @@ def pick_plates(apg, obs, par, times, lengths, schedule, loud=True):
 		if chosen[c,2] < 0: thisbak2 = -1
 		else: thisbak2 = apg[int(chosen[c,2])].plateid
 	
-		picks.append({'obsmjd': thistime-2400000, 'exposure_length': thislength, 'plate': thisplate, 'first_backup': thisbak1, 'second_backup': thisbak2, 'visits_expected': apg[int(chosen[c,0])].vplan, 'visits_complete': apg[int(chosen[c,0])].vdone, 'sn': int(apg[int(chosen[c,0])].sn), 'pct_complete': apg[int(chosen[c,0])].pct()})
+		picks.append({'obsmjd': thistime-2400000, 'exposure_length': thislength, 'plate': thisplate, 'first_backup': thisbak1, 'second_backup': thisbak2, 'coobs': apg[int(chosen[c,0])].coobs})
 		
 	return picks
 	

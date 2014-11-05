@@ -30,6 +30,7 @@ class apgplate(object):
 	hist = ''
 	cadence = ''
 	stack = 0
+	coobs = False
 		
 	# Determine most recent observation time
 	def maxhist(self):
@@ -76,6 +77,19 @@ def get_plates(errors, plan=False, loud=True):
 				"INNER JOIN platedb.plate_status AS plts ON (plts.pk=p2ps.plate_status_pk)) "+
 			"WHERE surv.label='APOGEE-2' AND plts.label = 'Accepted' AND ploc.label = 'APO' "+
 			"ORDER BY plt.plate_id").fetchall()
+
+		stage1man = session.execute("SET SCHEMA 'platedb'; "+
+			"SELECT plt.location_id, ptg.center_ra, ptg.center_dec, plt.plate_id, pltg.hour_angle, pltg.priority, plt.design_pk, plt.name, pltg.ha_observable_max, pltg.ha_observable_min, plt.pk, plt.current_survey_mode_pk "+
+			"FROM (((((((platedb.plate AS plt "+
+				"INNER JOIN platedb.plate_to_survey AS p2s ON (p2s.plate_pk = plt.pk)) "+
+				"INNER JOIN platedb.survey AS surv ON (p2s.survey_pk = surv.pk)) "+
+				"INNER JOIN platedb.plate_pointing AS pltg ON (pltg.plate_pk=plt.pk)) "+
+				"INNER JOIN platedb.pointing AS ptg ON (pltg.pointing_pk=ptg.pk)) "+
+				"INNER JOIN platedb.plate_location AS ploc ON (ploc.pk=plt.plate_location_pk)) "+
+				"INNER JOIN platedb.plate_to_plate_status AS p2ps ON (p2ps.plate_pk=plt.pk)) "+
+				"INNER JOIN platedb.plate_status AS plts ON (plts.pk=p2ps.plate_status_pk)) "+
+			"WHERE surv.label='MaNGA' AND plts.label = 'Accepted' AND ploc.label = 'APO' "+
+			"ORDER BY plt.plate_id").fetchall()
 	else:
 		stage1 = session.execute("SET SCHEMA 'platedb'; "+
 			"SELECT plt.location_id, ptg.center_ra, ptg.center_dec, plt.plate_id, pltg.hour_angle, pltg.priority, plt.design_pk, plt.name, pltg.ha_observable_max, pltg.ha_observable_min, plt.pk, plt.current_survey_mode_pk "+
@@ -88,6 +102,7 @@ def get_plates(errors, plan=False, loud=True):
 				"LEFT JOIN platedb.plate_pointing as pltg ON (pltg.plate_pk=plt.pk)) "+
 				"LEFT JOIN platedb.pointing AS ptg ON (pltg.pointing_pk=ptg.pk)) "+
 			"WHERE surv.label='APOGEE-2' ORDER BY crt.number").fetchall()
+		stage1man = None
 	
 	# Setup APOGEE-II data structure
 	apg = []
@@ -129,6 +144,14 @@ def get_plates(errors, plan=False, loud=True):
 			apg[-1].apgver = 999
 	stage1_end = time()
 	if loud: print("[SQL] Read in APOGEE-II plates (%.3f sec)" % ((stage1_end - stage1_start)))
+
+	# Determine co-observed plates
+	if stage1man:
+		for m in stage1man:
+			# Find this MaNGA plate in the APOGEE-II list
+			match_idx = [x for x in range(len(apg)) if apg[x].plateid == m[3]]
+			if len(match_idx) > 0:
+				apg[match_idx[0]].coobs = True
 	
 	# Let everyone know there are bad database entries, if necessary
 	if len(missing) > 0:

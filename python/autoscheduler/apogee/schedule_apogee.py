@@ -24,7 +24,7 @@ def schedule_apogee(schedule, errors, plan=False, loud=True):
 	# If APOGEE-II starts the split night
 	if schedule['bright_start'] < schedule['dark_start']:
 		# Determine whether we should add another exposure (leftover time > 15min)
-		if len(times) < par['ncarts'] and nightlength - sum(lengths) > (15/60):
+		if len(times) < par['ncarts'] and nightlength - sum(lengths) > 0:
 			times.append(schedule['bright_start'] + len(times) * (par['exposure'] + par['overhead']) / 60 / 24)
 			lengths.append(nightlength - sum(lengths))
 		# Because APOGEE-II is first, the last exposure will not have overhead
@@ -33,7 +33,7 @@ def schedule_apogee(schedule, errors, plan=False, loud=True):
 	# APOGEE-II ends the night
 	else:
 		# Determine whether we can add an exposure (leftover time > 15min)
-		if len(times) < par['ncarts'] and nightlength - sum(lengths) > (15/60 + par['overhead'] / 60):
+		if len(times) < par['ncarts'] and nightlength - sum(lengths) > par['overhead'] / 60:
 			times.append(schedule['bright_start'] + len(times) * (par['exposure'] + par['overhead']) / 60 / 24)
 			lengths.append(nightlength - sum(lengths))
 
