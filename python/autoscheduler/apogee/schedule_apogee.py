@@ -22,7 +22,7 @@ def schedule_apogee(schedule, errors, plan=False, loud=True):
 	lengths = [(par['exposure'] + par['overhead']) / 60 for x in range(nslots)]
 	
 	# If APOGEE-II starts the split night
-	if schedule['bright_start'] < schedule['dark_start']:
+	if schedule['bright_start'] < schedule['dark_start'] or schedule['dark_start'] == 0:
 		# Determine whether we should add another exposure (leftover time > 15min)
 		if len(times) < par['ncarts'] and nightlength - sum(lengths) > 0:
 			times.append(schedule['bright_start'] + len(times) * (par['exposure'] + par['overhead']) / 60 / 24)
