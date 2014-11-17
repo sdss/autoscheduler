@@ -6,11 +6,15 @@ def schedule_manga(schedule, errors, plan=False, loud=True):
 	plates = []
 
 	if plan:
-		manga_obj = Plugger(startDate=schedule['manga_start'], endDate=schedule['manga_end'])
-		manga_output = manga_obj.getOutput()
+		try:
+			manga_obj = Plugger(startDate=schedule['manga_start'], endDate=schedule['manga_end'])
+			manga_output = manga_obj.getOutput()
 
-		for k,v in manga_output.iteritems():
-			plates.append({'plateid': v, 'cart': k})
+			for k,v in manga_output.iteritems():
+				plates.append({'plateid': v, 'cart': k})
+
+		except Exception as e:
+			errors.append('MANGA: %s' % e)
 
 	else:
 		# Get raw output from MaNGA submodule
