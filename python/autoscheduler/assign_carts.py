@@ -54,7 +54,6 @@ def assign_carts(apogee_choices, manga_choices, eboss_choices, errors, loud=True
 	plugplan = sort_plugplan
 
 	# Save MaNGA choices to cartridges (since they are the most dependent)
-	# TO-DO
 	manpicks = manga_choices
 
 	# Find currently-plugged MaNGA plates, and adjust the cart order
@@ -66,14 +65,17 @@ def assign_carts(apogee_choices, manga_choices, eboss_choices, errors, loud=True
 		man_pctcomplete.append(plate.getPlateCompletion())
 	man_pctsort = np.argsort(man_pctcomplete)
 	man_cartnum, man_pctcomplete = [man_cartnum[-x-1] for x in man_pctsort], [man_pctcomplete[-x-1] for x in man_pctsort]
-
-	print(cart_order)
 	for c in range(len(man_cartnum)):
 		man_entry = [x for x in range(len(cart_order)) if cart_order[x] == man_cartnum[c]]
 		if len(man_entry) > 0: cart_order.pop(man_entry[0])
 		cart_order.append(man_cartnum[c])
-	print(cart_order)
-
+	
+	# Remove any cartridges already chosen by manga
+	if len(manpicks) > 0:
+		for c in manpicks:
+			wcart = [x for x in range(len(plugplan)) if plugplan[x]['cart'] == c['cart']]
+			if len(wcart) == 0: continue
+			plugplan[wcart[0]]['cart'] = -1
 
 	# Save APOGEE-II choices to cartridges
 	apgsaved = np.zeros(len(apogee_choices))
