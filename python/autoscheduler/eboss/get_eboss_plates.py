@@ -2,6 +2,8 @@ from __future__ import print_function, division
 from time import time
 import os
 import math
+import sdss.internal.database.apo.platedb.ModelClasses as plateDB
+from sqlalchemy import or_
 
 # EBOPLATE OBJECT DENITION
 # DESCRIPTION: eBOSS Plate Object
@@ -41,53 +43,48 @@ def get_plates(plan=False, loud=True):
     if (os.path.dirname(os.path.realpath(__file__))).find('utah.edu') >= 0: from sdss.internal.database.connections.UtahLocalConnection import db
     else: from sdss.internal.database.connections.APODatabaseUserLocalConnection import db
     session = db.Session()
-    
-    # Pull all relevant plate information for eBOSS plates
+
+    # Look at all plates for plugging purposes
     stage1_start = time()
     if plan:
-        stage1 = session.execute("SET SCHEMA 'platedb'; "+
-            "SELECT ptg.center_ra, ptg.center_dec, plt.plate_id, pltg.hour_angle, pltg.priority, pltg.ha_observable_max, pltg.ha_observable_min, plt.pk "+
-            "FROM (((((((platedb.plate AS plt "+
-                "INNER JOIN platedb.plate_to_survey AS p2s ON (p2s.plate_pk = plt.pk)) "+
-                "INNER JOIN platedb.survey AS surv ON (p2s.survey_pk = surv.pk)) "+
-                "INNER JOIN platedb.plate_pointing AS pltg ON (pltg.plate_pk=plt.pk)) "+
-                "INNER JOIN platedb.pointing AS ptg ON (pltg.pointing_pk=ptg.pk)) "+
-                "INNER JOIN platedb.plate_location AS ploc ON (ploc.pk=plt.plate_location_pk)) "+
-                "INNER JOIN platedb.plate_to_plate_status AS p2ps ON (p2ps.plate_pk=plt.pk))"+
-                "INNER JOIN platedb.plate_status AS plts ON (plts.pk=p2ps.plate_status_pk))"+
-            "WHERE (surv.label='BOSS' OR surv.label='eBOSS') AND plt.plate_id >= 4800 "+
-            	"AND (plts.label = 'Accepted' OR plts.label = 'Special') AND ploc.label = 'APO' "+
-            "ORDER BY plt.plate_id").fetchall()
+       # Pull all information on eBOSS plates
+        ebossPlates = session.query(plateDB.Plate, plateDB.Pointing, plateDB.PlatePointing).join(plateDB.PlateToSurvey, plateDB.Survey, plateDB.PlatePointing, plateDB.Pointing, plateDB.PlateLocation, plateDB.PlateToPlateStatus, plateDB.PlateStatus).filter(or_(plateDB.Survey.label == 'eBOSS', plateDB.Survey.label == 'BOSS'), plateDB.Plate.plate_id >= 4800).order_by(plateDB.Plate.plate_id).all()
+
+        # Add all incomplete plates to be analyzed
+        ebo = []
+        for p in ebossPlates:
+            if p.Plate.calculatedCompletionStatus() == 'Complete' or p.Plate.calculatedCompletionStatus() == 'Force Complete': continue
+            ebo.append(eboplate())
+            ebo[-1].ra = p.Pointing.center_ra
+            ebo[-1].dec = p.Pointing.center_dec
+            ebo[-1].plateid = p.Plate.plate_id
+            ebo[-1].ha = p.PlatePointing.hour_angle
+            ebo[-1].manual_priority = p.PlatePointing.priority
+            try:
+                ebo[-1].maxha = p.PlatePointing.ha_observable_max
+                ebo[-1].minha = p.PlatePointing.ha_observable_min
+            except:
+                pass
+            ebo[-1].platepk = p.Plate.pk
+            ebo[-1].plugged = 0
     else:
-        stage1 = session.execute("SET SCHEMA 'platedb'; "+
-            "SELECT ptg.center_ra, ptg.center_dec, plt.plate_id, pltg.hour_angle, pltg.priority, pltg.ha_observable_max, pltg.ha_observable_min, plt.pk "+
-            "FROM (((((((platedb.active_plugging AS ac "+
+        plugged_plates = session.execute("SET SCHEMA 'platedb'; "+
+            "SELECT crt.number, plt.plate_id, plt.pk "+
+            "FROM ((((((platedb.active_plugging AS ac "+
                 "JOIN platedb.plugging AS plg ON (ac.plugging_pk=plg.pk)) "+
                 "LEFT JOIN platedb.cartridge AS crt ON (plg.cartridge_pk=crt.pk)) "+
                 "LEFT JOIN platedb.plate AS plt ON (plg.plate_pk=plt.pk)) "+
                 "LEFT JOIN platedb.plate_to_survey AS p2s ON (p2s.plate_pk=plt.pk)) "+
                 "LEFT JOIN platedb.survey AS surv ON (p2s.survey_pk = surv.pk)) "+
                 "LEFT JOIN platedb.plate_pointing as pltg ON (pltg.plate_pk=plt.pk)) "+
-                "LEFT JOIN platedb.pointing AS ptg ON (pltg.pointing_pk=ptg.pk)) "+
             "WHERE surv.label='BOSS' OR surv.label='eBOSS' ORDER BY crt.number").fetchall() 
-    # Setup eBOSS data structure
-    ebo = []
-    for i in range(len(stage1)):
-        ebo.append(eboplate())
-        ebo[i].ra = float(stage1[i][0])
-        ebo[i].dec = float(stage1[i][1])
-        ebo[i].plateid = stage1[i][2]
-        ebo[i].ha = float(stage1[i][3])
-        ebo[i].manual_priority = stage1[i][4]
-        if stage1[i][5]: ebo[i].maxha = float(stage1[i][5])
-        if stage1[i][6]: ebo[i].minha = float(stage1[i][6])
-        ebo[i].platepk = stage1[i][7]
-        ebo[i].plugged = 0
+        ebo = []
+        for i in range(len(plugged_plates)):
+            ebo.append(eboplate())
+            ebo[-1].plateid = int(plugged_plates[i][1])
+            ebo[-1].platepk = int(plugged_plates[i][2])
     stage1_end = time()
     if loud: print("[SQL] Read in eBOSS plates (%.3f sec)" % ((stage1_end - stage1_start)))
-    
-    # Read in previous eBOSS observations
-    # TO-DO
     
     # Determine what is currently plugged
     stage3_start = time()
