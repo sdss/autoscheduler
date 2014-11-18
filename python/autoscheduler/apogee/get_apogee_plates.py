@@ -171,8 +171,7 @@ def get_plates(errors, plan=False, loud=True):
 				"LEFT JOIN platedb.observation AS obs ON (exp.observation_pk=obs.pk)) "+
 				"LEFT JOIN platedb.plate_pointing AS pltg ON (obs.plate_pointing_pk=pltg.pk)) "+
 				"RIGHT JOIN platedb.plate AS plt ON (pltg.plate_pk=plt.pk)) "+
-			"WHERE (surv.label='APOGEE-2' OR surv.label='APOGEE') AND expf.label='Object' "+
-				"AND (qr.snr_standard >= 10.0 OR apr.snr >= 10.0) "+
+			"WHERE expf.label='Object' AND (qr.snr_standard >= 10.0 OR apr.snr >= 10.0) "+
 			"GROUP BY plt.plate_id, CAST (exp.start_time/86400 AS int) ORDER BY plt.plate_id").fetchall()
 	except: pass
 	stage2_end = time()
@@ -190,9 +189,11 @@ def get_plates(errors, plan=False, loud=True):
 		if stage2[i][4] != None:
 			sn = float(stage2[i][4])
 			sncnt = float(stage2[i][5])
-		else:
+		elif stage2[i][2] != None:
 			sn = float(stage2[i][2])
 			sncnt = float(stage2[i][3])
+		else:
+			sn, sncnt = 0, 0
 			
 		# Determine whether we can add this MJD to observation history
 		if sncnt >= 2:
