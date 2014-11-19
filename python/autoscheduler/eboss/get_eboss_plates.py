@@ -48,7 +48,7 @@ def get_plates(plan=False, loud=True):
     stage1_start = time()
     if plan:
        # Pull all information on eBOSS plates
-        ebossPlates = session.query(plateDB.Plate, plateDB.Pointing, plateDB.PlatePointing).join(plateDB.PlateToSurvey, plateDB.Survey, plateDB.PlatePointing, plateDB.Pointing, plateDB.PlateLocation, plateDB.PlateToPlateStatus, plateDB.PlateStatus).filter(or_(plateDB.Survey.label == 'eBOSS', plateDB.Survey.label == 'BOSS'), plateDB.Plate.plate_id >= 4800).order_by(plateDB.Plate.plate_id).all()
+        ebossPlates = session.query(plateDB.Plate, plateDB.Pointing, plateDB.PlatePointing).join(plateDB.PlateToSurvey, plateDB.Survey, plateDB.PlatePointing, plateDB.Pointing, plateDB.PlateLocation, plateDB.PlateToPlateStatus, plateDB.PlateStatus).filter(or_(plateDB.Survey.label == 'eBOSS', plateDB.Survey.label == 'BOSS'), plateDB.PlateStatus.label == 'Accepted', plateDB.PlateLocation.label == 'APO', plateDB.Plate.plate_id >= 4800).order_by(plateDB.Plate.plate_id).all()
 
         # Add all incomplete plates to be analyzed
         ebo = []
