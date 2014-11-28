@@ -65,7 +65,7 @@ def observability(apg, par, times, lengths, loud=True):
 				continue
 		
 			# Determine whether HAs of block are within observational range
-			if beglst[t] < minlst or endlst[t] > maxlst: 
+			if beglst[t] < usedminlst or endlst[t] > usedmaxlst: 
 				obsarr[p,t] = -1
 				continue
 		
