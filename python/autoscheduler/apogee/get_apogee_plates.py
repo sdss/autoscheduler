@@ -26,10 +26,11 @@ class apgplate(object):
 	manual_priority = 0
 	priority = 0.0
 	plugged = 0
-	sn = 0.0
+	snql, snred, sn = 0.0, 0.0, 0.0
 	hist = ''
 	cadence = ''
 	stack = 0
+	lead_surv = 'apg'
 	coobs = False
 		
 	# Determine most recent observation time
@@ -127,10 +128,12 @@ def get_plates(errors, plan=False, loud=True):
 			apg[-1].minha = float(stage1[i][9]) - 7.5
 			apg[-1].platepk = stage1[i][10]
 			apg[-1].plugged = 0
+			if stage1[i][12] is not None:
+				if stage1[i][12] == 2 or stage1[i][12] == 3: apg[i].survey = 'man'
 		except Exception as e:
 			print(e)
 			missing.append("%d (%s)" % (stage1[i][3], e))
-			continue
+			#continue
 		
 		# Get APOGEE version number and vplan for this plate
 		dvdata = session.execute("SELECT array_to_string(array_agg(dv.value),',') FROM platedb.design_value as dv WHERE (dv.design_field_pk=342 OR dv.design_field_pk=343 OR dv.design_field_pk=344 OR dv.design_field_pk=351 OR dv.design_field_pk=423 OR dv.design_field_pk=424) AND dv.design_pk=%d" % (designid)).fetchall()
@@ -189,11 +192,14 @@ def get_plates(errors, plan=False, loud=True):
 		if stage2[i][4] != None:
 			sn = float(stage2[i][4])
 			sncnt = float(stage2[i][5])
+			for v in range(len(wver)): apg[wver[v]].snred += float(stage2[i][4])
 		elif stage2[i][2] != None:
 			sn = float(stage2[i][2])
 			sncnt = float(stage2[i][3])
 		else:
 			sn, sncnt = 0, 0
+		if stage2[i][2] != None:
+			for v in range(len(wver)): apg[wver[v]].snql += float(stage2[i][2])
 			
 		# Determine whether we can add this MJD to observation history
 		if sncnt >= 2:
