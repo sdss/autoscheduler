@@ -29,8 +29,9 @@ class apgplate(object):
 	snql, snred, sn = 0.0, 0.0, 0.0
 	hist = ''
 	cadence = ''
+	plate_loc = ''
 	stack = 0
-	lead_surv = 'apg'
+	lead_survey = 'apg'
 	coobs = False
 		
 	# Determine most recent observation time
@@ -55,7 +56,7 @@ class apgplate(object):
 # DESCRIPTION: Reads in APOGEE-II plate information from platedb
 # INPUT: none
 # OUTPUT: apg -- list of objects with all APOGEE-II plate information
-def get_plates(errors, plan=False, loud=True, session=None):
+def get_plates(errors, plan=False, loud=True, session=None, atapo=True):
 	if session is None:
 		# Create database connection
 		if (os.path.dirname(os.path.realpath(__file__))).find('utah.edu') >= 0: 
@@ -67,18 +68,20 @@ def get_plates(errors, plan=False, loud=True, session=None):
 	# Pull all relevant plate information for APOGEE plates
 	stage1_start = time()
 	if plan:
-		stage1 = session.execute("SET SCHEMA 'platedb'; "+
-			"SELECT plt.location_id, ptg.center_ra, ptg.center_dec, plt.plate_id, pltg.hour_angle, pltg.priority, plt.design_pk, plt.name, pltg.ha_observable_max, pltg.ha_observable_min, plt.pk, plt.current_survey_mode_pk "+
-			"FROM (((((((platedb.plate AS plt "+
-				"INNER JOIN platedb.plate_to_survey AS p2s ON (p2s.plate_pk = plt.pk)) "+
-				"INNER JOIN platedb.survey AS surv ON (p2s.survey_pk = surv.pk)) "+
-				"INNER JOIN platedb.plate_pointing AS pltg ON (pltg.plate_pk=plt.pk)) "+
-				"INNER JOIN platedb.pointing AS ptg ON (pltg.pointing_pk=ptg.pk)) "+
-				"INNER JOIN platedb.plate_location AS ploc ON (ploc.pk=plt.plate_location_pk)) "+
-				"INNER JOIN platedb.plate_to_plate_status AS p2ps ON (p2ps.plate_pk=plt.pk)) "+
-				"INNER JOIN platedb.plate_status AS plts ON (plts.pk=p2ps.plate_status_pk)) "+
-			"WHERE surv.label='APOGEE-2' AND plts.label = 'Accepted' AND ploc.label = 'APO' "+
-			"ORDER BY plt.plate_id").fetchall()
+		qstr = "SET SCHEMA 'platedb'; "
+		qstr += "SELECT plt.location_id, ptg.center_ra, ptg.center_dec, plt.plate_id, pltg.hour_angle, pltg.priority, plt.design_pk, plt.name, pltg.ha_observable_max, pltg.ha_observable_min, plt.pk, plt.current_survey_mode_pk, ploc.label "
+		qstr += "FROM (((((((platedb.plate AS plt "
+		qstr += "INNER JOIN platedb.plate_to_survey AS p2s ON (p2s.plate_pk = plt.pk)) "
+		qstr += "INNER JOIN platedb.survey AS surv ON (p2s.survey_pk = surv.pk)) "
+		qstr += "INNER JOIN platedb.plate_pointing AS pltg ON (pltg.plate_pk=plt.pk)) "
+		qstr += "INNER JOIN platedb.pointing AS ptg ON (pltg.pointing_pk=ptg.pk)) "
+		qstr += "INNER JOIN platedb.plate_location AS ploc ON (ploc.pk=plt.plate_location_pk)) "
+		qstr += "INNER JOIN platedb.plate_to_plate_status AS p2ps ON (p2ps.plate_pk=plt.pk)) "
+		qstr += "INNER JOIN platedb.plate_status AS plts ON (plts.pk=p2ps.plate_status_pk)) "
+		qstr += "WHERE surv.label='APOGEE-2' AND plts.label = 'Accepted'"
+		if atapo: qstr += "AND ploc.label = 'APO' "
+		qstr += "ORDER BY plt.plate_id"
+		stage1 = session.execute(qstr).fetchall()
 
 		stage1man = session.execute("SET SCHEMA 'platedb'; "+
 			"SELECT plt.location_id, ptg.center_ra, ptg.center_dec, plt.plate_id, pltg.hour_angle, pltg.priority, plt.design_pk, plt.name, pltg.ha_observable_max, pltg.ha_observable_min, plt.pk, plt.current_survey_mode_pk "+
@@ -94,11 +97,12 @@ def get_plates(errors, plan=False, loud=True, session=None):
 			"ORDER BY plt.plate_id").fetchall()
 	else:
 		stage1 = session.execute("SET SCHEMA 'platedb'; "+
-			"SELECT plt.location_id, ptg.center_ra, ptg.center_dec, plt.plate_id, pltg.hour_angle, pltg.priority, plt.design_pk, plt.name, pltg.ha_observable_max, pltg.ha_observable_min, plt.pk, plt.current_survey_mode_pk "+
-			"FROM (((((((platedb.active_plugging AS ac "+
+			"SELECT plt.location_id, ptg.center_ra, ptg.center_dec, plt.plate_id, pltg.hour_angle, pltg.priority, plt.design_pk, plt.name, pltg.ha_observable_max, pltg.ha_observable_min, plt.pk, plt.current_survey_mode_pk, ploc.label "+
+			"FROM ((((((((platedb.active_plugging AS ac "+
 				"JOIN platedb.plugging AS plg ON (ac.plugging_pk=plg.pk)) "+
 				"LEFT JOIN platedb.cartridge AS crt ON (plg.cartridge_pk=crt.pk)) "+
 				"LEFT JOIN platedb.plate AS plt ON (plg.plate_pk=plt.pk)) "+
+				"LEFT JOIN platedb.plate_location AS ploc ON (ploc.pk=plt.plate_location_pk)) "
 				"LEFT JOIN platedb.plate_to_survey AS p2s ON (p2s.plate_pk=plt.pk)) "+
 				"LEFT JOIN platedb.survey AS surv ON (p2s.survey_pk = surv.pk)) "+
 				"LEFT JOIN platedb.plate_pointing as pltg ON (pltg.plate_pk=plt.pk)) "+
@@ -129,8 +133,9 @@ def get_plates(errors, plan=False, loud=True, session=None):
 			apg[-1].minha = float(stage1[i][9]) - 7.5
 			apg[-1].platepk = stage1[i][10]
 			apg[-1].plugged = 0
-			if stage1[i][12] is not None:
-				if stage1[i][12] == 2 or stage1[i][12] == 3: apg[i].survey = 'man'
+			if stage1[i][11] is not None:
+				if stage1[i][11] == 2 or stage1[i][11] == 3: apg[-1].lead_survey = 'man'
+			apg[-1].plate_loc = stage1[i][12]
 		except Exception as e:
 			print(e)
 			missing.append("%d (%s)" % (stage1[i][3], e))
