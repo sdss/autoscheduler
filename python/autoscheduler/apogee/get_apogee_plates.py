@@ -55,13 +55,14 @@ class apgplate(object):
 # DESCRIPTION: Reads in APOGEE-II plate information from platedb
 # INPUT: none
 # OUTPUT: apg -- list of objects with all APOGEE-II plate information
-def get_plates(errors, plan=False, loud=True):
-	# Create database connection
-	if (os.path.dirname(os.path.realpath(__file__))).find('utah.edu') >= 0: 
-		from sdss.internal.database.connections.UtahLocalConnection import db
-	else: 
-		from sdss.internal.database.connections.APOSDSSIIIUserLocalConnection import db
-	session = db.Session()
+def get_plates(errors, plan=False, loud=True, session=None):
+	if session is None:
+		# Create database connection
+		if (os.path.dirname(os.path.realpath(__file__))).find('utah.edu') >= 0: 
+			from sdss.internal.database.connections.UtahLocalConnection import db
+		else: 
+			from sdss.internal.database.connections.APOSDSSIIIUserLocalConnection import db
+		session = db.Session()
 	
 	# Pull all relevant plate information for APOGEE plates
 	stage1_start = time()
