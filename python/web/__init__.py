@@ -12,7 +12,7 @@ import flask
 import jinja_filters
 from .color_print import print_warning, print_error, print_info
 
-def create_app(debug=False):
+def create_app(debug=False, dev=False):
     app = flask.Flask(__name__)
 
     app.debug = debug
@@ -32,7 +32,7 @@ def create_app(debug=False):
         # Set up getsentry.com logging - only use when in production
         # ----------------------------------------------------------
         from raven.contrib.flask import Sentry
-        
+
         dsn = 'https://8b2c5489560e4ea0a170064f475afa13:bfa37568734c40279dcc73dfe1e68708@app.getsentry.com/29096'
         app.config['SENTRY_DSN'] = dsn
         sentry = Sentry(app)
@@ -64,10 +64,15 @@ def create_app(debug=False):
             server_config_file = os.path.join(os.path.dirname(os.path.abspath(__file__)),
                                               'configuration_files',
                                               'dev-utah.sdss.edu.cfg')
-        else:
+        elif dev == False:
             server_config_file = os.path.join(os.path.dirname(os.path.abspath(__file__)),
                                               'configuration_files',
                                               'sdss-db4.local.cfg')
+        else:
+            server_config_file = os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                                              'configuration_files',
+                                              'sdss-db4.dev.cfg')
+
     else:
         try:
             import uwsgi
@@ -84,7 +89,7 @@ def create_app(debug=False):
 
     #print(app.config)
     print("Server_name = {0}".format(app.config["SERVER_NAME"]))
-    
+
     # Load Modules as needed
     #execfile(app.config['MODULES_INIT_SCRIPT'], globals())
     #module('load', 'sdss_python_module/trunk')
@@ -95,13 +100,13 @@ def create_app(debug=False):
     #except ImportError:
     #    print_error("The Python module 'sdss' could not be loaded.")
     #    sys.exit(1)
-    
-    
+
+
     # This "with" is necessary to prevent exceptions of the form:
     #    RuntimeError: working outside of application context
     with app.app_context():
         from .model.database import db
-    
+
     # -------------------
     # Register blueprints
     # -------------------

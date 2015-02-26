@@ -30,6 +30,10 @@ parser.add_argument('-r','--rules',
                     action="store_true",
                     default=False,
                     required=False)
+parser.add_argument('-s','--safe',
+                    help='connect app to dev db.',
+                    action="store_true",
+                    required=False)
 
 args = parser.parse_args()
 
@@ -38,7 +42,7 @@ args = parser.parse_args()
 # -------------------
 from web import create_app
 
-app = create_app(debug=args.debug)
+app = create_app(debug=args.debug, dev=args.safe)
 
 # Can't create the database connection unless we've created the app
 #from web.model.database import db
