@@ -28,6 +28,7 @@ class apgplate(object):
 	plugged = 0
 	snql, snred, sn = 0.0, 0.0, 0.0
 	hist = ''
+	reduction = ''
 	cadence = ''
 	plate_loc = ''
 	stack = 0
@@ -211,6 +212,8 @@ def get_plates(errors, plan=False, loud=True, session=None, atapo=True):
 		if sncnt >= 2:
 			for v in range(len(wver)): 
 				apg[wver[v]].hist += "%7d," % (stage2[i][1] + 2400000)
+				if stage2[i][4] != None: apg[wver[v]].reduction += '1,'
+				else: apg[wver[v]].reduction += '0,'
 				apg[wver[v]].vdone += 1
 		# Add all good S/N to this plate
 		for v in range(len(wver)): apg[wver[v]].sn += sn
