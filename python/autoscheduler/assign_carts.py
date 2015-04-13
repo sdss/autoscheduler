@@ -29,7 +29,6 @@ def assign_carts(apogee_choices, manga_choices, eboss_choices, errors, loud=True
 		plugplan.append({'cart': c[0], 'cartsurveys': 0, 'oldplate': 0})
 		if c[0] < 10: plugplan[-1]['cartsurveys'] = 1
 		if c[0] >= 10: plugplan[-1]['cartsurveys'] = 2
-		if c[0] == 2: plugplan[-1]['cartsurveys'] = 3
 
 	# Read in all plates that are currently plugged
 	currentplug = session.execute("SET SCHEMA 'platedb'; "+
@@ -97,9 +96,9 @@ def assign_carts(apogee_choices, manga_choices, eboss_choices, errors, loud=True
 		if apgsaved[i] == 1: continue
 		if apogee_choices[i]['coobs']:
 			carts_avail = [x for x in range(len(plugplan)) if plugplan[x]['cart'] >= 0 and plugplan[x]['cart'] <= 4]
-			if len(carts_avail) == 0: carts_avail = [x for x in range(len(plugplan)) if plugplan[x]['cart'] >= 0 and (plugplan[x]['cartsurveys'] == 1 or plugplan[x]['cartsurveys'] == 3)]
+			if len(carts_avail) == 0: carts_avail = [x for x in range(len(plugplan)) if plugplan[x]['cart'] >= 0 and plugplan[x]['cartsurveys'] == 1]
 		else:
-			carts_avail = [x for x in range(len(plugplan)) if plugplan[x]['cart'] >= 0 and (plugplan[x]['cartsurveys'] == 1 or plugplan[x]['cartsurveys'] == 3)]
+			carts_avail = [x for x in range(len(plugplan)) if plugplan[x]['cart'] >= 0 and plugplan[x]['cartsurveys'] == 1]
 		if len(carts_avail) == 0: continue
 		# Save new values to apgpicks
 		thispick = apogee_choices[i]

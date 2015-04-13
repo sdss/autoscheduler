@@ -18,19 +18,19 @@ for i=0L, n_elements(timelines)-1 do begin
 	
 	; Figure out twilight for tonight
 	bright_twilight_start = -8.0
-	if schedule[i].jd le 2456948 then begin bright_twilight_end = -8.0 ; Summer 2014                                                                                                
-	endif else if schedule[i].jd gt 2456948 and schedule[i].jd le 2457102 then begin bright_twilight_end = -12.0 ; winter 2014-15                                                           
-	endif else if schedule[i].jd gt 2457102 and schedule[i].jd le 2457302 then begin bright_twilight_end = -8.0 ; summer 2015                                                               
-	endif else if schedule[i].jd gt 2457302 and schedule[i].jd le 2457481 then begin bright_twilight_end = -12.0 ; winter 2015-16                                                           
-	endif else if schedule[i].jd gt 2457481 and schedule[i].jd le 2457657 then begin bright_twilight_end = -8.0 ; summer 2016                                                               
-	endif else if schedule[i].jd gt 2457657 and schedule[i].jd le 2457834 then begin bright_twilight_end = -12.0 ; winter 2016-17                                                           
-	endif else if schedule[i].jd gt 2457834 and schedule[i].jd le 2458017 then begin bright_twilight_end = -8.0 ; summer 2017                                                               
-	endif else if schedule[i].jd gt 2458017 and schedule[i].jd le 2458198 then begin bright_twilight_end = -12.0 ; winter 2017-18                                                           
-	endif else if schedule[i].jd gt 2458198 and schedule[i].jd le 2458396 then begin bright_twilight_end = -8.0 ; summer 2018                                                               
-	endif else if schedule[i].jd gt 2458396 and schedule[i].jd le 2458575 then begin bright_twilight_end = -12.0 ; winter 2018-19                                                           
-	endif else if schedule[i].jd gt 2458575 and schedule[i].jd le 2458750 then begin bright_twilight_end = -8.0 ; summer 2019                                                               
-	endif else if schedule[i].jd gt 2458750 and schedule[i].jd le 2458929 then begin bright_twilight_end = -12.0 ; winter 2019-20                                                           
-	endif else if schedule[i].jd gt 2458929 then begin bright_twilight_end = -8.0 ; summer 2020                                                                                     
+	if schedule[i].jd le 2456948 then begin bright_twilight_end = -8.0 ; Summer 2014                                             
+	endif else if schedule[i].jd gt 2456948 and schedule[i].jd le 2457102 then begin bright_twilight_end = -12.0 ; winter 2014-15
+	endif else if schedule[i].jd gt 2457102 and schedule[i].jd le 2457302 then begin bright_twilight_end = -8.0 ; summer 2015    
+	endif else if schedule[i].jd gt 2457302 and schedule[i].jd le 2457481 then begin bright_twilight_end = -12.0 ; winter 2015-16
+	endif else if schedule[i].jd gt 2457481 and schedule[i].jd le 2457657 then begin bright_twilight_end = -8.0 ; summer 2016    
+	endif else if schedule[i].jd gt 2457657 and schedule[i].jd le 2457834 then begin bright_twilight_end = -12.0 ; winter 2016-17
+	endif else if schedule[i].jd gt 2457834 and schedule[i].jd le 2458017 then begin bright_twilight_end = -8.0 ; summer 2017    
+	endif else if schedule[i].jd gt 2458017 and schedule[i].jd le 2458198 then begin bright_twilight_end = -12.0 ; winter 2017-18
+	endif else if schedule[i].jd gt 2458198 and schedule[i].jd le 2458396 then begin bright_twilight_end = -8.0 ; summer 2018    
+	endif else if schedule[i].jd gt 2458396 and schedule[i].jd le 2458575 then begin bright_twilight_end = -12.0 ; winter 2018-19
+	endif else if schedule[i].jd gt 2458575 and schedule[i].jd le 2458750 then begin bright_twilight_end = -8.0 ; summer 2019    
+	endif else if schedule[i].jd gt 2458750 and schedule[i].jd le 2458929 then begin bright_twilight_end = -12.0 ; winter 2019-20
+	endif else if schedule[i].jd gt 2458929 then begin bright_twilight_end = -8.0 ; summer 2020                                  
 	endif
 	
 	where_darktime = WHERE(alt_sun lt -15, ndarktime)

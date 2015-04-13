@@ -45,7 +45,6 @@ def read_schedule(pwd, errors, mjd=-1, surveys=['apogee','eboss','manga'], loud=
 	if mjd < 0:
 		jd_now = get_juldate()
 		utc_hr = (((jd_now - int(jd_now))+0.5)*24+19) % 24
-		print(jd_now, utc_hr)
 		# For plugging, we want the next day after 9PM
 		if plan:
 			if utc_hr > 21 or utc_hr <= 7: tonight = int(jd_now)+1
@@ -55,8 +54,7 @@ def read_schedule(pwd, errors, mjd=-1, surveys=['apogee','eboss','manga'], loud=
 			tonight = int(jd_now-0.1)
 	else:
 		tonight = 2400000 + int(mjd)
-	if loud:
-		print("[PY] Scheduling MJD %5d" % (tonight - 2400000))
+	if loud: print("[PY] Scheduling MJD %5d" % (tonight - 2400000))
 	
 	# Find line to use in the schedule file
 	currjd = [x for x in range(len(schedule)) if schedule[x]['jd'] == tonight]

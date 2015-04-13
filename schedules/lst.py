@@ -8,8 +8,8 @@ import json
 weather = 0.50
 south_frac = 0.75
 apg_frac = 1
-man_frac = 12
-ebo_frac = 4
+man_frac = 13
+ebo_frac = 6
 
 apo = obs.Site(32.789278, -105.820278)
 schedule = np.loadtxt(sys.argv[1])
@@ -19,13 +19,13 @@ apg_met, man_met, ebo_met = [], [], []
 for d in range(schedule.shape[0]):
 	# APOGEE-II LST Calculations
 	apg_start, apg_end = schedule[d,4], schedule[d,5]
-	if apg_start != 0:
+	if apg_start > 1:
 		apg_length = int((apg_end - apg_start) * 24 * 60 / 87 + 0.4)
 		midpts = apg_start + np.arange(apg_length)*(87/60/24) + 0.5/24
-		nightlst = [apo.localSiderialTime(x) for x in midpts]
-		for l in nightlst: apg_lst[int(l)] += 87/60
-		if len(apg_met) == 0: apg_met.append([int(schedule[d,0]-2400000), len(nightlst)])
-		else: apg_met.append([int(schedule[d,0]-2400000), len(nightlst) + apg_met[-1][1]])
+		apg_nightlst = [apo.localSiderialTime(x) for x in midpts]
+		for l in apg_nightlst: apg_lst[int(l)] += 87/60
+		if len(apg_met) == 0: apg_met.append([int(schedule[d,0]-2400000), len(apg_nightlst)])
+		else: apg_met.append([int(schedule[d,0]-2400000), len(apg_nightlst) + apg_met[-1][1]])
 	else:
 		if len(apg_met) == 0: apg_met.append([int(schedule[d,0]-2400000), 0])
 		else: apg_met.append([int(schedule[d,0]-2400000), apg_met[-1][1]])
@@ -33,19 +33,20 @@ for d in range(schedule.shape[0]):
 
 	# eBOSS LST Calculations
 	ebo_start, ebo_end = schedule[d,8], schedule[d,9]
-	if ebo_start != 0:
+	if ebo_start > 1:
 		ebo_length = int((ebo_end - ebo_start) * 24 * 60 / 16.5 + 0.4)
 		midpts = ebo_start + np.arange(ebo_length)*(16.5/60/24) + 8.25/60/24
-		nightlst = [apo.localSiderialTime(x) for x in midpts]
-		for l in nightlst:
+		ebo_nightlst = [apo.localSiderialTime(x) for x in midpts]
+		ebo_nightlen = 0.0
+		for l in ebo_nightlst:
 			if int(l) > 6 and int(l) <= 18:
 				ebo_lst[int(l)] += 16.5/60
-				if len(ebo_met) == 0: ebo_met.append([int(schedule[d,0]-2400000), len(nightlst)])
-				else: ebo_met.append([int(schedule[d,0]-2400000), len(nightlst) + ebo_met[-1][1]])
+				ebo_nightlen += 1
 			else: 
 				ebo_lst[int(l)] += 16.5/60 * south_frac
-				if len(ebo_met) == 0: ebo_met.append([int(schedule[d,0]-2400000), int(len(nightlst) * south_frac)])
-				else: ebo_met.append([int(schedule[d,0]-2400000), int(len(nightlst) * south_frac) + ebo_met[-1][1]])
+				ebo_nightlen += 1 * south_frac
+		if len(ebo_met) == 0: ebo_met.append([int(schedule[d,0]-2400000), int(ebo_nightlen)])
+		else: ebo_met.append([int(schedule[d,0]-2400000), int(ebo_nightlen) + ebo_met[-1][1]])
 	else:
 		if len(ebo_met) == 0: ebo_met.append([int(schedule[d,0]-2400000), 0])
 		else: ebo_met.append([int(schedule[d,0]-2400000), ebo_met[-1][1]])
@@ -53,19 +54,20 @@ for d in range(schedule.shape[0]):
 
 	# MaNGA LST Calculations
 	man_start, man_end = schedule[d,10], schedule[d,11]
-	if man_start != 0:
+	if man_start > 1:
 		man_length = int((man_end - man_start) * 24 * 60 / 16.5 + 0.4)
 		midpts = man_start + np.arange(man_length)*(16.5/60/24) + 8.25/60/24
-		nightlst = [apo.localSiderialTime(x) for x in midpts]
-		for l in nightlst:
+		man_nightlst = [apo.localSiderialTime(x) for x in midpts]
+		man_nightlen = 0.0
+		for l in man_nightlst:
 			if int(l) > 6 and int(l) <= 18:
 				man_lst[int(l)] += 16.5/60
-				if len(man_met) == 0: man_met.append([int(schedule[d,0]-2400000), len(nightlst)])
-				else: man_met.append([int(schedule[d,0]-2400000), len(nightlst) + man_met[-1][1]])
+				man_nightlen += 1
 			else: 
 				man_lst[int(l)] += 16.5/60 * south_frac
-				if len(man_met) == 0: man_met.append([int(schedule[d,0]-2400000), int(len(nightlst) * south_frac)])
-				else: man_met.append([int(schedule[d,0]-2400000), int(len(nightlst) * south_frac) + man_met[-1][1]])
+				man_nightlen += 1 * south_frac
+		if len(man_met) == 0: man_met.append([int(schedule[d,0]-2400000), int(man_nightlen)])
+		else: man_met.append([int(schedule[d,0]-2400000), int(man_nightlen) + man_met[-1][1]])
 	else:
 		if len(man_met) == 0: man_met.append([int(schedule[d,0]-2400000), 0])
 		else: man_met.append([int(schedule[d,0]-2400000), man_met[-1][1]])
