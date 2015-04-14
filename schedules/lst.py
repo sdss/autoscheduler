@@ -8,8 +8,8 @@ import json
 weather = 0.50
 south_frac = 0.75
 apg_frac = 1
-man_frac = 13
-ebo_frac = 6
+man_frac = 12.6
+ebo_frac = 5.3
 
 apo = obs.Site(32.789278, -105.820278)
 schedule = np.loadtxt(sys.argv[1])
