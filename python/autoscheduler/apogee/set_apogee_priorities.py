@@ -14,6 +14,9 @@ def set_priorities(apg, par, schedule, loud=True):
 		if apg[p].manual_priority == 10:
 			apg[p].priority = 9999.0
 			continue
+		elif apg[p].manual_priority == 1:
+			apg[p].priority = -1.0
+			continue
 
 		# Set base priority
 		apg[p].priority = 100.0 * apg[p].manual_priority
