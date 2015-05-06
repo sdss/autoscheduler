@@ -30,10 +30,6 @@ def assign_carts(apogee_choices, manga_choices, eboss_choices, errors, loud=True
 		if c[0] < 10: plugplan[-1]['cartsurveys'] = 1
 		if c[0] >= 10: plugplan[-1]['cartsurveys'] = 2
 
-        ### TEMPORARY FIX ###
-        manga_choices = [{'plateid': 8486, 'cart': 3}]
-        #####################
-
 	# Read in all plates that are currently plugged
 	currentplug = session.execute("SET SCHEMA 'platedb'; "+
 		"SELECT crt.number, plt.plate_id "+
