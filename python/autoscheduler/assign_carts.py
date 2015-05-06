@@ -45,7 +45,7 @@ def assign_carts(apogee_choices, manga_choices, eboss_choices, errors, loud=True
 		plugplan[wcart]['oldplate'] = p
 
 	# Reorder plugplan to priority order
-	sort_plugplan, cart_order = [], [17, 16, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 2, 1]
+	sort_plugplan, cart_order = [], [17, 16, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1]
 	for c in cart_order:
 		pidx = [x for x in range(len(plugplan)) if plugplan[x]['cart'] == c]
 		if len(pidx) == 0: continue
@@ -68,7 +68,7 @@ def assign_carts(apogee_choices, manga_choices, eboss_choices, errors, loud=True
 		man_entry = [x for x in range(len(cart_order)) if cart_order[x] == man_cartnum[c]]
 		if len(man_entry) > 0: cart_order.pop(man_entry[0])
 		cart_order.append(man_cartnum[c])
-
+	
 	# Remove any cartridges already chosen by manga
 	if len(manpicks) > 0:
 		for c in manpicks:
