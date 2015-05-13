@@ -49,7 +49,6 @@ def assign_carts(apogee_choices, manga_choices, eboss_choices, errors, manga_car
 
 	# Save MaNGA choices to cartridges (since they are the most dependent)
 	manpicks = manga_choices
-	print(manpicks)
 
 	# Reorder plugplan to priority order
 	sort_plugplan = []
