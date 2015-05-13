@@ -28,14 +28,14 @@ def run_scheduler(plan=False, mjd=-1, surveys=['apogee','eboss','manga'], loud=T
 	if schedule['bright_start'] > 0:
 		apogee_choices = apg.schedule_apogee(schedule, errors, plan=plan, loud=loud)
 	# Schedule MaNGA
-	if schedule['manga'] > 0:
-		manga_choices = man.schedule_manga(schedule, errors, plan=plan, loud=loud)
+	(manga_choices,manga_cart_order) = man.schedule_manga(schedule, errors, plan=plan, loud=loud)
 	# Schedule eBOSS
 	if schedule['eboss'] > 0:
 		eboss_choices = ebo.schedule_eboss(schedule, errors, plan=plan, loud=loud)
 	
 	# Take results and assign to carts
-	apgcart, mancart, ebocart = assign_carts.assign_carts(apogee_choices, manga_choices, eboss_choices, errors, loud=loud)
+	apgcart, mancart, ebocart = assign_carts.assign_carts(apogee_choices, manga_choices, eboss_choices, 
+							      errors, manga_cart_order,loud=loud)
 	
 	as_end_time = time()
 	if loud: print("[PY] run_scheduler complete in (%.3f sec)" % ((as_end_time - as_start_time)))
