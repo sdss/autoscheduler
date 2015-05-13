@@ -81,7 +81,7 @@ def assign_carts(apogee_choices, manga_choices, eboss_choices, errors, manga_car
 	for i in range(len(apogee_choices)):
 		wplate = [x for x in range(len(plugplan)) if apogee_choices[i]['plate'] == plugplan[x]['oldplate']]
 		if len(wplate) == 0: continue
-		if plugplan[wplate]['m_picked'] == 1: continue
+		if plugplan[wplate[0]]['m_picked'] == 1: continue
 		# Save new values to apgpicks
 		thispick = apogee_choices[i]
 		thispick['cart'] = plugplan[wplate[0]]['cart']
