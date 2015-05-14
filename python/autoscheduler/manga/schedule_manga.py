@@ -5,7 +5,7 @@ import pdb
 def schedule_manga(schedule, errors, plan=False, loud=True):
 	plates = []
 	if plan:
-		#try:
+		try:
 			manga_obj = Plugger(startDate=schedule['manga_start'], endDate=schedule['manga_end'])			
 			manga_output = manga_obj.getASOutput()
 			manga_cart_order = manga_output.pop('cart_order')
@@ -13,21 +13,34 @@ def schedule_manga(schedule, errors, plan=False, loud=True):
 			for k,v in manga_output.iteritems():
 				plates.append({'plateid': v, 'cart': k})
 				
-		#except Exception as e:
-		#	errors.append('MANGA: %s' % e)
+		except Exception as e:
+			errors.append('MANGA: %s' % e)
 
 	else:
+		try:
+                        manga_obj = Plugger(startDate=0, endDate=0)
+
+                        manga_output = manga_obj.getASOutput()
+                        manga_cart_order = manga_output.pop('cart_order')
+
+			for k,v in manga_output.iteritems():
+                                plates.append({'plateid': v, 'cart': k})
+
+		except Exception as e:
+                        errors.append('MANGA: %s' % e)
+
+
 		# Get raw output from MaNGA submodule
-		manga_obj = Nightly(startDate=schedule['manga_start'], endDate=schedule['manga_end'])
-		manga_output = manga_obj.getOutput()
-	
+		#manga_obj = Nightly(startDate=schedule['manga_start'], endDate=schedule['manga_end'])
+		#manga_output = manga_obj.getOutput()
+
 		# Massage the MaNGA 'plates' output into a usable format
-		for plate_id, plate_data in manga_output['plates'].iteritems():
-			plate_dict = {}
-			plate_dict['plateid'] = plate_id
-			if 'cartridge' in plate_data.keys():
-				plate_dict['cart'] = plate_data['cartridge']
-			else: plate_dict['cart'] = -1
+		#for plate_id, plate_data in manga_output['plates'].iteritems():
+			#plate_dict = {}
+			#plate_dict['plateid'] = plate_id
+			#if 'cartridge' in plate_data.keys():
+				#plate_dict['cart'] = plate_data['cartridge']
+			#else: plate_dict['cart'] = -1
 			#plate_dict['complete'] = plate_data['complete']
 			#plate_dict['HARange'] = list(plate_data['HARange'])
 			#plate_dict['SN2'] = list(plate_data['SN2'])
@@ -58,7 +71,7 @@ def schedule_manga(schedule, errors, plan=False, loud=True):
 			#		exp_dict['SN2'] = list(exp_data['SN2'])
 			#		set_dict['exposures'].append(exp_dict)
 			#	plate_dict['sets'].append(set_dict)
-			plates.append(plate_dict)
+			#plates.append(plate_dict)
 
 	manga_formatted = plates
 

@@ -119,7 +119,8 @@ def assign_carts(apogee_choices, manga_choices, eboss_choices, errors, manga_car
 		apgpicks.append(thispick)
 		
         #Report removed MaNGA plates
-	errors.append('Removed {} MaNGA Plates'.format(len(manga_removed_plates)))
+	if len(manga_removed_plates) > 0:
+		errors.append('Removed {} MaNGA Plates'.format(len(manga_removed_plates)))
 
         # Save eBOSS choices to cartridges
 	ebosaved = np.zeros(len(eboss_choices))
