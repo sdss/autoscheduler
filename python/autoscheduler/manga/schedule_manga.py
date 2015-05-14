@@ -1,5 +1,5 @@
 from __future__ import print_function, division
-from sdss.internal.manga.Totoro.scheduler import Nightly, Plugger
+from sdss.internal.manga.Totoro.scheduler import Plugger
 import pdb
 
 def schedule_manga(schedule, errors, plan=False, loud=True):
