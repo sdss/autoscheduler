@@ -59,6 +59,7 @@ schedules/Sch_base.2yrs.txt.frm.dat -text
 schedules/Sch_base.4yrs.txt.frm.dat -text
 schedules/Sch_base.6yrs.txt -text
 schedules/Sch_base.6yrs.txt.frm.dat -text
+schedules/Sch_base.6yrs.txt.frm.dat.txt -text
 schedules/Sch_base.sdss3.txt.frm.dat -text
 schedules/gen_schedule.pro -text
 schedules/lst.py -text
