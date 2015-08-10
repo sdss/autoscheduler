@@ -27,8 +27,10 @@ def run_scheduler(plan=False, mjd=-1, surveys=['apogee','eboss','manga'], loud=T
 	# Schedule APOGEE-II
 	if schedule['bright_start'] > 0:
 		apogee_choices = apg.schedule_apogee(schedule, errors, plan=plan, loud=loud)
-        else:
-                apogee_choices = apg.schedule_apogee(schedule, errors, plan=plan, loud=loud,twilight=True)
+    if schedule['manga_end'] > schedule['bright_end'] or schedule['eboss_end'] > schedule['bright_end']:
+        twilight_choices = apg.schedule_apogee(schedule, errors, plan=plan, loud=loud,twilight=True)
+    apogee_choices = apogee_choices + twilight_choices
+    
 	# Schedule MaNGA
 	(manga_choices,manga_cart_order) = man.schedule_manga(schedule, errors, plan=plan, loud=loud)
 	# Schedule eBOSS
