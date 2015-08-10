@@ -10,7 +10,10 @@ from pick_apogee_plates import pick_plates
 # DESCRIPTION: Main APOGEE-II scheduling routine.
 # INPUT: schedule -- dictionary defining important schedule times throughout the night
 # OUTPUT: apogee_choices -- dictionary list containing plate choices + observing times for tonight 
-def schedule_apogee(schedule, errors, plan=False, loud=True):
+def schedule_apogee(schedule, errors, plan=False, loud=True, twilight=False):
+	#temp response for testing
+	if twilight:
+		return []
 	# Define APOGEE-II observing parameters
 	par = {'exposure': 67, 'overhead': 20, 'ncarts': 9, 'maxz': 3, 'moon_threshold': 15, 'sn_target': 3136}
 
