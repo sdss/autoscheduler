@@ -43,17 +43,19 @@ def schedule_apogee(schedule, errors, plan=False, loud=True, twilight=False):
                 lengths = []
         #define twilight parameters
 	if twilight:
-		par = {'exposure': 67, 'overhead': 20, 'ncarts': 9, 'maxz': 3, 'moon_threshold': 15, 'sn_target': 3136}
-
 		# Define APOGEE-II blocks for tonight
-		if schedule['manga_end'] > schedule['eboss_end']: 
-			twtimes= [schedule['manga_end']+(par['exposure'] + par['overhead']) / 60 / 24]
-		else:
-			twtimes= [schedule['eboss_end']+(par['exposure'] + par['overhead']) / 60 / 24]
-		twlengths = [(par['exposure'] + par['overhead']) / 60]
-                        
-                times = times + twtimes
-                lenghts = lengths + twlengths
+		# if schedule['manga_end'] > schedule['eboss_end']: 
+		# 	twtimes= [schedule['manga_end']+(par['exposure'] + par['overhead']) / 60 / 24]
+		# else:
+		# 	twtimes= [schedule['eboss_end']+(par['exposure'] + par['overhead']) / 60 / 24]
+		# twlengths = [(par['exposure'] + par['overhead']) / 60]
+                
+                #28 minutes from 15 deg twilight to 8 deg twilight
+                twtime= schedule['dark_end'] + par['overhead']/60/24
+                twlength= (28+par['overhead'])/60
+
+                times.appen(twtime)
+                lenghts.append(twlength)
                 nslots = nslots + 1
 
         #Return nothing if no APOGEE slots needed.
