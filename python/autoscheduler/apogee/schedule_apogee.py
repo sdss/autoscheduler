@@ -55,7 +55,7 @@ def schedule_apogee(schedule, errors, plan=False, loud=True, twilight=False):
                 twlength= (28+par['overhead'])/60
 
                 times.append(twtime)
-                lenghts.append(twlength)
+                lengths.append(twlength)
                 nslots = nslots + 1
 
         #Return nothing if no APOGEE slots needed.
