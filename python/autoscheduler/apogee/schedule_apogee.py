@@ -54,7 +54,7 @@ def schedule_apogee(schedule, errors, plan=False, loud=True, twilight=False):
                 twtime= schedule['dark_end'] + par['overhead']/60/24
                 twlength= (28+par['overhead'])/60
 
-                times.appen(twtime)
+                times.append(twtime)
                 lenghts.append(twlength)
                 nslots = nslots + 1
 
