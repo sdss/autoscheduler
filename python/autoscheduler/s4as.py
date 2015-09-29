@@ -9,6 +9,7 @@ import autoscheduler.apogee as apg
 import autoscheduler.eboss as ebo
 import autoscheduler.manga as man
 from time import time
+from astropy import time as atime
 import os
 
 def run_scheduler(plan=False, mjd=-1, surveys=['apogee','eboss','manga'], loud=True):
@@ -25,8 +26,29 @@ def run_scheduler(plan=False, mjd=-1, surveys=['apogee','eboss','manga'], loud=T
 	# Schedule surveys for tonight
 	apogee_choices, manga_choices, eboss_choices = [], [], []
 	# Schedule APOGEE-II
-	if schedule['bright_start'] > 0:
-		apogee_choices = apg.schedule_apogee(schedule, errors, plan=plan, loud=loud)
+
+	#check date range
+	check_date=atime.Time(schedule['jd'], format='jd')
+	check_year= int(check_date.byear) #get year of time in question, casting int floors in python 2.7
+	check_start=atime.Time('%d-3-16' %(check_year), format='iso')
+	check_end=atime.Time('%d-9-15' %(check_year), format='iso')
+	twilight_check=(check_start<check_date and check_end>check_date)
+
+	#if apogee observes tonight and in twilight time
+	if schedule['bright_start'] > 0 and twilight_check:
+                if schedule['manga_end'] > schedule['bright_end'] or schedule['eboss_end'] > schedule['bright_end']:
+                        apogee_choices = apg.schedule_apogee(schedule, errors, plan=plan, loud=loud, twilight=True)
+                else:
+                        apogee_choices = apg.schedule_apogee(schedule, errors, plan=plan, loud=loud, twilight=False)
+    
+        #if apogee doesn't observe but its twilight time
+        elif twilight_check:
+                apogee_choices = apg.schedule_apogee(schedule, errors, plan=plan, loud=loud, twilight=True)
+
+        #if apogee observes and not twilight time
+        elif schedule['bright_start'] > 0:
+        	apogee_choices = apg.schedule_apogee(schedule, errors, plan=plan, loud=loud, twilight=False)
+
 	# Schedule MaNGA
 	(manga_choices,manga_cart_order) = man.schedule_manga(schedule, errors, plan=plan, loud=loud)
 	# Schedule eBOSS

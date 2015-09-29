@@ -6,7 +6,7 @@ import numpy as np
 # DESCRIPTION: Sets priority values for all available APOGEE-II plates
 # INPUT: apg -- list of objects with all APOGEE-II plate information
 # OUTPUT: none
-def set_priorities(apg, par, schedule, loud=True):
+def set_priorities(apg, par, schedule, loud=True, twilight=False):
 	set_pri_start = time()
 	# Loop through all plates and set priorities
 	for p in range(len(apg)):
