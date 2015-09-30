@@ -38,7 +38,6 @@ def schedule_manga(schedule, errors, plan=False, loud=True):
             manga_cart_order += usedCarts
 
             for k, v in dict(manga_output).iteritems():
-                print(v, k)
                 plates.append({'plateid': v, 'cart': k})
 
         except Exception as e:
