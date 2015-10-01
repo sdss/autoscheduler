@@ -29,9 +29,8 @@ def observability(ebo, par, times, loud=True):
         try: 
             minlst = float(ebo[p].ra + ebo[p].minha) / 15
         except:
-            if loud == True:
-                print(ebo[p].plateid)
-                continue
+            print(ebo[p].plateid)
+            continue
 
         maxlst = float(ebo[p].ra + ebo[p].maxha) / 15
         
