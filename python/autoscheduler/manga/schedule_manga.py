@@ -1,18 +1,18 @@
 from __future__ import print_function, division
-from sdss.internal.manga.Totoro.scheduler import Plugger
+from Totoro.scheduler import Plugger
 import pdb
 
 def schedule_manga(schedule, errors, plan=False, loud=True):
 	plates = []
 	if plan:
 		try:
-			manga_obj = Plugger(startDate=schedule['manga_start'], endDate=schedule['manga_end'])			
+			manga_obj = Plugger(startDate=schedule['manga_start'], endDate=schedule['manga_end'])
 			manga_output = manga_obj.getASOutput()
 			manga_cart_order = manga_output.pop('cart_order')
 
 			for k,v in manga_output.iteritems():
 				plates.append({'plateid': v, 'cart': k})
-				
+
 		except Exception as e:
 			errors.append('MANGA: %s' % e)
 
@@ -54,10 +54,10 @@ def schedule_manga(schedule, errors, plan=False, loud=True):
 			#	set_dict['SN2'] = list(set_data['SN2'])
 			#	set_dict['SN2Range'] = [list(set_data['SN2Range'][0]), list(set_data['SN2Range'][1])]
 			#	set_dict['seeingRange'] = list(set_data['seeingRange'])
-#	
+#
 			#	haRange = set_data['HARange']
 			#	set_dict['HARange'] = haRange if haRange is False else list(set_data['HARange'])
-#	
+#
 			#	set_dict['missingDithers'] = list(set_data['missingDithers'])
 			#	set_dict['exposures'] = []
 			#	# Exposures contained within dither set
@@ -76,8 +76,3 @@ def schedule_manga(schedule, errors, plan=False, loud=True):
 	manga_formatted = plates
 
 	return manga_formatted,manga_cart_order
-
-
-
-
-
