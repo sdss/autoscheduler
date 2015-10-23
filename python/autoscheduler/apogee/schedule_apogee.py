@@ -68,7 +68,7 @@ def schedule_apogee(schedule, errors, plan=False, loud=True, twilight=False):
 		return []
 	
 	# Prioritize all plates
-	set_priorities(apg, par, schedule, loud=loud, twilight=twilight)
+	set_priorities(apg, par, schedule, plan, loud=loud, twilight=twilight)
 	
 	# Determine observability range of all plates
 	obs = observability(apg, par, times, lengths, loud=loud)
