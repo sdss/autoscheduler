@@ -26,7 +26,12 @@ def observability(ebo, par, times, loud=True):
         # Compute observing constants
         platecoo = coo.ICRSCoordinates(ebo[p].ra, ebo[p].dec)
         platelst = float(ebo[p].ra + ebo[p].ha) / 15
-        minlst = float(ebo[p].ra + ebo[p].minha) / 15
+        try: 
+            minlst = float(ebo[p].ra + ebo[p].minha) / 15
+        except:
+            print("Plate Missing minha info: {}".format(ebo[p].plateid))
+            continue
+
         maxlst = float(ebo[p].ra + ebo[p].maxha) / 15
         
         for t in range(len(times)): 
