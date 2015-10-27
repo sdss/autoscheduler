@@ -6,7 +6,7 @@ import numpy as np
 # DESCRIPTION: Sets priority values for all available APOGEE-II plates
 # INPUT: apg -- list of objects with all APOGEE-II plate information
 # OUTPUT: none
-def set_priorities(apg, par, schedule, loud=True, twilight=False):
+def set_priorities(apg, par, schedule, plan=False, loud=True, twilight=False):
 	set_pri_start = time()
 	# Loop through all plates and set priorities
 	for p in range(len(apg)):
@@ -31,7 +31,8 @@ def set_priorities(apg, par, schedule, loud=True, twilight=False):
 		# TO-DO
 		
 		# Completion (using algorithm in SDSS python module)
-		if apg[p].pct() >= 1: apg[p].priority = -2
+		if plan:
+			if apg[p].pct() >= 1: apg[p].priority = -2
 		
 		# Cadence
 		if schedule['jd'] != apg[p].maxhist():
