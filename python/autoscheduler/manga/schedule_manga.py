@@ -27,7 +27,10 @@ def schedule_manga(schedule, errors, plan=False, loud=True):
 
             # Creates the cart order list. We put plugged plates at the end of
             # the list.
-            usedCarts = zip(*manga_output)[0] if len(manga_obj) > 0 else []
+            if len(manga_obj) > 0:
+                usedCarts = zip(*manga_output)[0]
+            else:
+                usedCarts = []
             allCarts = (config['apogeeCarts'] + config['offlineCarts'] +
                         [cart for cart in config['mangaCarts']
                          if cart not in config['offlineCarts']])
