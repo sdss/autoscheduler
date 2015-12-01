@@ -12,7 +12,7 @@ from pick_eboss_plates import pick_plates
 # OUTPUT: eboss_choices -- dictionary list containing plate choices + observing times for tonight 
 def schedule_eboss(schedule, errors, plan=False, loud=True):
     # Define eBOSS observing parameters
-    par = {'exposure': 16.5, 'ncarts': 8, 'maxz': 2.0, 'moon_threshold': 30, 'snr_avg': 9.0, 'snb_avg': 4.0, 'snr': 25, 'snb': 10}
+    par = {'exposure': 16.5, 'ncarts': 8, 'maxz': 2.0, 'moon_threshold': 30, 'snr_avg':5.3, 'snb_avg': 2.5, 'snr': 22, 'snb': 10}
     
     # Divide eBOSS time into blocks
     times = np.arange(schedule['eboss_start'], schedule['eboss_end'], par['exposure']/60/24)
