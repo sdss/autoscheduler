@@ -1,8 +1,51 @@
 from __future__ import print_function, division
 from time import time
 from operator import itemgetter
+from sdss.internal.database.connections import APODatabaseUserLocalConnection
+from sdss.internal.database.apo.platedb import ModelClasses as plateDB
+from sdss.internal.database.apo.mangadb import ModelClasses as mangaDB
 import numpy as np
 import os
+
+def mangaBrightPriority(plateIDs):
+    """Sorts APOGEE plates in order of increasing MaNGA data.
+
+    Gets a list of APOGEE plateIDs and returns them in order of increasing
+    MaNGA data. It uses the sum of the transparencies of all the MaNGA
+    exposures associted with a plate as a proxy for amount of data.
+    """
+
+    plateIDs = np.sort(plateIDs)
+
+    Session = APODatabaseUserLocalConnection.Session
+    session = Session()
+
+    # Retrieves the plates from the DB
+    with session.begin():
+        plates = session.query(plateDB.Plate).filter(
+            plateDB.Plate.plate_id.in_(plateIDs)).order_by(
+                plateDB.Plate.plate_id).all()
+
+    # For each plate, gets a list with the transparency of each exposure.
+    mangaTransparencies = []
+    for plate in plates:
+        plateTransparencies = []
+        for plugging in plate.pluggings:
+            scienceExposures = plugging.scienceExposures()
+            for exp in scienceExposures:
+                if exp.survey.label != 'MaNGA':
+                    continue
+                if len(exp.mangadbExposure) == 0:
+                    continue
+                plateTransparencies.append(exp.mangadbExposure[0].transparency)
+        mangaTransparencies.append(plateTransparencies)
+
+    # Calculates the sum of the transparencies for each plate
+    sumOfTransparencies = [np.sum(exps) for exps in mangaTransparencies]
+
+    # Returns plate ids sorted by the sum of the transparencies.
+    return plateIDs[np.argsort(sumOfTransparencies)].tolist()
+
 
 def assign_carts(apogee_choices, manga_choices, eboss_choices, errors, manga_cart_order, loud=True):
 	'''
@@ -73,7 +116,26 @@ def assign_carts(apogee_choices, manga_choices, eboss_choices, errors, manga_car
 
 	#Sort apogee_choices, so that non-co-observing plates are plugged first
 	apogee_choices = sorted(apogee_choices, key=itemgetter('coobs')) 
-	
+
+        #Sort the co-observing plates in order of least manga signal to most manga signal
+        aponlyplt = [apogee_choices[x]['plate'] for x in range(len(apogee_choices)) if not apogee_choices[x]['coobs']]
+        coobsplt = [apogee_choices[x]['plate'] for x in range(len(apogee_choices)) if apogee_choices[x]['coobs']]
+        #Only do this if we have coobs plates
+        if len(coobsplt) > 0:
+                #Sort coobs plates in order of manga signal
+                coobsplt = mangaBrightPriority(coobsplt)
+
+                #Combine both plate lists together
+                allplate = aponlyplt+coobsplt
+                sort_choices = []
+                #Sort apogee_choices by allplate list
+                for i in range(len(allplate)):
+                        hold = [apogee_choices[x] for x in range(len(apogee_choices)) if apogee_choices[x]['plate'] == allplate[i]]
+                        sort_choices = sort_choices+hold
+
+                #Save the results
+                apogee_choices = sort_choices
+
 	# Save APOGEE-II choices to cartridges
 	apgsaved = np.zeros(len(apogee_choices))
 	apgpicks = []
