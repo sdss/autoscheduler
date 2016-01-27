@@ -100,7 +100,6 @@ def assign_carts(apogee_choices, manga_choices, eboss_choices, errors, manga_car
 	#APOGEE and MaNGA carts are in an order determined by Totoro
 	#cart_order.extend([9, 8, 7, 6, 5, 4, 3, 2, 1]) 
         cart_order.extend(manga_cart_order) 
-        print(manga_cart_order)
 
 	for c in cart_order:
 		pidx = [x for x in range(len(plugplan)) if plugplan[x]['cart'] == c]
@@ -124,9 +123,8 @@ def assign_carts(apogee_choices, manga_choices, eboss_choices, errors, manga_car
         #Only do this if we have coobs plates
         if len(coobsplt) > 0:
                 #Sort coobs plates in order of manga signal
-                print(coobsplt)
                 coobsplt = mangaBrightPriority(coobsplt)
-                print(coobsplt)
+
                 #Combine both plate lists together
                 allplate = aponlyplt+coobsplt
                 sort_choices = []
@@ -134,8 +132,7 @@ def assign_carts(apogee_choices, manga_choices, eboss_choices, errors, manga_car
                 for i in range(len(allplate)):
                         hold = [apogee_choices[x] for x in range(len(apogee_choices)) if apogee_choices[x]['plate'] == allplate[i]]
                         sort_choices = sort_choices+hold
-                for i in range(len(sort_choices)):
-                        print(sort_choices[i])
+
                 #Save the results
                 apogee_choices = sort_choices
 
