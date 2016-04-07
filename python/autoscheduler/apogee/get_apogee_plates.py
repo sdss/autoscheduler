@@ -143,7 +143,7 @@ def get_plates(errors, plan=False, loud=True, session=None, atapo=True):
 			#continue
 		
 		# Get APOGEE version number and vplan for this plate
-		dvdata = session.execute("SELECT array_to_string(array_agg(dv.value),',') FROM platedb.design_value as dv WHERE (dv.design_field_pk=342 OR dv.design_field_pk=343 OR dv.design_field_pk=344 OR dv.design_field_pk=351 OR dv.design_field_pk=423 OR dv.design_field_pk=424) AND dv.design_pk=%d" % (designid)).fetchall()
+		dvdata = session.execute("SELECT array_to_string(array_agg(dv.value ORDER BY dv.design_field_pk),',') FROM platedb.design_value as dv WHERE (dv.design_field_pk=342 OR dv.design_field_pk=343 OR dv.design_field_pk=344 OR dv.design_field_pk=351 OR dv.design_field_pk=423 OR dv.design_field_pk=424) AND dv.design_pk=%d" % (designid)).fetchall()
 		if dvdata[0][0]:
 			tmp = dvdata[0][0].split(',')
 			apg[-1].apgver = 100*int(tmp[0]) + 10*int(tmp[1]) + int(tmp[2])
