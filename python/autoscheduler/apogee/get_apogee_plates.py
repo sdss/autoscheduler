@@ -3,7 +3,7 @@ from time import time
 import os
 import sqlalchemy
 import numpy as np
-from sdss.apogee.plate_completion import completion
+# from sdss.apogee.plate_completion import completion
 
 # DESCRIPTION: APOGEE Plate Object
 class apgplate(object):
@@ -98,7 +98,7 @@ class apgplate(object):
 	@property 
 	def manual_priority(self):
 		if self._manual_priority is None:
-			self._manual_priority = float(self.plate.firstPointing.platePointing(self.plate.plate_id).priority)
+			self._manual_priority = int(self.plate.firstPointing.platePointing(self.plate.plate_id).priority)
 		return self._manual_priority
 
 	@property 
@@ -244,8 +244,9 @@ def get_plates(errors, plan=False, loud=True, session=None, atapo=True, allPlate
 		.join(pdb.Survey).join(pdb.ExposureFlavor)\
 		.join(pdb.Observation).join(pdb.PlatePointing).join(pdb.Plate)\
 		.outerjoin(qldb.Quickred).outerjoin(qldb.Reduction)\
-		.filter(pdb.Survey.label == 'APOGEE-2' ).filter(pdb.ExposureFlavor.label == 'Object').all()
-
+		.filter(pdb.ExposureFlavor.label == 'Object').all()
+		#removed survey label filter to deal with mislabled exposures
+		# .filter(pdb.Survey.label == 'APOGEE-2' )
 
 	exposures_tab = np.array(exposures)
 	fullRedCheck = np.copy([exposures_tab[:,0],exposures_tab[:,1],exposures_tab[:,2],exposures_tab[:,3],[x[3] if x[3] is not None else x[2] for x in exposures_tab]]).swapaxes(0,1)
