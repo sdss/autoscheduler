@@ -3,7 +3,7 @@ from time import time
 import os
 import sqlalchemy
 import numpy as np
-# from sdss.apogee.plate_completion import completion
+from sdss.apogee.plate_completion import completion
 
 # DESCRIPTION: APOGEE Plate Object
 class apgplate(object):
