@@ -3,6 +3,7 @@ from time import time
 import os
 import sqlalchemy
 import numpy as np
+from sdss.apogee.plate_completion import completion
 
 # DESCRIPTION: APOGEE Plate Object
 class apgplate(object):
@@ -67,19 +68,19 @@ class apgplate(object):
 	@property 
 	def ra(self):
 		if self._ra is None:
-			self._ra = self.plate.firstPointing.center_ra
+			self._ra = float(self.plate.firstPointing.center_ra)
 		return self._ra
 
 	@property 
 	def dec(self):
 		if self._dec is None:
-			self._dec = self.plate.firstPointing.center_dec
+			self._dec = float(self.plate.firstPointing.center_dec)
 		return self._dec
 
 	@property 
 	def ha(self):
 		if self._ha is None:
-			self._ha = self.plate.firstPointing.platePointing(self.plate.plate_id).hour_angle
+			self._ha = float(self.plate.firstPointing.platePointing(self.plate.plate_id).hour_angle)
 		return self._ha
 
 	@property 
@@ -97,7 +98,7 @@ class apgplate(object):
 	@property 
 	def manual_priority(self):
 		if self._manual_priority is None:
-			self._manual_priority = self.plate.firstPointing.platePointing(self.plate.plate_id).priority
+			self._manual_priority = float(self.plate.firstPointing.platePointing(self.plate.plate_id).priority)
 		return self._manual_priority
 
 	@property 
@@ -124,10 +125,10 @@ class apgplate(object):
 	def exp_time(self):
 		if self._exp_time is None:
 			if "apogee_exposure_time" in self.ddict: 
-				self._exp_time = self.ddict['apogee_exposure_time']
+				self._exp_time = float(self.ddict['apogee_exposure_time'])
 			elif self.lead_survey == 'apg': 
-				self._exp_time = 500
-			else: self._exp_time = 450
+				self._exp_time = 500.0
+			else: self._exp_time = 450.0
 		return self._exp_time
 
 	@property 
@@ -157,19 +158,22 @@ class apgplate(object):
 		
 	# Determine plate completion percentage (from algorithm in the SDSS python module)
 	def pct(self):
-		''' Computes completion percentage of APOGEE-II plate '''
-	    # Something is wrong here...
-		if self.vplan == 0: return 1
+		return completion(self.vplan, self.vdone, self.sn, self.cadence)
 
-		try:
-			# 90% of completion percentage is from number of visits
-			visit_completion = 0.9 * min([1, self.vdone / self.vplan])
-			# 10% of completion percentage is from S/N
-			sn_completion = 0.1 * calculateSnCompletion(self.vplan, self.sn)
-			return visit_completion + sn_completion
-		except:
-			raise RuntimeError("ERROR: unable to calculate completion for vplan: %d, vdone: %d, sn: %d\n%s" %\
-				(self.vplan, self.vdone, self.sn, sys.exc_info()))
+	# def pct(self):
+	# 	''' Computes completion percentage of APOGEE-II plate '''
+	#     # Something is wrong here...
+	# 	if self.vplan == 0: return 1
+
+	# 	try:
+	# 		# 90% of completion percentage is from number of visits
+	# 		visit_completion = 0.9 * min([1, self.vdone / self.vplan])
+	# 		# 10% of completion percentage is from S/N
+	# 		sn_completion = 0.1 * calculateSnCompletion(self.vplan, self.sn)
+	# 		return visit_completion + sn_completion
+	# 	except:
+	# 		raise RuntimeError("ERROR: unable to calculate completion for vplan: %d, vdone: %d, sn: %d\n%s" %\
+	# 			(self.vplan, self.vdone, self.sn, sys.exc_info()))
 
 
 def get_plates(errors, plan=False, loud=True, session=None, atapo=True, allPlates=False):
