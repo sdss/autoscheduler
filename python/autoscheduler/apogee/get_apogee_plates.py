@@ -277,7 +277,7 @@ def get_plates(errors, plan=False, loud=True, session=None, atapo=True, allPlate
 				day = plateExps[plateExps[:,0] == d]
 				if day.shape[0] >= 2: 
 					for r in repeat:
-						apg[plateidDict[r]].hist += '{},'.format(int(d))
+						apg[plateidDict[r]].hist += '{},'.format(int(d)+2400000)
 						apg[plateidDict[r]].vdone += 1
 						apg[plateidDict[r]].sn += float(np.sum(day[:,4]**2))
 						apg[plateidDict[r]].snql += float(np.sum(day[:,2]**2))
@@ -291,7 +291,7 @@ def get_plates(errors, plan=False, loud=True, session=None, atapo=True, allPlate
 			for d in dates:
 				day = plateExps[plateExps[:,0] == d]
 				if day.shape[0] >= 2: 
-					p.hist += '{},'.format(int(d))
+					p.hist += '{},'.format(int(d)+2400000)
 					p.vdone += 1
 					p.sn += float(np.sum(day[:,4]**2))
 					p.snql += float(np.sum(day[:,2]**2))
