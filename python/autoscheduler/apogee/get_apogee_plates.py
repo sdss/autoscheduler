@@ -252,7 +252,9 @@ def get_plates(errors, plan=False, loud=True, session=None, atapo=True, allPlate
 
 	print(fullRedCheck.shape)
 
-	good_exp = fullRedCheck[fullRedCheck[:,4]>10]
+	#convert nones in SNR to zeros
+	proto_good_exp = np.array(fullRedCheck[fullRedCheck[:,4]>10],dtype=np.float)
+	good_exp=np.nan_to_num(proto_good_exp)
 
 	plateidDict = dict()
 
@@ -275,12 +277,13 @@ def get_plates(errors, plan=False, loud=True, session=None, atapo=True, allPlate
 				day = plateExps[plateExps[:,0] == d]
 				if day.shape[0] >= 2: 
 					for r in repeat:
-						apg[plateidDict[r]].hist += '{},'.format(d)
+						apg[plateidDict[r]].hist += '{},'.format(int(d))
 						apg[plateidDict[r]].vdone += 1
 						apg[plateidDict[r]].sn += float(np.sum(day[:,4]**2))
 						apg[plateidDict[r]].snql += float(np.sum(day[:,2]**2))
 						apg[plateidDict[r]].snred += float(np.sum(day[:,3]**2))
 						if np.sum(day[:,4]) == np.sum(day[:,3]): apg[plateidDict[r]].reduction += '1,'
+						# else: print("fuck you")
 						else: apg[plateidDict[r]].reduction += '0,'
 		else:
 			plateExps = good_exp[good_exp[:,1] == p.plateid]
@@ -288,7 +291,7 @@ def get_plates(errors, plan=False, loud=True, session=None, atapo=True, allPlate
 			for d in dates:
 				day = plateExps[plateExps[:,0] == d]
 				if day.shape[0] >= 2: 
-					p.hist += '{},'.format(d)
+					p.hist += '{},'.format(int(d))
 					p.vdone += 1
 					p.sn += float(np.sum(day[:,4]**2))
 					p.snql += float(np.sum(day[:,2]**2))
