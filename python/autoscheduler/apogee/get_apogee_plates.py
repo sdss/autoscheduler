@@ -3,7 +3,7 @@ from time import time
 import os
 import sqlalchemy
 import numpy as np
-from sdss.apogee.plate_completion import completion
+# from sdss.apogee.plate_completion import completion
 
 # DESCRIPTION: APOGEE Plate Object
 class apgplate(object):
@@ -53,9 +53,9 @@ class apgplate(object):
 		self.hist = ''
 
 		#ben sets these but doesn't use them outside of get_plates; not needed?
-		# self.snql = 0.0
-		# self.snred = 0.0
-		# self.reduction = ''
+		self.snql = 0.0
+		self.snred = 0.0
+		self.reduction = ''
 
 		#properties not set in get_plates
 		self.priority = 0.0
@@ -248,9 +248,11 @@ def get_plates(errors, plan=False, loud=True, session=None, atapo=True, allPlate
 
 
 	exposures_tab = np.array(exposures)
-	fullRedCheck = np.copy([exposures_tab[:,0],exposures_tab[:,1],[x[3] if x[3] is not None else x[2] for x in exposures_tab]]).swapaxes(0,1)
+	fullRedCheck = np.copy([exposures_tab[:,0],exposures_tab[:,1],exposures_tab[:,2],exposures_tab[:,3],[x[3] if x[3] is not None else x[2] for x in exposures_tab]]).swapaxes(0,1)
 
-	good_exp = fullRedCheck[fullRedCheck[:,2]>10]
+	print(fullRedCheck.shape)
+
+	good_exp = fullRedCheck[fullRedCheck[:,4]>10]
 
 	plateidDict = dict()
 
@@ -275,7 +277,11 @@ def get_plates(errors, plan=False, loud=True, session=None, atapo=True, allPlate
 					for r in repeat:
 						apg[plateidDict[r]].hist += '{},'.format(d)
 						apg[plateidDict[r]].vdone += 1
-						apg[plateidDict[r]].sn += float(np.sum(day[:,2]**2))
+						apg[plateidDict[r]].sn += float(np.sum(day[:,4]**2))
+						apg[plateidDict[r]].snql += float(np.sum(day[:,2]**2))
+						apg[plateidDict[r]].snred += float(np.sum(day[:,3]**2))
+						if np.sum(day[:,4]) == np.sum(day[:,3]): apg[plateidDict[r]].reduction += '1,'
+						else: apg[plateidDict[r]].reduction += '0,'
 		else:
 			plateExps = good_exp[good_exp[:,1] == p.plateid]
 			dates = np.unique(plateExps[:,0])
@@ -284,6 +290,11 @@ def get_plates(errors, plan=False, loud=True, session=None, atapo=True, allPlate
 				if day.shape[0] >= 2: 
 					p.hist += '{},'.format(d)
 					p.vdone += 1
-					p.sn += float(np.sum(day[:,2]**2))
+					p.sn += float(np.sum(day[:,4]**2))
+					p.snql += float(np.sum(day[:,2]**2))
+					p.snred += float(np.sum(day[:,3]**2))
+					if np.sum(day[:,4]) == np.sum(day[:,3]): p.reduction += '1,'
+					else: p.reduction += '0,'
+
 
 	return apg
