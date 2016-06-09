@@ -186,7 +186,7 @@ def get_plates(errors, plan=False, loud=True, session=None, atapo=True, allPlate
 			from sdss.internal.database.connections.UtahLocalConnection import db
 		else: 
 			from sdss.internal.database.connections.APODatabaseUserLocalConnection import db
-		session = db.Session()
+	        session = db.Session()
 	from sdss.internal.database.apo.platedb import ModelClasses as pdb
 	from sdss.internal.database.apo.apogeeqldb import ModelClasses as qldb
 
@@ -251,11 +251,10 @@ def get_plates(errors, plan=False, loud=True, session=None, atapo=True, allPlate
 	exposures_tab = np.array(exposures)
 	fullRedCheck = np.copy([exposures_tab[:,0],exposures_tab[:,1],exposures_tab[:,2],exposures_tab[:,3],[x[3] if x[3] is not None else x[2] for x in exposures_tab]]).swapaxes(0,1)
 
-	print(fullRedCheck.shape)
-
 	#convert nones in SNR to zeros
-	proto_good_exp = np.array(fullRedCheck[fullRedCheck[:,4]>10],dtype=np.float)
-	good_exp=np.nan_to_num(proto_good_exp)
+        fullRedCheck = np.array(fullRedCheck,dtype=np.float)
+	proto_good_exp = np.nan_to_num(fullRedCheck)
+	good_exp=proto_good_exp[proto_good_exp[:,4]>10]
 
 	plateidDict = dict()
 
