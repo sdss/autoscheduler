@@ -1,242 +1,344 @@
 from __future__ import print_function, division
 from time import time
 import os
+import sqlalchemy
+import numpy as np
 from sdss.apogee.plate_completion import completion
 
-# APGPLATE OBJECT DENITION
 # DESCRIPTION: APOGEE Plate Object
 class apgplate(object):
-	# Identifying plate information
-	name = ''
-	locationid = 0
-	plateid = 0
-	apgver = 0
-	platepk = -1
-	
-	# Plate pointing information
-	ra = 0.0
-	dec = 0.0
-	ha = 0.0
-	maxha = 0.0
-	minha = 0.0
-	
-	# Scheduling info
-	vplan = 0
-	vdone = 0
-	manual_priority = 0
-	priority = 0.0
-	plugged = 0
-	snql, snred, sn = 0.0, 0.0, 0.0
-	hist = ''
-	reduction = ''
-	cadence = ''
-	plate_loc = ''
-	stack = 0
-	lead_survey = 'apg'
-	coobs = False
-		
-	# Determine most recent observation time
-	def maxhist(self):
-		obsstr = self.hist.split(',')
-		if len(obsstr) == 0 or obsstr[0] == '': return float(0.0)
-		obshist = [float(x) for x in obsstr if x != '']
-		return max(obshist)
-		
-	# Determine first observation time
-	def minhist(self):
-		obsstr = self.hist.split(',')
-		if len(obsstr) == 0 or obsstr[0] == '': return float(0.0)
-		obshist = [float(x) for x in obsstr if x != '']
-		return min(obshist)
-		
-	# Determine plate completion percentage (from algorithm in the SDSS python module)
-	def pct(self):
-		return completion(self.vplan, self.vdone, self.sn, self.cadence)
+    # Identifying plate information
+    def __init__(self,plate=None):
+        if plate is None: 
+            raise Exception("Somehow tried to make plate object without a plate")
+        #properties we get from plate object
+        self.plate = plate
+        self.name = plate.name
+        self.locationid = plate.location_id
+        self.plateid = plate.plate_id
+        self.platepk = plate.pk
+        self.ddict= plate.design.designDictionary
+        #plate_loc is physical location, and may never be used
+        self.plate_loc = plate.location.label
+        
+        #NOTE FROM JOHN: ddict contains RA, DEC, and survey info
+        #if this runs slowly, use ddict to set these
+        self._ra = None
+        self._dec = None
+        self._ha = None
+        self._maxha = None
+        self._minha = None
+        self._manual_priority = None
+        self._plugged = None
 
-# GET_PLATES
-# DESCRIPTION: Reads in APOGEE-II plate information from platedb
-# INPUT: none
-# OUTPUT: apg -- list of objects with all APOGEE-II plate information
-def get_plates(errors, plan=False, loud=True, session=None, atapo=True):
-	if session is None:
-		# Create database connection
-		if (os.path.dirname(os.path.realpath(__file__))).find('utah.edu') >= 0: 
-			from sdss.internal.database.connections.UtahLocalConnection import db
-		else: 
-			from sdss.internal.database.connections.APOSDSSIIIUserLocalConnection import db
-		session = db.Session()
-	
-	# Pull all relevant plate information for APOGEE plates
-	stage1_start = time()
-	if plan:
-		qstr = "SET SCHEMA 'platedb'; "
-		qstr += "SELECT plt.location_id, ptg.center_ra, ptg.center_dec, plt.plate_id, pltg.hour_angle, pltg.priority, plt.design_pk, plt.name, pltg.ha_observable_max, pltg.ha_observable_min, plt.pk, plt.current_survey_mode_pk, ploc.label "
-		qstr += "FROM (((((((platedb.plate AS plt "
-		qstr += "INNER JOIN platedb.plate_to_survey AS p2s ON (p2s.plate_pk = plt.pk)) "
-		qstr += "INNER JOIN platedb.survey AS surv ON (p2s.survey_pk = surv.pk)) "
-		qstr += "INNER JOIN platedb.plate_pointing AS pltg ON (pltg.plate_pk=plt.pk)) "
-		qstr += "INNER JOIN platedb.pointing AS ptg ON (pltg.pointing_pk=ptg.pk)) "
-		qstr += "INNER JOIN platedb.plate_location AS ploc ON (ploc.pk=plt.plate_location_pk)) "
-		qstr += "INNER JOIN platedb.plate_to_plate_status AS p2ps ON (p2ps.plate_pk=plt.pk)) "
-		qstr += "INNER JOIN platedb.plate_status AS plts ON (plts.pk=p2ps.plate_status_pk)) "
-		qstr += "WHERE surv.label='APOGEE-2' AND plts.label = 'Accepted'"
-		if atapo: qstr += "AND ploc.label = 'APO' "
-		qstr += "ORDER BY plt.plate_id"
-		stage1 = session.execute(qstr).fetchall()
+        self._exp_time = None
+        self._lead_survey = None
+        self._coobs = None
 
-		stage1man = session.execute("SET SCHEMA 'platedb'; "+
-			"SELECT plt.location_id, ptg.center_ra, ptg.center_dec, plt.plate_id, pltg.hour_angle, pltg.priority, plt.design_pk, plt.name, pltg.ha_observable_max, pltg.ha_observable_min, plt.pk, plt.current_survey_mode_pk "+
-			"FROM (((((((platedb.plate AS plt "+
-				"INNER JOIN platedb.plate_to_survey AS p2s ON (p2s.plate_pk = plt.pk)) "+
-				"INNER JOIN platedb.survey AS surv ON (p2s.survey_pk = surv.pk)) "+
-				"INNER JOIN platedb.plate_pointing AS pltg ON (pltg.plate_pk=plt.pk)) "+
-				"INNER JOIN platedb.pointing AS ptg ON (pltg.pointing_pk=ptg.pk)) "+
-				"INNER JOIN platedb.plate_location AS ploc ON (ploc.pk=plt.plate_location_pk)) "+
-				"INNER JOIN platedb.plate_to_plate_status AS p2ps ON (p2ps.plate_pk=plt.pk)) "+
-				"INNER JOIN platedb.plate_status AS plts ON (plts.pk=p2ps.plate_status_pk)) "+
-			"WHERE surv.label='MaNGA' AND plts.label = 'Accepted' AND ploc.label = 'APO' "+
-			"ORDER BY plt.plate_id").fetchall()
-	else:
-		stage1 = session.execute("SET SCHEMA 'platedb'; "+
-			"SELECT plt.location_id, ptg.center_ra, ptg.center_dec, plt.plate_id, pltg.hour_angle, pltg.priority, plt.design_pk, plt.name, pltg.ha_observable_max, pltg.ha_observable_min, plt.pk, plt.current_survey_mode_pk, ploc.label "+
-			"FROM ((((((((platedb.active_plugging AS ac "+
-				"JOIN platedb.plugging AS plg ON (ac.plugging_pk=plg.pk)) "+
-				"LEFT JOIN platedb.cartridge AS crt ON (plg.cartridge_pk=crt.pk)) "+
-				"LEFT JOIN platedb.plate AS plt ON (plg.plate_pk=plt.pk)) "+
-				"LEFT JOIN platedb.plate_location AS ploc ON (ploc.pk=plt.plate_location_pk)) "
-				"LEFT JOIN platedb.plate_to_survey AS p2s ON (p2s.plate_pk=plt.pk)) "+
-				"LEFT JOIN platedb.survey AS surv ON (p2s.survey_pk = surv.pk)) "+
-				"LEFT JOIN platedb.plate_pointing as pltg ON (pltg.plate_pk=plt.pk)) "+
-				"LEFT JOIN platedb.pointing AS ptg ON (pltg.pointing_pk=ptg.pk)) "+
-			"WHERE surv.label='APOGEE-2' ORDER BY crt.number").fetchall()
-		stage1man = None
-	
-	# Setup APOGEE-II data structure
-	apg = []
-	
-	# Save data to structure
-	missing = []
-	for i in range(len(stage1)):
-		try:
-			# Check to see whether this is a MaNGA-led plate
-			if stage1[i][11] is not None: 
-				if stage1[i][11] == 2 or stage1[i][11] == 3: continue
-			apg.append(apgplate())
-			apg[-1].locationid = stage1[i][0]
-			apg[-1].ra = float(stage1[i][1])
-			apg[-1].dec = float(stage1[i][2])
-			apg[-1].plateid = stage1[i][3]
-			apg[-1].ha = float(stage1[i][4])
-			apg[-1].manual_priority = stage1[i][5]
-			designid = int(stage1[i][6])
-			apg[-1].name = stage1[i][7]
-			apg[-1].maxha = float(stage1[i][8]) + 7.5
-			apg[-1].minha = float(stage1[i][9]) - 7.5
-			apg[-1].platepk = stage1[i][10]
-			apg[-1].plugged = 0
-			if stage1[i][11] is not None:
-				if stage1[i][11] == 2 or stage1[i][11] == 3: apg[-1].lead_survey = 'man'
-			apg[-1].plate_loc = stage1[i][12]
-		except Exception as e:
-			print(e)
-			missing.append("%d (%s)" % (stage1[i][3], e))
-			#continue
-		
-		# Get APOGEE version number and vplan for this plate
-		dvdata = session.execute("SELECT array_to_string(array_agg(dv.value ORDER BY dv.design_field_pk),',') FROM platedb.design_value as dv WHERE (dv.design_field_pk=342 OR dv.design_field_pk=343 OR dv.design_field_pk=344 OR dv.design_field_pk=351 OR dv.design_field_pk=423 OR dv.design_field_pk=424) AND dv.design_pk=%d" % (designid)).fetchall()
-		if dvdata[0][0]:
-			tmp = dvdata[0][0].split(',')
-			apg[-1].apgver = 100*int(tmp[0]) + 10*int(tmp[1]) + int(tmp[2])
-			if len(tmp) > 3: apg[-1].vplan = int(tmp[3])
-			if len(tmp) > 4: apg[-1].cadence = tmp[4]
-		else:
-			apg[-1].vplan = 3
-			apg[-1].apgver = 999
-	stage1_end = time()
-	if loud: print("[SQL] Read in APOGEE-II plates (%.3f sec)" % ((stage1_end - stage1_start)))
+        #catch values not set properly
+        if 'apogee_design_type' in self.ddict:
+            self.cadence = self.ddict['apogee_design_type']
+            self.driver = self.ddict['apogee_design_driver']
+            self.vplan = int(self.ddict['apogee_n_design_visits'])
+            self.apgver = 100*int(self.ddict['apogee_short_version']) + 10*int(self.ddict['apogee_med_version']) + int(self.ddict['apogee_long_version'])
+        else:
+            self.cadence = 'default'
+            self.driver = 'default'
+            self.vplan = 3
+            self.apgver = 999
 
-	# Determine co-observed plates
-	if stage1man:
-		for m in stage1man:
-			# Find this MaNGA plate in the APOGEE-II list
-			match_idx = [x for x in range(len(apg)) if apg[x].plateid == m[3]]
-			if len(match_idx) > 0:
-				apg[match_idx[0]].coobs = True
-	
-	# Let everyone know there are bad database entries, if necessary
-	if len(missing) > 0:
-		errors.append("APOGEE-II DB ERROR: missing information in DB on plates: %s" % (', '.join([str(x) for x in missing])))
-	
-	# Read in previous APOGEE observations
-	stage2_start = time()
-	stage2 = []
-	try:
-		stage2 = session.execute("SET SCHEMA 'platedb'; "+
-			"SELECT plt.plate_id, FLOOR(exp.start_time/86400), sum(qr.snr_standard^2.0), count(qr.snr_standard), sum(apr.snr^2.0), count(apr.snr) "+
-			"FROM (((((((platedb.exposure AS exp "+
-				"INNER JOIN platedb.survey as surv ON (exp.survey_pk = surv.pk))"+
-				"LEFT JOIN apogeeqldb.quickred AS qr ON (exp.pk=qr.exposure_pk)) "+
-				"LEFT JOIN apogeeqldb.reduction AS apr ON (exp.pk=apr.exposure_pk)) "+
-				"LEFT JOIN platedb.exposure_flavor AS expf ON (expf.pk=exp.exposure_flavor_pk)) "+
-				"LEFT JOIN platedb.observation AS obs ON (exp.observation_pk=obs.pk)) "+
-				"LEFT JOIN platedb.plate_pointing AS pltg ON (obs.plate_pointing_pk=pltg.pk)) "+
-				"RIGHT JOIN platedb.plate AS plt ON (pltg.plate_pk=plt.pk)) "+
-			"WHERE expf.label='Object' AND (qr.snr_standard >= 10.0 OR apr.snr >= 10.0) "+
-			"GROUP BY plt.plate_id, FLOOR(exp.start_time/86400) ORDER BY plt.plate_id").fetchall()
-	except: pass
-	stage2_end = time()
-	if loud: print("[SQL] Read in past APOGEE observations (%.3f sec)" % ((stage2_end - stage2_start)))
-	
-	# Parse previous APOGEE observations
-	for i in range(len(stage2)):
-		if stage2[i][0] == 0: continue
-		# Find this plate in the data structure
-		wplate = [x for x in range(len(apg)) if stage2[i][0] == apg[x].plateid]
-		if len(wplate) == 0: continue
-		wver = [x for x in range(len(apg)) if apg[wplate[0]].locationid == apg[x].locationid and apg[wplate[0]].apgver == apg[x].apgver]
-		
-		# Determine which S/N to use, QL or reduction
-		if stage2[i][4] != None:
-			sn = float(stage2[i][4])
-			sncnt = float(stage2[i][5])
-			for v in range(len(wver)): apg[wver[v]].snred += float(stage2[i][4])
-		elif stage2[i][2] != None:
-			sn = float(stage2[i][2])
-			sncnt = float(stage2[i][3])
-		else:
-			sn, sncnt = 0, 0
-		if stage2[i][2] != None:
-			for v in range(len(wver)): apg[wver[v]].snql += float(stage2[i][2])
-			
-		# Determine whether we can add this MJD to observation history
-		if sncnt >= 2:
-			for v in range(len(wver)): 
-				apg[wver[v]].hist += "%7d," % (stage2[i][1] + 2400000)
-				if stage2[i][4] != None: apg[wver[v]].reduction += '1,'
-				else: apg[wver[v]].reduction += '0,'
-				apg[wver[v]].vdone += 1
-		# Add all good S/N to this plate
-		for v in range(len(wver)): apg[wver[v]].sn += sn
-		
-	# Determine what is currently plugged
-	stage3_start = time()
-	stage3 = session.execute("SET SCHEMA 'platedb'; "+
-		"SELECT crt.number, plt.plate_id "+
-		"FROM ((((((platedb.active_plugging AS ac "+
-			"JOIN platedb.plugging AS plg ON (ac.plugging_pk=plg.pk)) "+
-			"LEFT JOIN platedb.cartridge AS crt ON (plg.cartridge_pk=crt.pk)) "+
-			"LEFT JOIN platedb.plate AS plt ON (plg.plate_pk=plt.pk)) "+
-			"LEFT JOIN platedb.plate_to_survey AS p2s ON (p2s.plate_pk=plt.pk)) "+
-			"LEFT JOIN platedb.survey as surv ON (p2s.survey_pk = surv.pk)) "+
-			"LEFT JOIN platedb.plate_pointing as pltg ON (pltg.plate_pk=plt.pk)) "+
-		"WHERE surv.label = 'APOGEE-2' ORDER BY crt.number").fetchall()
-	stage3_end = time()
-	if loud: print("[SQL] Read in currently plugged APOGEE plates (%.3f sec)" % ((stage3_end - stage3_start)))
-	
-	# Save currently plugged plates to data
-	for c,p in stage3:
-		wplate = [x for x in range(len(apg)) if apg[x].plateid == p]
-		if len(wplate) == 0: continue
-		apg[wplate[0]].plugged = c
-		
-	return apg
+        #properties requiring plate_completion method
+        self.vdone = 0
+        self.sn = 0.0
+        self.hist = ''
+
+        #ben sets these but doesn't use them outside of get_plates; not needed?
+        self.snql = 0.0
+        self.snred = 0.0
+        self.reduction = ''
+
+        #properties not set in get_plates
+        self.priority = 0.0
+        self.stack = 0
+
+
+#----------------------------
+#properties
+#----------------------------
+    @property 
+    def ra(self):
+        if self._ra is None:
+            self._ra = float(self.plate.firstPointing.center_ra)
+        return self._ra
+
+    @property 
+    def dec(self):
+        if self._dec is None:
+            self._dec = float(self.plate.firstPointing.center_dec)
+        return self._dec
+
+    @property 
+    def ha(self):
+        if self._ha is None:
+            self._ha = float(self.plate.firstPointing.platePointing(self.plate.plate_id).hour_angle)
+        return self._ha
+
+    @property 
+    def maxha(self):
+        if self._maxha is None:
+            self._maxha = float(self.plate.firstPointing.platePointing(self.plate.plate_id).ha_observable_max) + 7.5
+        return self._maxha
+
+    @property 
+    def minha(self):
+        if self._minha is None:
+            self._minha = float(self.plate.firstPointing.platePointing(self.plate.plate_id).ha_observable_min) - 7.5
+        return self._minha
+
+    @property 
+    def manual_priority(self):
+        if self._manual_priority is None:
+            self._manual_priority = int(self.plate.firstPointing.platePointing(self.plate.plate_id).priority)
+        return self._manual_priority
+
+    @property 
+    def plugged(self):
+        if self._plugged is None:
+            self._plugged = 0
+            for p in self.plate.pluggings:
+                if len(p.activePlugging) >0:
+                    self._plugged = p.cartridge.number
+        return self._plugged
+
+    @property 
+    def lead_survey(self):
+        if self._lead_survey is None:
+            if self.plate.currentSurveyMode is None:
+                self._lead_survey = 'apg'
+            elif self.plate.currentSurveyMode.label == 'APOGEE lead': 
+                self._lead_survey = 'apg'
+            else: 
+                self._lead_survey = 'man'
+        return self._lead_survey    
+
+    @property 
+    def exp_time(self):
+        if self._exp_time is None:
+            if "apogee_exposure_time" in self.ddict: 
+                self._exp_time = float(self.ddict['apogee_exposure_time'])
+            elif self.lead_survey == 'apg': 
+                self._exp_time = 500.0
+            else: self._exp_time = 450.0
+        return self._exp_time
+
+    @property 
+    def coobs(self):
+        if self._coobs is None:
+            if 'MANGA' in self.ddict['instruments']:
+                self._coobs = True
+            else: self._coobs = False
+        return self._coobs
+
+#----------------------------
+#useful methods
+#----------------------------
+    # Determine most recent observation time
+    def maxhist(self):
+        obsstr = self.hist.split(',')
+        if len(obsstr) == 0 or obsstr[0] == '': return float(0.0)
+        obshist = [float(x) for x in obsstr if x != '']
+        return max(obshist)
+        
+    # Determine first observation time
+    def minhist(self):
+        obsstr = self.hist.split(',')
+        if len(obsstr) == 0 or obsstr[0] == '': return float(0.0)
+        obshist = [float(x) for x in obsstr if x != '']
+        return min(obshist)
+        
+    # Determine plate completion percentage (from algorithm in the SDSS python module)
+    def pct(self):
+        return completion(self.vplan, self.vdone, self.sn, self.cadence)
+
+
+def getPlateid(item):
+        return item.plateid
+        
+def get_plates(errors, plan=False, loud=True, session=None, atapo=True, allPlates=False, plateList = []):
+    '''DESCRIPTION: Reads in APOGEE-II plate information from platedb
+    INPUT: None
+    OUTPUT: apg -- list of objects with all APOGEE-II plate information'''
+    start_time = time()
+
+    if session is None:
+        # Create database connection
+        if (os.path.dirname(os.path.realpath(__file__))).find('utah.edu') >= 0: 
+            from sdss.internal.database.connections.UtahLocalConnection import db
+        else: 
+            from sdss.internal.database.connections.APODatabaseUserLocalConnection import db
+        session = db.Session()
+    from sdss.internal.database.apo.platedb import ModelClasses as pdb
+    from sdss.internal.database.apo.apogeeqldb import ModelClasses as qldb
+
+    try:
+        acceptedStatus=session.query(pdb.PlateStatus).filter(pdb.PlateStatus.label=="Accepted").one()
+    except sqlalchemy.orm.exc.NoResultFound:
+        raise Exception("Could not find 'Accepted' status in plate_status table")
+
+    try:
+        survey=session.query(pdb.Survey).filter(pdb.Survey.label=="APOGEE-2").one()
+    except sqlalchemy.orm.exc.NoResultFound:
+        raise Exception("Could not find 'APOGEE-2' survey in survey table")
+
+    try:
+        plateLoc=session.query(pdb.PlateLocation).filter(pdb.PlateLocation.label=="APO").one()
+    except sqlalchemy.orm.exc.NoResultFound:
+        raise Exception("Could not find 'APO' location in plate_location table")
+
+    # Pull all relevant plate information for APOGEE plates
+    protoList = list()
+    with session.begin():
+        if plateList != []:
+            #getting plates with same loc id as requested plates to determine hist & completion
+            locIDS=session.query(pdb.Plate.location_id)\
+               .filter(pdb.Survey.pk == survey.pk)\
+               .filter(pdb.Plate.plate_id.in_(plateList)).all()
+
+            plates=session.query(pdb.Plate)\
+               .join(pdb.PlateToSurvey, pdb.Survey)\
+               .filter(pdb.Survey.pk == survey.pk)\
+               .filter(pdb.Plate.location_id.in_(locIDS)).all()
+
+        elif plan:
+            protoList=session.query(pdb.Plate.plate_id)\
+                   .join(pdb.PlateToSurvey, pdb.Survey)\
+                   .join(pdb.PlateLocation)\
+                   .join(pdb.PlateToPlateStatus,pdb.PlateStatus)\
+                   .filter(pdb.Survey.pk == survey.pk)\
+                   .filter(pdb.Plate.location==plateLoc)\
+                   .filter(pdb.PlateStatus.pk ==acceptedStatus.pk).all()
+            locIDS=session.query(pdb.Plate.location_id)\
+                    .filter(pdb.Survey.pk == survey.pk)\
+                    .filter(pdb.Plate.plate_id.in_(protoList)).all()
+            plates=session.query(pdb.Plate)\
+               .join(pdb.PlateToSurvey, pdb.Survey)\
+               .filter(pdb.Survey.pk == survey.pk)\
+               .filter(pdb.Plate.location_id.in_(locIDS)).all()    
+
+        elif allPlates:
+            plates=session.query(pdb.Plate)\
+               .join(pdb.PlateToSurvey, pdb.Survey)\
+               .filter(pdb.Survey.pk == survey.pk).all()
+        else:
+            protoList=session.query(pdb.Plate.plate_id)\
+                   .join(pdb.PlateToSurvey, pdb.Survey)\
+                   .join(pdb.Plugging,pdb.Cartridge)\
+                   .join(pdb.ActivePlugging)\
+                   .filter(pdb.Survey.pk == survey.pk)\
+                   .order_by(pdb.Cartridge.number).all()
+            #getting plates with same loc id as PLUGGED plates to determine hist & completion
+            locIDS=session.query(pdb.Plate.location_id)\
+               .filter(pdb.Survey.pk == survey.pk)\
+               .filter(pdb.Plate.plate_id.in_(protoList)).all()
+
+            plates=session.query(pdb.Plate)\
+               .join(pdb.PlateToSurvey, pdb.Survey)\
+               .filter(pdb.Survey.pk == survey.pk)\
+               .filter(pdb.Plate.location_id.in_(locIDS)).all()
+
+    q1Time = time()
+    if loud: print('[SQL]: plate query completed in {} s'.format(q1Time-start_time))
+
+    #create the list of apg plate objects
+    apg = list()
+    tmpPlateList=list()
+    for plate in plates:
+        tmpPlate=apgplate(plate)
+        if allPlates or plateList != []: apg.append(tmpPlate)   
+        else:
+            if tmpPlate.lead_survey == 'apg':
+                tmpPlateList.append(tmpPlate.plateid)
+                apg.append(tmpPlate)
+
+    if protoList != []:
+        plateList = set([p[0] for p in protoList]).intersection(tmpPlateList)
+
+    assignmentTime = time()
+    if loud: print('[PYTHON]: plate object created in {} s'.format(assignmentTime-q1Time))
+
+    exposedPlates = [p.plateid for p in apg]
+    with session.begin():
+        #returns list of tuples (mjd,plateid,qrRed,fullRed)
+        exposures=session.query(sqlalchemy.func.floor(pdb.Exposure.start_time/86400+.3),pdb.Plate.plate_id,\
+            qldb.Quickred.snr_standard,qldb.Reduction.snr)\
+        .join(pdb.Survey).join(pdb.ExposureFlavor)\
+        .join(pdb.Observation).join(pdb.PlatePointing).join(pdb.Plate)\
+        .outerjoin(qldb.Quickred).outerjoin(qldb.Reduction)\
+        .filter(pdb.ExposureFlavor.label == 'Object')\
+        .filter(pdb.Plate.plate_id.in_(exposedPlates)).all()
+        #removed survey label filter to deal with mislabled exposures
+        # .filter(pdb.Survey.label == 'APOGEE-2' )
+    q2Time = time()
+    
+    if loud: print('[SQL]: exposures query completed in {} s'.format(q2Time-assignmentTime))    
+
+    exposures_tab = np.array(exposures)
+    fullRedCheck = np.copy([exposures_tab[:,0],exposures_tab[:,1],exposures_tab[:,2],exposures_tab[:,3],[x[3] if x[3] is not None else x[2] for x in exposures_tab]]).swapaxes(0,1)
+
+    #convert nones in SNR to zeros
+    fullRedCheck = np.array(fullRedCheck,dtype=np.float)
+    proto_good_exp = np.nan_to_num(fullRedCheck)
+    good_exp=proto_good_exp[proto_good_exp[:,4]>10]
+
+    plateidDict = dict()
+
+    for i,p in enumerate(apg): 
+        plateidDict[p.plateid] = i
+
+    for p in apg:
+        if p.hist != '' and p.vdone != 0: continue
+        repeat = []
+        #find plates that share location and cohort
+        for pl in apg:
+            if p.plateid == pl.plateid: continue
+            if p.locationid == pl.locationid:
+                if p.apgver == pl.apgver: repeat.append(pl.plateid)
+        if repeat != []:
+            repeat.append(p.plateid)        
+            plateExps = good_exp[np.in1d(good_exp[:,1], repeat)]
+            dates = np.unique(plateExps[:,0])
+            for d in dates:
+                day = plateExps[plateExps[:,0] == d]
+                if day.shape[0] >= 2: 
+                    for r in repeat:
+                        apg[plateidDict[r]].hist += '{},'.format(int(d)+2400000)
+                        apg[plateidDict[r]].vdone += 1
+                        apg[plateidDict[r]].sn += float(np.sum(day[:,4]**2))
+                        apg[plateidDict[r]].snql += float(np.sum(day[:,2]**2))
+                        apg[plateidDict[r]].snred += float(np.sum(day[:,3]**2))
+                        if np.sum(day[:,4]) == np.sum(day[:,3]): apg[plateidDict[r]].reduction += '1,'
+                        # else: print("fuck you")
+                        else: apg[plateidDict[r]].reduction += '0,'
+        else:
+            plateExps = good_exp[good_exp[:,1] == p.plateid]
+            dates = np.unique(plateExps[:,0])
+            for d in dates:
+                day = plateExps[plateExps[:,0] == d]
+                if day.shape[0] >= 2: 
+                    p.hist += '{},'.format(int(d)+2400000)
+                    p.vdone += 1
+                    p.sn += float(np.sum(day[:,4]**2))
+                    p.snql += float(np.sum(day[:,2]**2))
+                    p.snred += float(np.sum(day[:,3]**2))
+                    if np.sum(day[:,4]) == np.sum(day[:,3]): p.reduction += '1,'
+                    else: p.reduction += '0,'
+
+    end_time = time()
+    if loud: print('[PYTHON]: get_plates complete in {} s'.format(end_time-start_time))
+
+    if plateList != []:
+        plateList = list(plateList)
+        plateList = sorted(plateList)
+        return [apg[plateidDict[p]] for p in plateList]
+        
+    return sorted(apg,key=getPlateid)
