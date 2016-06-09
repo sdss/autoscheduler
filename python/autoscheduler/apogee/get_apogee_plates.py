@@ -161,6 +161,9 @@ class apgplate(object):
 		return completion(self.vplan, self.vdone, self.sn, self.cadence)
 
 
+def getPlateid(item):
+        return item.plateid
+        
 def get_plates(errors, plan=False, loud=True, session=None, atapo=True, allPlates=False, plateList = []):
 	'''DESCRIPTION: Reads in APOGEE-II plate information from platedb
 	INPUT: None
@@ -216,12 +219,11 @@ def get_plates(errors, plan=False, loud=True, session=None, atapo=True, allPlate
 				   .filter(pdb.PlateStatus.pk ==acceptedStatus.pk).all()
 			locIDS=session.query(pdb.Plate.location_id)\
 				    .filter(pdb.Survey.pk == survey.pk)\
-					.filter(pdb.Plate.plate_id.in_(protoList)).all()
-
+				    .filter(pdb.Plate.plate_id.in_(protoList)).all()
 			plates=session.query(pdb.Plate)\
 			   .join(pdb.PlateToSurvey, pdb.Survey)\
 			   .filter(pdb.Survey.pk == survey.pk)\
-			   .filter(pdb.Plate.location_id.in_(locIDS)).all()
+			   .filter(pdb.Plate.location_id.in_(locIDS)).all()    
 
 		elif allPlates:
 			plates=session.query(pdb.Plate)\
@@ -335,6 +337,8 @@ def get_plates(errors, plan=False, loud=True, session=None, atapo=True, allPlate
 	if loud: print('[PYTHON]: get_plates complete in {} s'.format(end_time-start_time))
 
 	if plateList != []:
+                plateList = list(plateList)
+                plateList = sorted(plateList)
 		return [apg[plateidDict[p]] for p in plateList]
-
-	return apg
+        
+	return sorted(apg,key=getPlateid)
