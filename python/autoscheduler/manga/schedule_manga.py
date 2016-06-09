@@ -44,8 +44,7 @@ def schedule_manga(schedule, errors, plan=False, loud=True):
                 plates.append({'plateid': v, 'cart': k})
 
         except Exception as e:
-            raise(e)
-            errors.append('MANGA: %s' %str(e))
+            errors.append('MANGA: %s' % e)
 
         # Get raw output from MaNGA submodule
         #manga_obj = Nightly(startDate=schedule['manga_start'], endDate=schedule['manga_end'])
