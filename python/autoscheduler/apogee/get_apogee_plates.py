@@ -160,26 +160,13 @@ class apgplate(object):
 	def pct(self):
 		return completion(self.vplan, self.vdone, self.sn, self.cadence)
 
-	# def pct(self):
-	# 	''' Computes completion percentage of APOGEE-II plate '''
-	#     # Something is wrong here...
-	# 	if self.vplan == 0: return 1
 
-	# 	try:
-	# 		# 90% of completion percentage is from number of visits
-	# 		visit_completion = 0.9 * min([1, self.vdone / self.vplan])
-	# 		# 10% of completion percentage is from S/N
-	# 		sn_completion = 0.1 * calculateSnCompletion(self.vplan, self.sn)
-	# 		return visit_completion + sn_completion
-	# 	except:
-	# 		raise RuntimeError("ERROR: unable to calculate completion for vplan: %d, vdone: %d, sn: %d\n%s" %\
-	# 			(self.vplan, self.vdone, self.sn, sys.exc_info()))
-
-
-def get_plates(errors, plan=False, loud=True, session=None, atapo=True, allPlates=False):
+def get_plates(errors, plan=False, loud=True, session=None, atapo=True, allPlates=False, plateList = []):
 	'''DESCRIPTION: Reads in APOGEE-II plate information from platedb
 	INPUT: None
 	OUTPUT: apg -- list of objects with all APOGEE-II plate information'''
+	start_time = time()
+
 	if session is None:
 		# Create database connection
 		if (os.path.dirname(os.path.realpath(__file__))).find('utah.edu') >= 0: 
@@ -206,37 +193,78 @@ def get_plates(errors, plan=False, loud=True, session=None, atapo=True, allPlate
 		raise Exception("Could not find 'APO' location in plate_location table")
 
 	# Pull all relevant plate information for APOGEE plates
+	protoList = list()
 	with session.begin():
-		if plan:
+		if plateList != []:
+			#getting plates with same loc id as requested plates to determine hist & completion
+			locIDS=session.query(pdb.Plate.location_id)\
+			   .filter(pdb.Survey.pk == survey.pk)\
+			   .filter(pdb.Plate.plate_id.in_(plateList)).all()
+
 			plates=session.query(pdb.Plate)\
+			   .join(pdb.PlateToSurvey, pdb.Survey)\
+			   .filter(pdb.Survey.pk == survey.pk)\
+			   .filter(pdb.Plate.location_id.in_(locIDS)).all()
+
+		elif plan:
+			protoList=session.query(pdb.Plate.plate_id)\
 				   .join(pdb.PlateToSurvey, pdb.Survey)\
 				   .join(pdb.PlateLocation)\
 				   .join(pdb.PlateToPlateStatus,pdb.PlateStatus)\
 				   .filter(pdb.Survey.pk == survey.pk)\
 				   .filter(pdb.Plate.location==plateLoc)\
 				   .filter(pdb.PlateStatus.pk ==acceptedStatus.pk).all()
+			locIDS=session.query(pdb.Plate.location_id)\
+				    .filter(pdb.Survey.pk == survey.pk)\
+					.filter(pdb.Plate.plate_id.in_(protoList)).all()
+
+			plates=session.query(pdb.Plate)\
+			   .join(pdb.PlateToSurvey, pdb.Survey)\
+			   .filter(pdb.Survey.pk == survey.pk)\
+			   .filter(pdb.Plate.location_id.in_(locIDS)).all()
+
 		elif allPlates:
 			plates=session.query(pdb.Plate)\
 			   .join(pdb.PlateToSurvey, pdb.Survey)\
 			   .filter(pdb.Survey.pk == survey.pk).all()
 		else:
-			plates=session.query(pdb.Plate)\
+			protoList=session.query(pdb.Plate.plate_id)\
 				   .join(pdb.PlateToSurvey, pdb.Survey)\
 				   .join(pdb.Plugging,pdb.Cartridge)\
 				   .join(pdb.ActivePlugging)\
 				   .filter(pdb.Survey.pk == survey.pk)\
 				   .order_by(pdb.Cartridge.number).all()
+			#getting plates with same loc id as PLUGGED plates to determine hist & completion
+			locIDS=session.query(pdb.Plate.location_id)\
+			   .filter(pdb.Survey.pk == survey.pk)\
+			   .filter(pdb.Plate.plate_id.in_(protoList)).all()
+
+			plates=session.query(pdb.Plate)\
+			   .join(pdb.PlateToSurvey, pdb.Survey)\
+			   .filter(pdb.Survey.pk == survey.pk)\
+			   .filter(pdb.Plate.location_id.in_(locIDS)).all()
+
+	q1Time = time()
+	if loud: print('[SQL]: plate query completed in {} s'.format(q1Time-start_time))
 
 	#create the list of apg plate objects
 	apg = list()
+	tmpPlateList=list()
 	for plate in plates:
 		tmpPlate=apgplate(plate)
-		if allPlates: apg.append(tmpPlate)
-		else: 
+		if allPlates or plateList != []: apg.append(tmpPlate)	
+		else:
 			if tmpPlate.lead_survey == 'apg':
+				tmpPlateList.append(tmpPlate.plateid)
 				apg.append(tmpPlate)
 
+	if protoList != []:
+		plateList = set([p[0] for p in protoList]).intersection(tmpPlateList)
 
+	assignmentTime = time()
+	if loud: print('[PYTHON]: plate object created in {} s'.format(assignmentTime-q1Time))
+
+	exposedPlates = [p.plateid for p in apg]
 	with session.begin():
 		#returns list of tuples (mjd,plateid,qrRed,fullRed)
 		exposures=session.query(sqlalchemy.func.floor(pdb.Exposure.start_time/86400+.3),pdb.Plate.plate_id,\
@@ -244,15 +272,19 @@ def get_plates(errors, plan=False, loud=True, session=None, atapo=True, allPlate
 		.join(pdb.Survey).join(pdb.ExposureFlavor)\
 		.join(pdb.Observation).join(pdb.PlatePointing).join(pdb.Plate)\
 		.outerjoin(qldb.Quickred).outerjoin(qldb.Reduction)\
-		.filter(pdb.ExposureFlavor.label == 'Object').all()
+		.filter(pdb.ExposureFlavor.label == 'Object')\
+		.filter(pdb.Plate.plate_id.in_(exposedPlates)).all()
 		#removed survey label filter to deal with mislabled exposures
 		# .filter(pdb.Survey.label == 'APOGEE-2' )
+	q2Time = time()
+	
+	if loud: print('[SQL]: exposures query completed in {} s'.format(q2Time-assignmentTime))	
 
 	exposures_tab = np.array(exposures)
 	fullRedCheck = np.copy([exposures_tab[:,0],exposures_tab[:,1],exposures_tab[:,2],exposures_tab[:,3],[x[3] if x[3] is not None else x[2] for x in exposures_tab]]).swapaxes(0,1)
 
 	#convert nones in SNR to zeros
-        fullRedCheck = np.array(fullRedCheck,dtype=np.float)
+	fullRedCheck = np.array(fullRedCheck,dtype=np.float)
 	proto_good_exp = np.nan_to_num(fullRedCheck)
 	good_exp=proto_good_exp[proto_good_exp[:,4]>10]
 
@@ -299,5 +331,10 @@ def get_plates(errors, plan=False, loud=True, session=None, atapo=True, allPlate
 					if np.sum(day[:,4]) == np.sum(day[:,3]): p.reduction += '1,'
 					else: p.reduction += '0,'
 
+	end_time = time()
+	if loud: print('[PYTHON]: get_plates complete in {} s'.format(end_time-start_time))
+
+	if plateList != []:
+		return [apg[plateidDict[p]] for p in plateList]
 
 	return apg
