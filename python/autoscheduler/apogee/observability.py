@@ -75,6 +75,12 @@ def observability(apg, par, times, lengths, loud=True):
 			# Check whether any of the points contain a bad airmass value
 			badsecz = [x for x in secz if x < 1.003 or x > par['maxz']]
 			if len(badsecz) > 0: obsarr[p,t] = -2
+
+                        #Lower the priority of long exposure plates in the last slot
+                        if t == len(times) -1:
+                                if apg[p].exp_time == 1000.0:
+                                        obsarr[p,t] = obsarr[p,t] / 5.0
+                                        
 			
 		if loud: print(apg[p].plateid, minlst, maxlst, apo.localTime(minlst, utc=True), apo.localTime(maxlst, utc=True), obsarr[p,:], file=df)
 			
