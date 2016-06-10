@@ -18,7 +18,6 @@ platelists/apogee2_2016-02-10_forBen.dat -text
 platelists/eboss.1113.txt -text
 python/autoscheduler/__init__.py -text
 python/autoscheduler/apogee/__init__.py -text
-python/autoscheduler/apogee/get_apogee_plates.py -text
 python/autoscheduler/apogee/observability.py -text
 python/autoscheduler/apogee/pick_apogee_plates.py -text
 python/autoscheduler/apogee/schedule_apogee.py -text
