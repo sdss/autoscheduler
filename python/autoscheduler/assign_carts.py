@@ -124,13 +124,12 @@ def assign_carts(apogee_choices, manga_choices, eboss_choices, errors, manga_car
     apogee_choices = sorted(apogee_choices, key=itemgetter('coobs')) 
 
     #Sort the co-observing plates in order of least manga signal to most manga signal
-    aponlyplt = [apogee_choices[x]['plate'] for x in range(len(apogee_choices)) if not apogee_choices[x]['coobs']]
+    aponlyplt = [apogee_choices[x]['plate'] for x in range(len(apogee_choices)) if not apogee_choices[x]['coobs'] and apogee_choices[x]['plate'] != -1]
     coobsplt = [apogee_choices[x]['plate'] for x in range(len(apogee_choices)) if apogee_choices[x]['coobs']]
     #Only do this if we have coobs plates
     if len(coobsplt) > 0:
         #Sort coobs plates in order of manga signal
         coobsplt = mangaBrightPriority(coobsplt)
-
         #Combine both plate lists together
         allplate = aponlyplt+coobsplt
         sort_choices = []
@@ -138,6 +137,11 @@ def assign_carts(apogee_choices, manga_choices, eboss_choices, errors, manga_car
         for i in range(len(allplate)):
             hold = [apogee_choices[x] for x in range(len(apogee_choices)) if apogee_choices[x]['plate'] == allplate[i]]
             sort_choices = sort_choices+hold
+
+        #Add back in the -1 plates
+        for i in range(len(apogee_choices)):
+            if(apogee_choices[i]['plate'] == -1):
+                sort_choices.append(apogee_choices[i])
 
         #Save the results
         apogee_choices = sort_choices
