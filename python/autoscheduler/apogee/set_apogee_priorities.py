@@ -44,7 +44,9 @@ def set_priorities(apg, par, schedule, plan=False, loud=True, twilight=False):
 			elif apg[p].vplan > 3:
 				if schedule['jd'] - apg[p].maxhist() < 3: apg[p].priority = -1
 			# Alternative cadence rules
-			# TO-DO
+                        #Do a once a bright run cadence for KOI and substellar plates
+                        if apg[p].cadence == 'kep_koi' or apg[p].cadence == 'substellar':
+                                if schedule['jd'] - apg[p].maxhist() < 18: apg[p].priority = -1
 			
 
         # In-Order Completion (needs second loop)
