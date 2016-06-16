@@ -79,7 +79,19 @@ def observability(apg, par, times, lengths, loud=True):
                         #Lower the priority of long exposure plates in the last slot
                         if t == len(times) -1:
                                 if apg[p].exp_time == 1000.0:
-                                        obsarr[p,t] = obsarr[p,t] / 5.0
+                                        obsarr[p,t] = obsarr[p,t] / 3.0
+
+                        #Lower priorities for all plates that aren't vplan == 1 for short slots. The priority order should be:
+                        # vpan == 1, vplan > 3, vplan == 3, cadence == kep_koi or substellar, long exposure
+                        if lengths[t] < 1.0:
+                                if apg[p].exp_time == 1000.0:
+                                        obsarr[p,t] = obsarr[p,t] / 3.0
+                                elif apg[p].cadence == 'kep_koi' or apg[p].cadence == 'substellar':
+                                        obsarr[p,t] = obsarr[p,t] / 2.5
+                                elif apg[p].vplan == 3:
+                                        obsarr[p,t] = obsarr[p,t] / 2.0
+                                elif apg[p].vplan > 3:
+                                        obsarr[p,t] = obsarr[p,t] / 1.5
                                         
 			
 		if loud: print(apg[p].plateid, minlst, maxlst, apo.localTime(minlst, utc=True), apo.localTime(maxlst, utc=True), obsarr[p,:], file=df)
