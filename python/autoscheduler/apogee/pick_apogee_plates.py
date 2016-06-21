@@ -93,8 +93,12 @@ def pick_plates(apg, obs, par, times, lengths, schedule, loud=True):
 		else: thisbak1 = apg[int(chosen[c,1])].plateid
 		if chosen[c,2] < 0: thisbak2 = -1
 		else: thisbak2 = apg[int(chosen[c,2])].plateid
-	
-		picks.append({'obsmjd': thistime-2400000, 'exposure_length': thislength, 'plate': thisplate, 'first_backup': thisbak1, 'second_backup': thisbak2, 'coobs': apg[int(chosen[c,0])].coobs})
+
+                #Set coobs
+                if (thisplate == -1): thiscoobs = False
+                else: thiscoobs = apg[int(chosen[c,0])].coobs
+                
+		picks.append({'obsmjd': thistime-2400000, 'exposure_length': thislength, 'plate': thisplate, 'first_backup': thisbak1, 'second_backup': thisbak2, 'coobs': thiscoobs})
 		
 	return picks
 	
