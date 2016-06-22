@@ -51,12 +51,15 @@ def schedule_apogee(schedule, errors, plan=False, loud=True, twilight=False):
 		# twlengths = [(par['exposure'] + par['overhead']) / 60]
                 
                 #28 minutes from 15 deg twilight to 8 deg twilight
-                twtime= schedule['dark_end'] + par['overhead']/60/24
-                twlength= (28+par['overhead'])/60
+                
+                #We don't want to schedule plates during summer shutdown or any night that doesn't have a dark survey
+                if (schedule['dark_end'] != 0.0):
+                        twtime= schedule['dark_end'] + par['overhead']/60/24
+                        twlength= (28+par['overhead'])/60
 
-                times.append(twtime)
-                lengths.append(twlength)
-                nslots = nslots + 1
+                        times.append(twtime)
+                        lengths.append(twlength)
+                        nslots = nslots + 1
 
         #Return nothing if no APOGEE slots needed.
         if nslots == 0: return []
