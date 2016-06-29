@@ -7,6 +7,7 @@ from sdss.internal.database.apo.mangadb import ModelClasses as mangaDB
 import numpy as np
 import os
 
+
 def mangaBrightPriority(plateIDs):
     """Sorts APOGEE plates in order of increasing MaNGA data.
 
@@ -74,8 +75,10 @@ def assign_carts(apogee_choices, manga_choices, eboss_choices, errors, manga_car
     plugplan = []
     for c in allcarts:
         plugplan.append({'cart': c[0], 'cartsurveys': 0, 'oldplate': 0, 'm_picked': 0})
-        if c[0] < 10: plugplan[-1]['cartsurveys'] = 1
-        if c[0] >= 10: plugplan[-1]['cartsurveys'] = 2
+        if c[0] < 10:
+            plugplan[-1]['cartsurveys'] = 1
+        if c[0] >= 10:
+            plugplan[-1]['cartsurveys'] = 2
 
     # Read in all plates that are currently plugged
     # Co-observing plates are returned twice
@@ -88,11 +91,11 @@ def assign_carts(apogee_choices, manga_choices, eboss_choices, errors, manga_car
     #       "LEFT JOIN platedb.plate_to_survey AS p2s ON (p2s.plate_pk=plt.pk)) "+
     #       "LEFT JOIN platedb.plate_pointing as pltg ON (pltg.plate_pk=plt.pk)) "+
     #   "ORDER BY crt.number").fetchall()
-    #coobserved plates no longer returned twice
-    currentplug = session.query(plateDB.Cartridge.number,plateDB.Plate.plate_id)\
-                   .join(plateDB.Plugging).join(plateDB.Cartridge).join(plateDB.Plate).join(plateDB.ActivePlugging)\
-                   .order_by(plateDB.Cartridge.number).all()
-    for c,p in currentplug:
+    # coobserved plates no longer returned twice
+    currentplug = session.query(plateDB.Cartridge.number, plateDB.Plate.plate_id)\
+                                .join(plateDB.Plugging).join(plateDB.Cartridge).join(plateDB.Plate).join(plateDB.ActivePlugging)\
+                                .order_by(plateDB.Cartridge.number).all()
+    for c, p in currentplug:
         wcart = [x for x in range(len(plugplan)) if plugplan[x]['cart'] == c][0]
         plugplan[wcart]['oldplate'] = p
 
@@ -101,49 +104,51 @@ def assign_carts(apogee_choices, manga_choices, eboss_choices, errors, manga_car
 
     # Reorder plugplan to priority order
     sort_plugplan = []
-    #eBOSS is just in order by cart number
+    # eBOSS is just in order by cart number
     cart_order = [17, 16, 15, 14, 13, 12, 11, 10]
-    #APOGEE and MaNGA carts are in an order determined by Totoro
-    #cart_order.extend([9, 8, 7, 6, 5, 4, 3, 2, 1]) 
-    cart_order.extend(manga_cart_order) 
+    # APOGEE and MaNGA carts are in an order determined by Totoro
+    # cart_order.extend([9, 8, 7, 6, 5, 4, 3, 2, 1])
+    cart_order.extend(manga_cart_order)
 
     for c in cart_order:
         pidx = [x for x in range(len(plugplan)) if plugplan[x]['cart'] == c]
-        if len(pidx) == 0: continue
+        if len(pidx) == 0:
+            continue
         sort_plugplan.append(plugplan[pidx[0]])
-    plugplan = sort_plugplan    
-        
+    plugplan = sort_plugplan
+
     # Mark any cartridges already chosen by manga
     if len(manpicks) > 0:
         for c in manpicks:
             wcart = [x for x in range(len(plugplan)) if plugplan[x]['cart'] == c['cart']]
-            if len(wcart) == 0: continue
+            if len(wcart) == 0:
+                continue
             plugplan[wcart[0]]['m_picked'] = 1
 
-    #Sort apogee_choices, so that non-co-observing plates are plugged first
-    apogee_choices = sorted(apogee_choices, key=itemgetter('coobs')) 
+    # Sort apogee_choices, so that non-co-observing plates are plugged first
+    apogee_choices = sorted(apogee_choices, key=itemgetter('coobs'))
 
-    #Sort the co-observing plates in order of least manga signal to most manga signal
+    # Sort the co-observing plates in order of least manga signal to most manga signal
     aponlyplt = [apogee_choices[x]['plate'] for x in range(len(apogee_choices)) if not apogee_choices[x]['coobs'] and apogee_choices[x]['plate'] != -1]
     coobsplt = [apogee_choices[x]['plate'] for x in range(len(apogee_choices)) if apogee_choices[x]['coobs']]
-    #Only do this if we have coobs plates
+    # Only do this if we have coobs plates
     if len(coobsplt) > 0:
-        #Sort coobs plates in order of manga signal
+        # Sort coobs plates in order of manga signal
         coobsplt = mangaBrightPriority(coobsplt)
-        #Combine both plate lists together
+        # Combine both plate lists together
         allplate = aponlyplt+coobsplt
         sort_choices = []
-        #Sort apogee_choices by allplate list
+        # Sort apogee_choices by allplate list
         for i in range(len(allplate)):
             hold = [apogee_choices[x] for x in range(len(apogee_choices)) if apogee_choices[x]['plate'] == allplate[i]]
             sort_choices = sort_choices+hold
 
-        #Add back in the -1 plates
+        # Add back in the -1 plates
         for i in range(len(apogee_choices)):
             if(apogee_choices[i]['plate'] == -1):
                 sort_choices.append(apogee_choices[i])
 
-        #Save the results
+        # Save the results
         apogee_choices = sort_choices
 
     # Save APOGEE-II choices to cartridges
@@ -152,8 +157,10 @@ def assign_carts(apogee_choices, manga_choices, eboss_choices, errors, manga_car
     # First loop: assign plates to carts which are already plugged
     for i in range(len(apogee_choices)):
         wplate = [x for x in range(len(plugplan)) if apogee_choices[i]['plate'] == plugplan[x]['oldplate']]
-        if len(wplate) == 0: continue
-        if plugplan[wplate[0]]['m_picked'] == 1: continue
+        if len(wplate) == 0:
+            continue
+        if plugplan[wplate[0]]['m_picked'] == 1:
+            continue
         # Save new values to apgpicks
         thispick = apogee_choices[i]
         thispick['cart'] = plugplan[wplate[0]]['cart']
@@ -162,26 +169,27 @@ def assign_carts(apogee_choices, manga_choices, eboss_choices, errors, manga_car
         apgsaved[i] = 1
         thispick.pop('coobs', None)
         apgpicks.append(thispick)
-    
+
     manga_removed_plates = []
     # Second loop: assign plates to carts which are not plugged
     for i in range(len(apogee_choices)):
-        if apgsaved[i] == 1: continue
+        if apgsaved[i] == 1:
+            continue
         if apogee_choices[i]['coobs']:
-            #Co-observing plates prefer being on carts 1 - 6
+            # Co-observing plates prefer being on carts 1 - 6
             carts_avail = [x for x in range(len(plugplan)) if plugplan[x]['cart'] >= 0 and plugplan[x]['cart'] <= 6 and plugplan[x]['m_picked'] == 0]
-            if len(carts_avail) == 0: 
+            if len(carts_avail) == 0:
                 carts_avail = [x for x in range(len(plugplan)) if plugplan[x]['cart'] >= 0 and plugplan[x]['cartsurveys'] == 1]
         else:
             carts_avail = [x for x in range(len(plugplan)) if plugplan[x]['cart'] >= 0 and plugplan[x]['cartsurveys'] == 1]
-        if len(carts_avail) == 0: continue
-        
-                #Remove cart from MaNGA list
+        if len(carts_avail) == 0:
+            continue
+
+        # Remove cart from MaNGA list
         if plugplan[carts_avail[0]]['m_picked'] == 1:
             wcart = [x for x in range(len(manpicks)) if plugplan[carts_avail[0]]['cart'] == manpicks[x]['cart']]
             manga_removed_plates.append(manpicks[wcart[0]]['plateid'])
             manpicks.pop(wcart[0])
-            
 
         # Save new values to apgpicks
         thispick = apogee_choices[i]
@@ -189,8 +197,8 @@ def assign_carts(apogee_choices, manga_choices, eboss_choices, errors, manga_car
         thispick['cart'] = plugplan[carts_avail[0]]['cart']
         plugplan[carts_avail[0]]['cart'] = -1
         apgpicks.append(thispick)
-        
-        #Report removed MaNGA plates
+
+        # Report removed MaNGA plates
     if len(manga_removed_plates) > 0:
         errors.append('Removed {} MaNGA Plates'.format(len(manga_removed_plates)))
 
@@ -200,7 +208,8 @@ def assign_carts(apogee_choices, manga_choices, eboss_choices, errors, manga_car
     # First loop: assign plates to carts which are already plugged
     for i in range(len(eboss_choices)):
         wplate = [x for x in range(len(plugplan)) if eboss_choices[i]['plate'] == plugplan[x]['oldplate']]
-        if len(wplate) == 0: continue
+        if len(wplate) == 0:
+            continue
         # Save new values to ebopicks
         thispick = eboss_choices[i]
         thispick['cart'] = plugplan[wplate[0]]['cart']
@@ -209,9 +218,11 @@ def assign_carts(apogee_choices, manga_choices, eboss_choices, errors, manga_car
         ebopicks.append(thispick)
     # Second loop: assign plates to carts which are not plugged
     for i in range(len(eboss_choices)):
-        if ebosaved[i] == 1: continue
+        if ebosaved[i] == 1:
+            continue
         carts_avail = [x for x in range(len(plugplan)) if plugplan[x]['cart'] >= 0 and plugplan[x]['cartsurveys'] == 2]
-        if len(carts_avail) == 0: continue
+        if len(carts_avail) == 0:
+            continue
         # Save new values to ebopicks
         thispick = eboss_choices[i]
         thispick['cart'] = plugplan[carts_avail[0]]['cart']
@@ -223,4 +234,3 @@ def assign_carts(apogee_choices, manga_choices, eboss_choices, errors, manga_car
         print("[PY] Assigned cartridges (%.3f sec)" % (cart_end - cart_start))
 
     return apgpicks, manpicks, ebopicks
-
