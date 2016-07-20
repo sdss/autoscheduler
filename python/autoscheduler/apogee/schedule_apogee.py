@@ -20,6 +20,9 @@ def schedule_apogee(schedule, errors, par=None, plan=False, loud=True, twilight=
 
     # Define APOGEE-II blocks for tonight
     nightlength = (schedule['bright_end'] - schedule['bright_start']) * 24
+    # ###############################
+    # could toss this if block if we make the change in how ncarts is defined in assign_carts_south
+    # ###############################
     if south:
         nslots = int(round(nightlength / ((par['exposure'] + par['overhead']) / 60)))
     else:
@@ -73,21 +76,19 @@ def schedule_apogee(schedule, errors, par=None, plan=False, loud=True, twilight=
             return []
 
     # Get all plate information from the database
-    # ###########################
-    # this will probably need a south flag, waiting for response from nathan...
-    apg = get_plates(errors, plan=plan, loud=loud)
+    apg = get_plates(errors, plan=plan, loud=loud, south=south)
     if len(apg) == 0:
         errors.append('APOGEE-II PLATE ERROR: No APOGEE-II plates found. Aborting.')
         return []
 
     # Prioritize all plates
-    set_priorities(apg, par, schedule, plan, loud=loud, twilight=twilight)
+    set_priorities(apg, par, schedule, plan, loud=loud, twilight=twilight, south=south)
 
     # Determine observability range of all plates
-    obs = observability(apg, par, times, lengths, loud=loud)
+    obs = observability(apg, par, times, lengths, loud=loud, south=south)
 
     # Pick plates for tonight
-    picks = pick_plates(apg, obs, par, times, lengths, schedule, loud=loud)
+    picks = pick_plates(apg, obs, par, times, lengths, schedule, loud=loud, south=south)
 
     # Print out all plate information (just for testing purposes)
     if loud:

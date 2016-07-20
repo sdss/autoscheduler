@@ -5,12 +5,16 @@ import astropysics.coords as coo
 import astropysics.obstools as obs
 from sdss.utilities.idlasl import moonpos
 
-def observability(apg, par, times, lengths, loud=True):
+
+def observability(apg, par, times, lengths, loud=True, south=False):
     obs_start = time()
-    apo = obs.Site(32.789278, -105.820278)
+    if south:
+        obs_site = obs.Site(29.0182, -70.6915)
+    else:
+        obs_site = obs.Site(32.789278, -105.820278)
     obsarr = np.zeros([len(apg), len(times)])
-    beglst = [apo.localSiderialTime(x) for x in times]
-    endlst = [apo.localSiderialTime(times[x] + lengths[x]/24) for x in range(len(times))]
+    beglst = [obs_site.localSiderialTime(x) for x in times]
+    endlst = [obs_site.localSiderialTime(times[x] + lengths[x]/24) for x in range(len(times))]
 
     # Determine moon coordinates
     mpos = []
@@ -80,7 +84,7 @@ def observability(apg, par, times, lengths, loud=True):
                 continue
 
             # Compute horiztonal coordinates
-            horz = apo.apparentCoordinates(platecoo, datetime=[times[t] + lengths[t] / 2 / 24 * x for x in range(3)])
+            horz = obs_site.apparentCoordinates(platecoo, datetime=[times[t] + lengths[t] / 2 / 24 * x for x in range(3)])
             secz = [1/np.cos((90.0 - horz[x].alt.d) * np.pi / 180) for x in range(len(horz))]
             # Check whether any of the points contain a bad airmass value
             badsecz = [x for x in secz if x < 1.003 or x > par['maxz']]
@@ -105,7 +109,7 @@ def observability(apg, par, times, lengths, loud=True):
                     obsarr[p, t] = obsarr[p, t] / 1.5
 
         if loud:
-            print(apg[p].plateid, minlst, maxlst, apo.localTime(minlst, utc=True), apo.localTime(maxlst, utc=True), obsarr[p, :], file=df)
+            print(apg[p].plateid, minlst, maxlst, obs_site.localTime(minlst, utc=True), obs_site.localTime(maxlst, utc=True), obsarr[p, :], file=df)
 
     obs_end = time()
     if loud:
