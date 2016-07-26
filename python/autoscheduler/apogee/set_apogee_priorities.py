@@ -25,13 +25,14 @@ def set_priorities(apg, par, schedule, plan=False, loud=True, twilight=False, so
 
         # Already Plugged
         if apg[p].plugged > 0:
-            apg[p].priority += 100.0
+            if not south:
+                apg[p].priority += 100.0
 
         # Declination
         if south:
-            apg[p].priority -= 50.0 * float(np.exp(-(apg[p].dec + 30)**2 / (2 * (20)**2)))
+            apg[p].priority -= 50.0 * float(np.exp(-(apg[p].dec + 29)**2 / (2 * (20)**2)))
         else:
-            apg[p].priority -= 50.0 * float(np.exp(-(apg[p].dec - 30)**2 / (2 * (20)**2)))
+            apg[p].priority -= 50.0 * float(np.exp(-(apg[p].dec - 33)**2 / (2 * (20)**2)))
         # Ecliptic
         # TO-DO
 

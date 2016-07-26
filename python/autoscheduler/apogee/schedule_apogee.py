@@ -20,17 +20,14 @@ def schedule_apogee(schedule, errors, par=None, plan=False, loud=True, twilight=
 
     # Define APOGEE-II blocks for tonight
     nightlength = (schedule['bright_end'] - schedule['bright_start']) * 24
-    # ###############################
-    # could toss this if block if we make the change in how ncarts is defined in assign_carts_south
-    # ###############################
-    if south:
-        nslots = int(round(nightlength / ((par['exposure'] + par['overhead']) / 60)))
-    else:
-        nslots = min([int(round(nightlength / ((par['exposure'] + par['overhead']) / 60))), par['ncarts']])
+    nslots = min([int(round(nightlength / ((par['exposure'] + par['overhead']) / 60))), par['ncarts']])
     if nslots != 0:
         times = [schedule['bright_start'] + (par['exposure'] + par['overhead']) / 60 / 24 * x for x in range(nslots)]
         lengths = [(par['exposure'] + par['overhead']) / 60 for x in range(nslots)]
-        if not south:
+        if south:
+            # no overhead on last exposure
+            lengths[-1] = par['exposure'] / 60
+        else:
             # If APOGEE-II starts the split night
             if schedule['bright_start'] < schedule['dark_start'] or schedule['dark_start'] == 0:
                 # Determine whether we should add another exposure (leftover time > 15min)
@@ -64,19 +61,23 @@ def schedule_apogee(schedule, errors, par=None, plan=False, loud=True, twilight=
 
                 # We don't want to schedule plates during summer shutdown or any night that doesn't have a dark survey
         if (schedule['dark_end'] != 0.0):
-                twtime = schedule['dark_end'] + par['overhead']/60/24
-                twlength = (28+par['overhead'])/60
+            twtime = schedule['dark_end'] + par['overhead']/60/24
+            twlength = (28+par['overhead'])/60
 
-                times.append(twtime)
-                lengths.append(twlength)
-                nslots = nslots + 1
+            times.append(twtime)
+            lengths.append(twlength)
+            nslots = nslots + 1
 
-        # Return nothing if no APOGEE slots needed.
-        if nslots == 0:
-            return []
+    # Return nothing if no APOGEE slots needed.
+    if nslots == 0:
+        return []
 
     # Get all plate information from the database
-    apg = get_plates(errors, plan=plan, loud=loud, south=south)
+    if south:
+        passed_mjd = schedule['jd'] - 2400000
+    else:
+        passed_mjd = None
+    apg = get_plates(errors, plan=plan, loud=loud, south=south, mjd=passed_mjd)
     if len(apg) == 0:
         errors.append('APOGEE-II PLATE ERROR: No APOGEE-II plates found. Aborting.')
         return []
@@ -94,7 +95,7 @@ def schedule_apogee(schedule, errors, par=None, plan=False, loud=True, twilight=
     if loud:
         df = open('apogee.txt', 'w')
         for p in range(len(apg)):
-            print("%20s %5d %3d %3d %5.2f %5.2f  %5.1f %8.2f %8.2f  %s" % (apg[p].name, apg[p].plateid, apg[p].vplan, apg[p].vdone, apg[p].minha, apg[p].maxha, apg[p].sn, apg[p].priority, max(obs[p,:]), apg[p].hist), file=df)
+            print("%20s %5d %3d %3d %5.2f %5.2f  %5.1f %8.2f %8.2f  %s" % (apg[p].name, apg[p].plateid, apg[p].vplan, apg[p].vdone, apg[p].minha, apg[p].maxha, apg[p].sn, apg[p].priority, max(obs[p, :]), apg[p].hist), file=df)
         df.close()
 
     return picks

@@ -9,7 +9,7 @@ from sdss.utilities.idlasl import moonpos
 def observability(apg, par, times, lengths, loud=True, south=False):
     obs_start = time()
     if south:
-        obs_site = obs.Site(29.0182, -70.6915)
+        obs_site = obs.Site(-29.0182, -70.6915)
     else:
         obs_site = obs.Site(32.789278, -105.820278)
     obsarr = np.zeros([len(apg), len(times)])
