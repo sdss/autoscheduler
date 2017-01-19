@@ -11,7 +11,7 @@ def get_juldate():
     return julian
 
 
-def read_schedule(pwd, errors, mjd=-1, surveys=['apogee', 'eboss', 'manga'], loud=True, plan=False):
+def read_schedule(pwd, errors, mjd=-1, surveys=['apogee', 'eboss', 'manga'], loud=True, plan=False, south=False):
     '''
     read_schedule: reads in scheduler formatted nightly schedule
 

@@ -24,8 +24,8 @@ def set_priorities(apg, par, schedule, plan=False, loud=True, twilight=False, so
         apg[p].priority = 100.0 * apg[p].manual_priority
 
         # Already Plugged
-        if apg[p].plugged > 0:
-            if not south:
+        if not south:
+            if apg[p].plugged > 0:
                 apg[p].priority += 100.0
 
         # Declination

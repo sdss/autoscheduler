@@ -23,6 +23,7 @@ python/autoscheduler/apogee/pick_apogee_plates.py -text
 python/autoscheduler/apogee/schedule_apogee.py -text
 python/autoscheduler/apogee/set_apogee_priorities.py -text
 python/autoscheduler/assign_carts.py -text
+python/autoscheduler/assign_carts_south.py -text
 python/autoscheduler/eboss/__init__.py -text
 python/autoscheduler/eboss/get_eboss_plates.py -text
 python/autoscheduler/eboss/observability.py -text
