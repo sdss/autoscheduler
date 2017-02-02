@@ -35,20 +35,27 @@ def run_scheduler(plan=False, mjd=-1, surveys=['apogee', 'eboss', 'manga'], loud
 
     # if we're scheduling the south, its quick and easy, so ignore the rest of the logic
     if south:
-        apgcart = assign_carts_south.assign_carts(schedule, errors, loud=loud)
-        as_end_time = time()
-        if loud:
-            print("[PY] run_scheduler complete in (%.3f sec)" % ((as_end_time - as_start_time)))
         plan = dict()
-        # Reformat schedule dict for output
         plan['schedule'] = dict()
         plan['schedule']['mjd'] = schedule['jd'] - 2400000
+        if schedule['survey'] != 1:
+            plan['schedule']['apg_start'] = 0.0
+            plan['schedule']['apg_end'] = 0.0
+            plan['errors'] = errors
+            as_end_time = time()
+            if loud:
+                print("[PY] run_scheduler complete in (%.3f sec)" % ((as_end_time - as_start_time)))
+            return plan
+        apgcart = assign_carts_south.assign_carts(schedule, errors, loud=loud)
         # next 2 lines are artifacts of old code; may be unnecessary
         plan['schedule']['apg_start'] = schedule['bright_start'] - 2400000
         plan['schedule']['apg_end'] = schedule['bright_end'] - 2400000
         # Return cart assignments for chosen plates
         plan['apogee'] = apgcart
         plan['errors'] = errors
+        as_end_time = time()
+        if loud:
+            print("[PY] run_scheduler complete in (%.3f sec)" % ((as_end_time - as_start_time)))
         return plan
 
     # otherwise, schedule surveys for tonight

@@ -62,13 +62,15 @@ def assign_carts(schedule, errors, loud=True):
 
     # Save APOGEE-II choices to cartridges
     apgpicks = list()
+    # order apogee plates by obs time
     ordered_choices = sorted(apogee_choices, key=itemgetter('obsmjd'))
-    # print(ordered_choices)
+    # print('there are {} apogee choices tonight.'.format(len(ordered_choices)))
     if len(ordered_choices) == 0:
         print('[PY] No APOGEE plates chosen')
         return list()
 
     # First loop: assign plates to carts which are already plugged
+    # if they are in the first N plates of the night (N=num of carts)
     for i, choice in enumerate(ordered_choices):
         if i < len(allcarts):
             for cart in plugplan:
@@ -79,11 +81,11 @@ def assign_carts(schedule, errors, loud=True):
                     apgpicks.append(thispick)
                     cart['cart'] = -1
 
-    # second loop, assign to remaining carts in order of observing
+    # second loop, assign plates to remaining carts in order of observing
     remaining_carts = [x for x in plugplan if x['cart'] != -1]
     if len(remaining_carts) > 0:
-        for i, cart in enumerate(remaining_carts):
-            thispick = ordered_choices.pop(i)
+        for cart in remaining_carts:
+            thispick = ordered_choices.pop(0)  # remove the next plate up to be observed and plug it
             thispick['cart'] = cart['cart']
             apgpicks.append(thispick)
             cart['cart'] = -1
