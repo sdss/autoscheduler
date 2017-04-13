@@ -15,7 +15,7 @@ def run_scheduler(plan=False, mjd=-1, surveys=['apogee', 'eboss', 'manga'], loud
     as_start_time = time()
     errors = []
 
-    if surveys == ['south']:
+    if surveys == ['south'] or surveys == ['override']:
         south = True
         plan = True
         from autoscheduler import assign_carts_south
@@ -38,14 +38,16 @@ def run_scheduler(plan=False, mjd=-1, surveys=['apogee', 'eboss', 'manga'], loud
         plan = dict()
         plan['schedule'] = dict()
         plan['schedule']['mjd'] = schedule['jd'] - 2400000
-        if schedule['survey'] != 1:
-            plan['schedule']['apg_start'] = 0.0
-            plan['schedule']['apg_end'] = 0.0
-            plan['errors'] = errors
-            as_end_time = time()
-            if loud:
-                print("[PY] run_scheduler complete in (%.3f sec)" % ((as_end_time - as_start_time)))
-            return plan
+        # April '17: request for default behavior to return an APOGEE schedule, thus block below isn't needed
+        # if schedule['survey'] == 0 or schedule['survey'] == 2:  # not observing or engineering
+        #     plan['schedule']['apg_start'] = 0.0
+        #     plan['schedule']['apg_end'] = 0.0
+        #     plan['errors'] = errors
+        #     as_end_time = time()
+        #     if loud:
+        #         print("[PY] run_scheduler complete in (%.3f sec)" % ((as_end_time - as_start_time)))
+        #     return plan
+        # uncomment between to return to previous default
         apgcart = assign_carts_south.assign_carts(schedule, errors, loud=loud)
         # next 2 lines are artifacts of old code; may be unnecessary
         plan['schedule']['apg_start'] = schedule['bright_start'] - 2400000
