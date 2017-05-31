@@ -87,7 +87,11 @@ def observability(apg, par, times, lengths, loud=True, south=False):
             horz = obs_site.apparentCoordinates(platecoo, datetime=[times[t] + lengths[t] / 2 / 24 * x for x in range(3)])
             secz = [1/np.cos((90.0 - horz[x].alt.d) * np.pi / 180) for x in range(len(horz))]
             # Check whether any of the points contain a bad airmass value
-            badsecz = [x for x in secz if x < 1.003 or x > par['maxz']]
+            # If manual_priority 10 ignore zenith avoidance
+            if apg[p].manual_priority == 10:
+                badsecz = [x for x in secz if x > par['maxz']]
+            else:
+                badsecz = [x for x in secz if x < 1.003 or x > par['maxz']]
             if len(badsecz) > 0:
                 obsarr[p, t] = -2
 
