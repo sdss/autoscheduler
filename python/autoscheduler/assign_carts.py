@@ -217,6 +217,9 @@ def assign_carts(apogee_choices, manga_choices, eboss_choices, errors, manga_car
             for cart in carts_avail:
                 if cart != 2 or cart == carts_avail[-1]:
                     selected_cart = cart
+                    break
+            if cart == 2:
+                errors.append('Plate {0} in cart 2 may not be pluggable.'.format(plate_id))
 
         thispick['cart'] = plugplan[selected_cart]['cart']
         plugplan[selected_cart]['cart'] = -1
