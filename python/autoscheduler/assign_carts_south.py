@@ -54,7 +54,7 @@ def assign_carts(schedule, errors, loud=True):
         plugplan[wcart]['oldplate'] = p
 
     # had to get rid of hardcoded carts
-    par = {'exposure': 60, 'overhead': 30, 'maxz': 3, 'moon_threshold': 15, 'sn_target': 3136}
+    par = {'exposure': 60, 'overhead': 20, 'maxz': 3, 'moon_threshold': 15, 'sn_target': 3136}
     nightLength = (schedule['bright_end'] - schedule['bright_start']) * 24
     nslots = int(round(nightLength / ((par['exposure'] + par['overhead']) / 60)))
     par['ncarts'] = nslots
