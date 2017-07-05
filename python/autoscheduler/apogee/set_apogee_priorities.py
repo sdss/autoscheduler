@@ -59,12 +59,13 @@ def set_priorities(apg, par, schedule, plan=False, loud=True, twilight=False, so
                     if schedule['jd'] - apg[p].maxhist() < 18:
                         apg[p].priority = -1
 
-        # In-Order Completion (needs second loop)
-        for p in range(len(apg)):
-            wfield = [x for x in range(len(apg)) if apg[x].locationid == apg[p].locationid]
-            for f in wfield:
-                if apg[p].apgver > apg[f].apgver and apg[f].priority > 1:
-                    apg[p].priority /= 2
+    # In-Order Completion (needs second loop)
+    for p in range(len(apg)):
+        wfield = [x for x in range(len(apg)) if apg[x].locationid == apg[p].locationid]
+        for f in wfield:
+            if apg[p].apgver > apg[f].apgver and apg[f].priority > 1:
+                apg[p].priority /= 2
     set_pri_end = time()
+
     if loud:
         print("[PY] Prioritized APOGEE-II plates (%.3f sec)" % (set_pri_end - set_pri_start))
