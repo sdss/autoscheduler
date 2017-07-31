@@ -43,9 +43,11 @@ def read_schedule(pwd, errors, mjd=-1, surveys=['apogee', 'eboss', 'manga'], lou
             if line[0] == '#':
                 continue
             tmp = line.split()
+            programs = tmp[-1].split(',')
             # Assign already-computed values to dict
             schedule.append({'jd': float(tmp[0]), 'survey': int(tmp[1]), 'survey2': int(tmp[2]), 'bright_start': float(tmp[4]),
-                             'bright_end': float(tmp[5]), 'lead_survey': int(tmp[12]), 'eng_flag': int(tmp[13]), 'eng_type': int(tmp[14])})
+                             'bright_end': float(tmp[5]), 'lead_survey': int(tmp[12]), 'eng_flag': int(tmp[13]), 'eng_type': int(tmp[14]),
+                             'programs': programs})
     else:
         schf = open(schdir+'Sch_base.6yrs.txt.frm.dat', 'r')
         schlines = schf.read().splitlines()

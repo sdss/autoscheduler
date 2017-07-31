@@ -82,6 +82,10 @@ def schedule_apogee(schedule, errors, par=None, plan=False, loud=True, twilight=
         errors.append('APOGEE-II PLATE ERROR: No APOGEE-II plates found. Aborting.')
         return []
 
+    # programs = ['bulge', 'cluster_gc', 'cluster_gc1', 'cluster_gc2', 'cluster_gc3', 'cluster_oc', 'disk', 'disk1', 'disk2', 'halo', 'halo_dsph', 'rrlyr']
+
+    if 'programs' in schedule:
+        apg = [p for p in apg if p.cadence in schedule['programs']]
     # Prioritize all plates
     set_priorities(apg, par, schedule, plan, loud=loud, twilight=twilight, south=south)
 
@@ -105,7 +109,7 @@ def schedule_external(schedule, errors, par=None, plan=False, loud=True, twiligh
 
     # Default params for north, south can have different params so keep them if passed in
     if par is None:
-        par = {'exposure': 67, 'overhead': 20, 'ncarts': 9, 'maxz': 3, 'moon_threshold': 15, 'sn_target': 3136}
+        par = {'exposure': 60, 'overhead': 20, 'ncarts': 9, 'maxz': 3, 'moon_threshold': 15, 'sn_target': 3136}
 
     # Define APOGEE-II blocks for tonight
     nightlength = (schedule['bright_end'] - schedule['bright_start']) * 24
