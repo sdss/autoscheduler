@@ -82,10 +82,10 @@ def schedule_apogee(schedule, errors, par=None, plan=False, loud=True, twilight=
         errors.append('APOGEE-II PLATE ERROR: No APOGEE-II plates found. Aborting.')
         return []
 
-    # programs = ['bulge', 'cluster_gc', 'cluster_gc1', 'cluster_gc2', 'cluster_gc3', 'cluster_oc', 'disk', 'disk1', 'disk2', 'halo', 'halo_dsph', 'rrlyr']
-
-    if 'programs' in schedule:
-        apg = [p for p in apg if p.cadence in schedule['programs']]
+    # decision to include ALL plates, but de-prioritize other programs, moved to set_priorities
+    # if 'programs' in schedule:
+    #     apg = [p for p in apg if p.cadence in schedule['programs']]
+    
     # Prioritize all plates
     set_priorities(apg, par, schedule, plan, loud=loud, twilight=twilight, south=south)
 

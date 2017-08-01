@@ -65,6 +65,12 @@ def set_priorities(apg, par, schedule, plan=False, loud=True, twilight=False, so
         for f in wfield:
             if apg[p].apgver > apg[f].apgver and apg[f].priority > 1:
                 apg[p].priority /= 2
+
+    # For south, de-prioritize plates for programs not scheduled tonight
+    if 'programs' in schedule:
+        for p in apg:
+            if p.cadence not in schedule['programs']:
+                p.priority /= 10
     set_pri_end = time()
 
     if loud:
