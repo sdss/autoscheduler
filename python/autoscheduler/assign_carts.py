@@ -4,6 +4,7 @@ from operator import itemgetter
 from sdss.internal.database.connections import APODatabaseUserLocalConnection
 from sdss.internal.database.apo.platedb import ModelClasses as plateDB
 from sdss.internal.database.apo.mangadb import ModelClasses as mangaDB
+from Totoro.utils.utils import avoid_cart_2
 import numpy as np
 import os
 
@@ -42,10 +43,20 @@ def mangaBrightPriority(plateIDs):
         mangaTransparencies.append(plateTransparencies)
 
     # Calculates the sum of the transparencies for each plate
-    sumOfTransparencies = [np.sum(exps) for exps in mangaTransparencies]
+    sumOfTransparencies = np.array([np.sum(exps)
+                                    for exps in mangaTransparencies])
+
+    plates_to_avoid_cart_2 = np.array([avoid_cart_2(plateid)
+                                       for plateid in plateIDs])
+    print(plates_to_avoid_cart_2)
+    tier1 = plateIDs[plates_to_avoid_cart_2][
+        np.argsort(sumOfTransparencies[plates_to_avoid_cart_2])]
+
+    tier2 = plateIDs[~plates_to_avoid_cart_2][
+        np.argsort(sumOfTransparencies[~plates_to_avoid_cart_2])]
 
     # Returns plate ids sorted by the sum of the transparencies.
-    return plateIDs[np.argsort(sumOfTransparencies)].tolist()
+    return tier1.tolist() + tier2.tolist()
 
 
 def assign_carts(apogee_choices, manga_choices, eboss_choices, errors, manga_cart_order, loud=True):
@@ -93,7 +104,7 @@ def assign_carts(apogee_choices, manga_choices, eboss_choices, errors, manga_car
     #   "ORDER BY crt.number").fetchall()
     # coobserved plates no longer returned twice
     currentplug = session.query(plateDB.Cartridge.number, plateDB.Plate.plate_id)\
-                                .join(plateDB.Plugging).join(plateDB.Cartridge).join(plateDB.Plate).join(plateDB.ActivePlugging)\
+                                .join(plateDB.Plugging).join(plateDB.Plate).join(plateDB.ActivePlugging)\
                                 .order_by(plateDB.Cartridge.number).all()
     for c, p in currentplug:
         wcart = [x for x in range(len(plugplan)) if plugplan[x]['cart'] == c][0]
@@ -162,6 +173,7 @@ def assign_carts(apogee_choices, manga_choices, eboss_choices, errors, manga_car
         if plugplan[wplate[0]]['m_picked'] == 1:
             continue
         # Save new values to apgpicks
+
         thispick = apogee_choices[i]
         thispick['cart'] = plugplan[wplate[0]]['cart']
         thispick['plate'] = apogee_choices[i]['plate']
@@ -194,8 +206,23 @@ def assign_carts(apogee_choices, manga_choices, eboss_choices, errors, manga_car
         # Save new values to apgpicks
         thispick = apogee_choices[i]
         thispick.pop('coobs', None)
-        thispick['cart'] = plugplan[carts_avail[0]]['cart']
-        plugplan[carts_avail[0]]['cart'] = -1
+        plate_id = thispick['plate']
+
+        if plate_id == -1 or not avoid_cart_2(plate_id):
+            # If the plate holes are separated enough for cart 2.
+            selected_cart = carts_avail[0]
+        else:
+            # If the plate cannot be plugged in cart 2 loops until it gets
+            # a different cart or gets to the last cart available.
+            for cart in carts_avail:
+                if cart != 2 or cart == carts_avail[-1]:
+                    selected_cart = cart
+                    break
+            if cart == 2:
+                errors.append('Plate {0} in cart 2 may not be pluggable.'.format(plate_id))
+
+        thispick['cart'] = plugplan[selected_cart]['cart']
+        plugplan[selected_cart]['cart'] = -1
         apgpicks.append(thispick)
 
         # Report removed MaNGA plates
