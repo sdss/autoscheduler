@@ -4,10 +4,8 @@
 
 # Import necessary modules
 from __future__ import print_function, division
-from autoscheduler import night_schedule, assign_carts
+from autoscheduler import night_schedule
 import autoscheduler.apogee as apg
-import autoscheduler.eboss as ebo
-import autoscheduler.manga as man
 from time import time
 from astropy import time as atime
 import os
@@ -17,15 +15,52 @@ def run_scheduler(plan=False, mjd=-1, surveys=['apogee', 'eboss', 'manga'], loud
     as_start_time = time()
     errors = []
 
+    if surveys == ['south'] or surveys == ['override']:
+        south = True
+        plan = True
+        from autoscheduler import assign_carts_south
+    else:
+        south = False
+        from autoscheduler import assign_carts
+        import autoscheduler.eboss as ebo
+        import autoscheduler.manga as man
+
     # Read in schedule file
     pwd = os.path.dirname(os.path.realpath(__file__))
     schedule_start_time = time()
-    schedule = night_schedule.read_schedule(pwd, errors, mjd=mjd, surveys=surveys, loud=loud, plan=plan)
+    schedule = night_schedule.read_schedule(pwd, errors, mjd=mjd, surveys=surveys, loud=loud, plan=plan, south=south)
     schedule_end_time = time()
     if loud:
         print("[PY] Schedule read in complete (%.3f sec)" % (schedule_end_time - schedule_start_time))
 
-    # Schedule surveys for tonight
+    # if we're scheduling the south, its quick and easy, so ignore the rest of the logic
+    if south:
+        plan = dict()
+        plan['schedule'] = dict()
+        plan['schedule']['mjd'] = schedule['jd'] - 2400000
+        # April '17: request for default behavior to return an APOGEE schedule, thus block below isn't needed
+        # if schedule['survey'] == 0 or schedule['survey'] == 2:  # not observing or engineering
+        #     plan['schedule']['apg_start'] = 0.0
+        #     plan['schedule']['apg_end'] = 0.0
+        #     plan['errors'] = errors
+        #     as_end_time = time()
+        #     if loud:
+        #         print("[PY] run_scheduler complete in (%.3f sec)" % ((as_end_time - as_start_time)))
+        #     return plan
+        # uncomment between to return to previous default
+        apgcart = assign_carts_south.assign_carts(schedule, errors, loud=loud)
+        # next 2 lines are artifacts of old code; may be unnecessary
+        plan['schedule']['apg_start'] = schedule['bright_start'] - 2400000
+        plan['schedule']['apg_end'] = schedule['bright_end'] - 2400000
+        # Return cart assignments for chosen plates
+        plan['apogee'] = apgcart
+        plan['errors'] = errors
+        as_end_time = time()
+        if loud:
+            print("[PY] run_scheduler complete in (%.3f sec)" % ((as_end_time - as_start_time)))
+        return plan
+
+    # otherwise, schedule surveys for tonight
     apogee_choices, manga_choices, eboss_choices = [], [], []
     # Schedule APOGEE-II
 

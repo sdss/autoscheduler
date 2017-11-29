@@ -23,6 +23,7 @@ python/autoscheduler/apogee/pick_apogee_plates.py -text
 python/autoscheduler/apogee/schedule_apogee.py -text
 python/autoscheduler/apogee/set_apogee_priorities.py -text
 python/autoscheduler/assign_carts.py -text
+python/autoscheduler/assign_carts_south.py -text
 python/autoscheduler/eboss/__init__.py -text
 python/autoscheduler/eboss/get_eboss_plates.py -text
 python/autoscheduler/eboss/observability.py -text
@@ -54,6 +55,7 @@ python/web/model/__init__.py -text
 python/web/model/database.py -text
 python/web/templates/index.html -text
 python/web/templates/layout.html -text
+schedules/Sch_LCO_base.dat -text
 schedules/Sch_base.2yrs.txt.frm.dat -text
 schedules/Sch_base.4yrs.txt.frm.dat -text
 schedules/Sch_base.6yrs.txt -text
