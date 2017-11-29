@@ -11,7 +11,7 @@ def get_juldate():
     return julian
 
 
-def read_schedule(pwd, errors, mjd=-1, surveys=['apogee', 'eboss', 'manga'], loud=True, plan=False):
+def read_schedule(pwd, errors, mjd=-1, surveys=['apogee', 'eboss', 'manga'], loud=True, plan=False, south=False):
     '''
     read_schedule: reads in scheduler formatted nightly schedule
 
@@ -20,28 +20,45 @@ def read_schedule(pwd, errors, mjd=-1, surveys=['apogee', 'eboss', 'manga'], lou
     '''
     # Read in SDSS-III schedule
     schdir = '/'.join(pwd.split('/')[0:-2]) + "/schedules/"
-    schf = open(schdir+'Sch_base.6yrs.txt.frm.dat', 'r')
-    schlines = schf.read().splitlines()
-    schf.close()
-    # Assign values to schedule dict list
+
+    # the following lines appear to do be duplicated below. commented out as a test. if no crashes, delete them
+    # schf = open(schdir+'Sch_base.6yrs.txt.frm.dat', 'r')
+    # schlines = schf.read().splitlines()
+    # schf.close()
+    # # Assign values to schedule dict list
     schedule = []
-    for i in range(len(schlines)):
-        tmp = schlines[i].split()
-        # Assign already-computed values to dict
-        schedule.append({'jd': float(tmp[0]), 'eboss': int(tmp[1]), 'manga': int(tmp[2]), 'bright_start': float(tmp[4]),
-                         'bright_end': float(tmp[5]), 'dark_start': float(tmp[6]), 'dark_end': float(tmp[7]),
-                         'eboss_start': float(tmp[8]), 'eboss_end': float(tmp[9]), 'manga_start': float(tmp[10]), 'manga_end': float(tmp[11])})
+    # for i in range(len(schlines)):
+    #     tmp = schlines[i].split()
+    #     # Assign already-computed values to dict
+    #     schedule.append({'jd': float(tmp[0]), 'eboss': int(tmp[1]), 'manga': int(tmp[2]), 'bright_start': float(tmp[4]),
+    #                      'bright_end': float(tmp[5]), 'dark_start': float(tmp[6]), 'dark_end': float(tmp[7]),
+    #                      'eboss_start': float(tmp[8]), 'eboss_end': float(tmp[9]), 'manga_start': float(tmp[10]), 'manga_end': float(tmp[11])})
     # Read in SDSS-IV schedule
-    schf = open(schdir+'Sch_base.6yrs.txt.frm.dat', 'r')
-    schlines = schf.read().splitlines()
-    schf.close()
-    # Assign values to schedule dict list
-    for i in range(len(schlines)):
-        tmp = schlines[i].split()
-        # Assign already-computed values to dict
-        schedule.append({'jd': float(tmp[0]), 'eboss': int(tmp[1]), 'manga': int(tmp[2]), 'bright_start': float(tmp[4]),
-                         'bright_end': float(tmp[5]), 'dark_start': float(tmp[6]), 'dark_end': float(tmp[7]),
-                         'eboss_start': float(tmp[8]), 'eboss_end': float(tmp[9]), 'manga_start': float(tmp[10]), 'manga_end': float(tmp[11])})
+    if south:
+        schf = open(schdir+'Sch_LCO_base.dat', 'r')
+        schlines = schf.read().splitlines()
+        schf.close()
+        # Assign values to schedule dict list
+        for line in schlines:
+            if line[0] == '#':
+                continue
+            tmp = line.split()
+            programs = tmp[-1].split(',')
+            # Assign already-computed values to dict
+            schedule.append({'jd': float(tmp[0]), 'survey': int(tmp[1]), 'survey2': int(tmp[2]), 'bright_start': float(tmp[4]),
+                             'bright_end': float(tmp[5]), 'lead_survey': int(tmp[12]), 'eng_flag': int(tmp[13]), 'eng_type': int(tmp[14]),
+                             'programs': programs})
+    else:
+        schf = open(schdir+'Sch_base.6yrs.txt.frm.dat', 'r')
+        schlines = schf.read().splitlines()
+        schf.close()
+        # Assign values to schedule dict list
+        for i in range(len(schlines)):
+            tmp = schlines[i].split()
+            # Assign already-computed values to dict
+            schedule.append({'jd': float(tmp[0]), 'eboss': int(tmp[1]), 'manga': int(tmp[2]), 'bright_start': float(tmp[4]),
+                             'bright_end': float(tmp[5]), 'dark_start': float(tmp[6]), 'dark_end': float(tmp[7]),
+                             'eboss_start': float(tmp[8]), 'eboss_end': float(tmp[9]), 'manga_start': float(tmp[10]), 'manga_end': float(tmp[11])})
 
     # Determine what line in the schedule to use for tonight
     if mjd < 0:
@@ -67,6 +84,9 @@ def read_schedule(pwd, errors, mjd=-1, surveys=['apogee', 'eboss', 'manga'], lou
     if not len(currjd) > 0:
         currjd = np.argsort([np.abs(schedule[x]['jd']-tonight) for x in range(len(schedule))])
         errors.append('MJD ERROR: JD %d not present in schedule file. Using JD = %d instead.' % (tonight, schedule[currjd[0]]['jd']))
+
+    if south:
+        return schedule[currjd[0]]
 
     # See if schedule needs to be adjusted based on what surveys are being run tonight
     # Is eBOSS offline, but MaNGA isn't? MaNGA gets all of dark time.

@@ -60,10 +60,23 @@ def create_app(debug=False, dev=False):
     # for each server.
 
     if app.debug: #args['debug']:
+        hostname = socket.gethostname()
         if (os.path.dirname(os.path.realpath(__file__))).find('utah.edu') >= 0:
             server_config_file = os.path.join(os.path.dirname(os.path.abspath(__file__)),
                                               'configuration_files',
                                               'dev-utah.sdss.edu.cfg')
+        # elif "sdss4-gateway.lco.cl" in hostname:
+        #     server_config_file = os.path.join(os.path.dirname(os.path.abspath(__file__)),
+        #                                       'configuration_files',
+        #                                       'sdss4-lcogateway.local.cfg')
+        # elif "sdss-db4" in hostname or "sdss4-db" in hostname:
+        #     # determine if we are at LCO or APO
+        #     # by checking the public IP of the gateway machine
+        #     gatewayDN = socket.getfqdn("sdss-gateway")
+        #     if gatewayDN.endswith("lco.cl"):
+        #         server_config_file = os.path.join(os.path.dirname(os.path.abspath(__file__)),
+        #                                       'configuration_files',
+        #                                       'sdss4-lcogateway.local.cfg')
         elif dev == False:
             server_config_file = os.path.join(os.path.dirname(os.path.abspath(__file__)),
                                               'configuration_files',
