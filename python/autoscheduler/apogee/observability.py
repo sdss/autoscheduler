@@ -89,6 +89,9 @@ def observability(apg, par, times, lengths, loud=True, south=False):
             # Check whether any of the points contain a bad airmass value
             if south:
                 badsecz = [x for x in secz if x > par['maxz']]
+            # Check again to ignore zenith avoidance for priority 10 plates in the north
+            elif apg[p].manual_priority == 10:
+                badsecz = [x for x in secz if x > par['maxz']]
             else:
                 badsecz = [x for x in secz if x < 1.003 or x > par['maxz']]
             if len(badsecz) > 0:
