@@ -1,9 +1,9 @@
 from __future__ import print_function, division
 from time import time
 from operator import itemgetter
-from sdss.internal.database.connections import APODatabaseUserLocalConnection
-from sdss.internal.database.apo.platedb import ModelClasses as plateDB
-from sdss.internal.database.apo.mangadb import ModelClasses as mangaDB
+from plateDBtools.database.connections import APODatabaseUserLocalConnection
+from plateDBtools.database.apo.platedb import ModelClasses as plateDB
+from plateDBtools.database.apo.mangadb import ModelClasses as mangaDB
 from Totoro.utils.utils import avoid_cart_2
 import numpy as np
 import os

@@ -2,7 +2,7 @@ from __future__ import print_function, division
 from time import time
 import os
 import math
-import sdss.internal.database.apo.platedb.ModelClasses as plateDB
+import plateDBtools.database.apo.platedb.ModelClasses as plateDB
 from sqlalchemy import or_
 from sqlalchemy import desc
 

@@ -1,7 +1,7 @@
 from __future__ import print_function, division
 from time import time
 
-from sdss.apogee.get_apogee_plates import get_plates
+from plateDBtools.apogee.get_apogee_plates import get_plates
 from set_apogee_priorities import set_priorities
 from observability import observability
 from pick_apogee_plates import pick_plates
