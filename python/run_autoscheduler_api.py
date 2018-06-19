@@ -75,8 +75,9 @@ if __name__ == "__main__":
     if args.debug:
         # Safari blocks some high ports (e.g.port 6000)
         # Ref: http://support.apple.com/kb/TS4639
-        import sdss
-        print("autoscheduler sdss location: %s"%sdss.__file__)
+        # jdonor commented out the next 2 lines on 19 jun 2018; they appear old
+        # import sdss
+        # print("autoscheduler sdss location: %s"%sdss.__file__)
         app.run(debug=args.debug, port=args.port)
     else:
         app.run()
