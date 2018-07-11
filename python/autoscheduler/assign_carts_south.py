@@ -17,9 +17,9 @@ def assign_carts(schedule, errors, loud=True):
 
     cart_start = time()
     # Create database connection
-    from sdss.internal.database.connections.LCODatabaseUserLocalConnection import db
+    from autoscheduler.plateDBtools.database.connections.LCODatabaseUserLocalConnection import db
     session = db.Session()
-    from sdss.internal.database.apo.platedb import ModelClasses as plateDB
+    from autoscheduler.plateDBtools.database.apo.platedb import ModelClasses as plateDB
 
     # Read in all available cartridges
     # allcarts = session.execute("SET SCHEMA 'platedb'; "+
