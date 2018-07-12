@@ -1,9 +1,9 @@
 from __future__ import print_function, division
 from time import time
 from operator import itemgetter
-from plateDBtools.database.connections import APODatabaseUserLocalConnection
-from plateDBtools.database.apo.platedb import ModelClasses as plateDB
-from plateDBtools.database.apo.mangadb import ModelClasses as mangaDB
+from autoscheduler.plateDBtools.database.connections import APODatabaseUserLocalConnection
+from autoscheduler.plateDBtools.database.apo.platedb import ModelClasses as plateDB
+from autoscheduler.plateDBtools.database.apo.mangadb import ModelClasses as mangaDB
 from Totoro.utils.utils import avoid_cart_2
 import numpy as np
 import os
@@ -72,9 +72,9 @@ def assign_carts(apogee_choices, manga_choices, eboss_choices, errors, manga_car
     cart_start = time()
     # Create database connection
     if (os.path.dirname(os.path.realpath(__file__))).find('utah.edu') >= 0:
-        from sdss.internal.database.connections.UtahLocalConnection import db
+        from autoscheduler.plateDBtools.database.connections.UtahLocalConnection import db
     else:
-        from sdss.internal.database.connections.APODatabaseUserLocalConnection import db
+        from autoscheduler.plateDBtools.database.connections.APODatabaseUserLocalConnection import db
     session = db.Session()
 
     # Read in all available cartridges

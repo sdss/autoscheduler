@@ -2,7 +2,7 @@ from __future__ import print_function, division
 from time import time
 import os
 import math
-import plateDBtools.database.apo.platedb.ModelClasses as plateDB
+import autoscheduler.plateDBtools.database.apo.platedb.ModelClasses as plateDB
 from sqlalchemy import or_
 from sqlalchemy import desc
 
@@ -41,8 +41,10 @@ class eboplate(object):
 # OUTPUT: ebo -- list of dicts with all eBOSS plate information
 def get_plates(plan=False, loud=True):
     # Create database connection
-    if (os.path.dirname(os.path.realpath(__file__))).find('utah.edu') >= 0: from sdss.internal.database.connections.UtahLocalConnection import db
-    else: from sdss.internal.database.connections.APODatabaseUserLocalConnection import db
+    if (os.path.dirname(os.path.realpath(__file__))).find('utah.edu') >= 0:
+        from autoscheduler.plateDBtools.database.connections.UtahLocalConnection import db
+    else:
+        from autoscheduler.plateDBtools.database.connections.APODatabaseUserLocalConnection import db
     session = db.Session()
 
     # Look at all plates for plugging purposes

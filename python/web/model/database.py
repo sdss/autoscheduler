@@ -7,7 +7,7 @@
 from __future__ import print_function
 from __future__ import division
 
-from plateDBtools.database.DatabaseConnection import DatabaseConnection
+from autoscheduler.plateDBtools.database.DatabaseConnection import DatabaseConnection
 from flask import current_app as app
 
 # default values here
