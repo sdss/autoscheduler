@@ -32,11 +32,17 @@ def observability(apg, par, times, lengths, loud=True, south=False):
         for t in range(len(times)):
             obsarr[p, t] = apg[p].priority
 
+
+        if apg[p].manual_priority == 10:
+            extra_time = 0.25  # add 15 minute buffer
+        else:
+            extra_time = 0
         # Compute observing constants
         platecoo = coo.ICRSCoordinates(apg[p].ra, apg[p].dec)
         platelst = float(apg[p].ra + apg[p].ha) / 15
-        minlst = float(apg[p].ra + apg[p].minha) / 15
-        maxlst = float(apg[p].ra + apg[p].maxha) / 15
+        minlst = float(apg[p].ra + apg[p].minha) / 15 - extra_time
+        maxlst = float(apg[p].ra + apg[p].maxha) / 15 + extra_time
+
 
         for t in range(len(times)):
             # Adjust LSTs for 24 hour wrapping
