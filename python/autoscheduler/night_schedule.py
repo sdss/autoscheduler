@@ -49,16 +49,26 @@ def read_schedule(pwd, errors, mjd=-1, surveys=['apogee', 'eboss', 'manga'], lou
                              'bright_end': float(tmp[5]), 'lead_survey': int(tmp[12]), 'eng_flag': int(tmp[13]), 'eng_type': int(tmp[14]),
                              'programs': programs})
     else:
-        schf = open(schdir+'Sch_base.6yrs.txt.frm.dat', 'r')
+        schf = open(schdir+'Sch_base.18_eb_MaStar.txt', 'r')
         schlines = schf.read().splitlines()
         schf.close()
         # Assign values to schedule dict list
-        for i in range(len(schlines)):
-            tmp = schlines[i].split()
+        for line in schlines:
+            if line[0] == '#':
+                continue
+            tmp = line.split()
             # Assign already-computed values to dict
-            schedule.append({'jd': float(tmp[0]), 'eboss': int(tmp[1]), 'manga': int(tmp[2]), 'bright_start': float(tmp[4]),
-                             'bright_end': float(tmp[5]), 'dark_start': float(tmp[6]), 'dark_end': float(tmp[7]),
-                             'eboss_start': float(tmp[8]), 'eboss_end': float(tmp[9]), 'manga_start': float(tmp[10]), 'manga_end': float(tmp[11])})
+            schedule.append({'jd': float(tmp[0]), 'eboss': int(tmp[1]), 'manga': int(tmp[2]),
+                             'bright_start': float(tmp[4]), 'bright_end': float(tmp[5]),
+                             'dark_start': float(tmp[6]), 'dark_end': float(tmp[7]),
+                             'eboss_start': float(tmp[8]), 'eboss_end': float(tmp[9]),
+                             'manga_start': float(tmp[10]), 'manga_end': float(tmp[11]),
+                             'dark_order': int(tmp[12]), 'eng': int(tmp[13]), 'eng_type': int(tmp[14]),
+                             'RM_flag': int(tmp[15]),
+                             'mastar_start': float(tmp[16]), 'mastar_end': float(tmp[17]),
+                             'rm_start': float(tmp[18]), 'rm_end': float(tmp[19]),
+                             'sdss5_start': float(tmp[20]), 'sdss5_end': float(tmp[21]),
+                             'comment': tmp[22:] })
 
     # Determine what line in the schedule to use for tonight
     if mjd < 0:
