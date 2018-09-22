@@ -27,13 +27,17 @@ def schedule_apogee(schedule, errors, par=None, plan=False, loud=True, twilight=
         if south:
             # no overhead on last exposure
             lengths[-1] = par['exposure'] / 60
+            # determine whether or not we can add an exposure
+            if len(times) < par['ncarts'] and nightlength - sum(lengths) > par['overhead'] / 60:
+                times.append(schedule['bright_start'] + len(times) * (par['exposure'] + par['overhead']) / 60 / 24)
+                lengths.append(nightlength - sum(lengths))
         else:
             # If APOGEE-II starts the split night
             if schedule['bright_start'] < schedule['dark_start'] or schedule['dark_start'] == 0:
                 # Determine whether we should add another exposure (leftover time > 15min)
                 if len(times) < par['ncarts'] and nightlength - sum(lengths) > 0:
-                        times.append(schedule['bright_start'] + len(times) * (par['exposure'] + par['overhead']) / 60 / 24)
-                        lengths.append(nightlength - sum(lengths))
+                    times.append(schedule['bright_start'] + len(times) * (par['exposure'] + par['overhead']) / 60 / 24)
+                    lengths.append(nightlength - sum(lengths))
                 # Because APOGEE-II is first, the last exposure will not have overhead
                 else:
                     lengths[-1] = par['exposure'] / 60
@@ -42,8 +46,8 @@ def schedule_apogee(schedule, errors, par=None, plan=False, loud=True, twilight=
             else:
                 # Determine whether we can add an exposure (leftover time > 15min)
                 if len(times) < par['ncarts'] and nightlength - sum(lengths) > par['overhead'] / 60:
-                        times.append(schedule['bright_start'] + len(times) * (par['exposure'] + par['overhead']) / 60 / 24)
-                        lengths.append(nightlength - sum(lengths))
+                    times.append(schedule['bright_start'] + len(times) * (par['exposure'] + par['overhead']) / 60 / 24)
+                    lengths.append(nightlength - sum(lengths))
 
     else:
             times = []
