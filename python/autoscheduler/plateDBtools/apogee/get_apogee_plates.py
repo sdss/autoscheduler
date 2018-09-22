@@ -15,13 +15,13 @@ class ApogeePlate(object):
         if plate is None:
             raise Exception("Somehow tried to make plate object without a plate")
         # properties we get from plate object
-        self.plate = plate
-        self.name = plate.name
+        self.plate = plate  # the plate from the DB
+        self.name = plate.name  # the field name
         self.locationid = plate.location_id
         self.plateid = plate.plate_id
         self.platepk = plate.pk
         self.ddict = plate.design.designDictionary
-        # plate_loc is physical location, and may never be used
+        # plate_loc is physical location
         self.plate_loc = plate.location.label
 
         # NOTE FROM JOHN: ddict contains RA, DEC, and survey info
@@ -63,6 +63,8 @@ class ApogeePlate(object):
         self.snred = 0.0
         self.reduction = ''
         # exposures returns a list of dicts for each exposure
+        # keys: exp_no, mjd, quality, start_time, exp_time, qr_sn2, apr_sn2
+        # apr_sn2 may be nan if not processed yet. 
         self.exposureList = list()
 
         # properties not set in get_plates
@@ -212,9 +214,18 @@ def getPlateid(item):
         return item.plateid
 
 
-def get_plates(errors, plan=False, loud=True, session=None, atapo=True, allPlates=False, plateList=None, south=False, mjd=None):
+def get_plates(errors=None, plan=False, loud=True, session=None, atapo=True, allPlates=False, 
+               plateList=None, south=False, mjd=None):
     '''DESCRIPTION: Reads in APOGEE-II plate information from platedb
-    INPUT: None
+    INPUT: 
+        plan: grabs everything that can be observed tonight (i.e. on the mountain, marked accepted)
+        loud: print timing info to std out
+        session: DB session if already created
+        atapo: not used anymore
+        allPlates: pull everything in the DB
+        plateList: a list of integers corresponding to plates; must be iterable.
+        south: pull from lco-db (works at LCO)
+        mjd: only used at lco; excludes exposures taken on mjd to keep schedule consistent through night
     OUTPUT: apg -- list of objects with all APOGEE-II plate information'''
     start_time = time()
 
