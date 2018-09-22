@@ -16,7 +16,7 @@ def schedule_apogee(schedule, errors, par=None, plan=False, loud=True, twilight=
 
     # Default params for north, south can have different params so keep them if passed in
     if par is None:
-        par = {'exposure': 67, 'overhead': 20, 'ncarts': 9, 'maxz': 3, 'moon_threshold': 15, 'sn_target': 3136}
+        par = {'exposure': 67, 'overhead': 20.0, 'ncarts': 9, 'maxz': 3, 'moon_threshold': 15, 'sn_target': 3136}
 
     # Define APOGEE-II blocks for tonight
     nightlength = (schedule['bright_end'] - schedule['bright_start']) * 24
@@ -28,7 +28,7 @@ def schedule_apogee(schedule, errors, par=None, plan=False, loud=True, twilight=
             # no overhead on last exposure
             lengths[-1] = par['exposure'] / 60
             # determine whether or not we can add an exposure
-            if len(times) < par['ncarts'] and nightlength - sum(lengths) > par['overhead'] / 60:
+            if nightlength - sum(lengths) > par['overhead'] / 60:
                 times.append(schedule['bright_start'] + len(times) * (par['exposure'] + par['overhead']) / 60 / 24)
                 lengths.append(nightlength - sum(lengths))
         else:
