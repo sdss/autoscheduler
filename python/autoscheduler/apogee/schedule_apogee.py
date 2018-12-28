@@ -11,6 +11,7 @@ from pick_apogee_plates import pick_plates
 # INPUT: schedule -- dictionary defining important schedule times throughout the night
 # OUTPUT: apogee_choices -- dictionary list containing plate choices + observing times for tonight
 
+single_AB = 15
 
 def schedule_apogee(schedule, errors, par=None, plan=False, loud=True, twilight=False, south=False):
 
@@ -28,7 +29,7 @@ def schedule_apogee(schedule, errors, par=None, plan=False, loud=True, twilight=
             # no overhead on last exposure
             lengths[-1] = par['exposure'] / 60
             # determine whether or not we can add an exposure
-            if nightlength - sum(lengths) > par['overhead'] / 60:
+            if nightlength - sum(lengths) > (par['overhead'] + single_AB) / 60:
                 times.append(schedule['bright_start'] + len(times) * (par['exposure'] + par['overhead']) / 60 / 24)
                 lengths.append(nightlength - sum(lengths))
         else:
