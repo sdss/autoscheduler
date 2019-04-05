@@ -6,14 +6,38 @@
 from __future__ import print_function, division
 from autoscheduler import night_schedule
 import autoscheduler.apogee as apg
+import Totoro
 from time import time
 from astropy import time as atime
 import os
+import logging
+
+class filter(object):
+    """A class to filter logging warnings
+       and act on relevent plugger warnings
+    """
+
+    def __init__(self, err_list=None):
+        # this should be a reference to the list returned by run_scheduler
+        self.err_list = err_list
+
+    def filter(self, record):
+        if "unallocated" in record.msg:
+            assert self.err_list is not None, "can't log errors!"
+            self.err_list.append(record.msg)
+
+            print("[Totoro] {}".format(record.msg))
+        # must return non-zero, or it won't be logged in Totoro
+        return 1
 
 
 def run_scheduler(plan=False, mjd=-1, surveys=['apogee', 'eboss', 'manga'], loud=True):
     as_start_time = time()
     errors = []
+
+    plugFilter = filter(errors)
+    log = logging.getLogger("Totoro.core.logger")
+    log.addFilter(plugFilter)
 
     if surveys == ['south'] or surveys == ['override']:
         south = True
