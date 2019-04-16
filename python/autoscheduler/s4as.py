@@ -22,7 +22,7 @@ class filter(object):
         self.err_list = err_list
 
     def filter(self, record):
-        if "unallocated" in record.msg:
+        if "PETUNIA" in record.msg:
             assert self.err_list is not None, "can't log errors!"
             self.err_list.append(record.msg)
 
