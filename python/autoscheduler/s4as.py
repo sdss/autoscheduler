@@ -6,11 +6,11 @@
 from __future__ import print_function, division
 from autoscheduler import night_schedule
 import autoscheduler.apogee as apg
-import Totoro
 from time import time
 from astropy import time as atime
 import os
 import logging
+
 
 class filter(object):
     """A class to filter logging warnings
