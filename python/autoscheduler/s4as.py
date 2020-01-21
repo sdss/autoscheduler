@@ -9,6 +9,14 @@ import autoscheduler.apogee as apg
 from time import time
 from astropy import time as atime
 import os
+
+try:
+    import Totoro
+    noTotoro = False
+except ImportError:
+    # running at LCO
+    noTotoro = True
+
 import logging
 
 
@@ -45,6 +53,8 @@ def run_scheduler(plan=False, mjd=-1, surveys=['apogee', 'eboss', 'manga'], loud
         from autoscheduler import assign_carts_south
     else:
         south = False
+        if noTotoro:
+            raise Exception("trying to run without Totoro!?")
         from autoscheduler import assign_carts
         import autoscheduler.eboss as ebo
         import autoscheduler.manga as man
