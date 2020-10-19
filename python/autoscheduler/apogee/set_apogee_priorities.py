@@ -41,23 +41,23 @@ def set_priorities(apg, par, schedule, plan=False, loud=True, twilight=False, so
             if apg[p].pct() >= 1:
                 apg[p].priority = -2
 
-        # Cadence
-#        if schedule['jd'] != apg[p].maxhist():
-#            # 3-visit cadence rules: 3 days between adjacent obs, 26 between first and last
-#            if apg[p].vplan == 3:
-#                if schedule['jd'] - apg[p].maxhist() < 3:
-#                    apg[p].priority = -1
-#                if apg[p].vdone == 2 and schedule['jd'] - apg[p].minhist() < 26#
-#                    apg[p].priority = -1
-#            # 4+ visit cadence rules: 3 days between adjacent obs
-#            elif apg[p].vplan > 3:
-#                if schedule['jd'] - apg[p].maxhist() < 3:
-#                    apg[p].priority = -1
-#            # Alternative cadence rules
-#            # Do a once a bright run cadence for KOI and substellar plates
-#            if apg[p].cadence == 'kep_koi' or apg[p].cadence == 'substellar' or apg[p].cadence == 'koi_btx':
-#                    if schedule['jd'] - apg[p].maxhist() < 18:
-#                        apg[p].priority = -1
+        ## Cadence
+        #if schedule['jd'] != apg[p].maxhist():
+            ## 3-visit cadence rules: 3 days between adjacent obs, 26 between first and last
+            #if apg[p].vplan == 3:
+                #if schedule['jd'] - apg[p].maxhist() < 3:
+                    #apg[p].priority = -1
+                #if apg[p].vdone == 2 and schedule['jd'] - apg[p].minhist() < 26:
+                    #apg[p].priority = -1
+            ## 4+ visit cadence rules: 3 days between adjacent obs
+            #elif apg[p].vplan > 3:
+                #if schedule['jd'] - apg[p].maxhist() < 3:
+                    #apg[p].priority = -1
+            ## Alternative cadence rules
+            ## Do a once a bright run cadence for KOI and substellar plates
+            #if apg[p].cadence == 'kep_koi' or apg[p].cadence == 'substellar' or apg[p].cadence == 'koi_btx':
+                #if schedule['jd'] - apg[p].maxhist() < 4:
+                    #apg[p].priority = -1
 
     # In-Order Completion (needs second loop)
     for p in range(len(apg)):
