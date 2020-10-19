@@ -49,7 +49,7 @@ def read_schedule(pwd, errors, mjd=-1, surveys=['apogee', 'eboss', 'manga'], lou
                              'bright_end': float(tmp[5]), 'lead_survey': int(tmp[12]), 'eng_flag': int(tmp[13]), 'eng_type': int(tmp[14]),
                              'programs': programs})
     else:
-        schf = open(schdir+'Sch_APO_base.dat', 'r')
+        schf = open(schdir+'Sch_cludge_APO.dat', 'r')
         schlines = schf.read().splitlines()
         schf.close()
         # Assign values to schedule dict list
