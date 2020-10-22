@@ -86,9 +86,21 @@ def assign_carts(schedule, errors, loud=True):
     if len(remaining_carts) > 0:
         for cart in remaining_carts:
             thispick = ordered_choices.pop(0)  # remove the next plate up to be observed and plug it
-            thispick['cart'] = cart['cart']
-            apgpicks.append(thispick)
-            cart['cart'] = -1
+            while thispick["plate"] == -1:
+                thispick['cart'] = -1
+                apgpicks.append(thispick)
+                try:
+                    thispick = ordered_choices.pop(0)
+                except IndexError:
+                    # I can see this happening...
+                    thispick = None
+                    break
+            
+            if thispick is not None:
+                # clumsy? but probably safe
+                thispick['cart'] = cart['cart']
+                apgpicks.append(thispick)
+                cart['cart'] = -1
 
     # assign dummy carts, -1 showing that they aren't actually plugged
     for choice in ordered_choices:
