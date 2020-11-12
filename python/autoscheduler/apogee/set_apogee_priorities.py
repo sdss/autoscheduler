@@ -41,7 +41,12 @@ def set_priorities(apg, par, schedule, plan=False, loud=True, twilight=False, so
             if apg[p].pct() >= 1:
                 apg[p].priority = -2
 
-        ## Cadence
+        # Cadence
+        if schedule['jd'] != apg[p].maxhist():
+            if schedule['jd'] - apg[p].maxhist() < 3:
+                apg[p].priority = -1
+
+        #  # Cadence
         # if schedule['jd'] != apg[p].maxhist():
         #     # 3-visit cadence rules: 3 days between adjacent obs, 26 between first and last
         #     if apg[p].vplan == 3:
